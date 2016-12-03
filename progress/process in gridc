@@ -1,0 +1,107 @@
+1/11/2012 corrected Function GetGrid(all finished except Partition outputdata);
+          Function Freegrid is finished. Readgrid is not finished(should get the nfaces array from celldata.)
+          start to change partition function
+          stop at topology
+
+2/11/2012 finish: topology and transferdata, EdgeMarkers, GeoMetery, VertGrid(not needed to change)
+	  stop at Reorder
+
+3/11/2012 finish: ReorderRealArray, ReorderIntArray in util.c
+	  finish: ReOrder
+	  finish: Partition
+	  finish: CorrectVoronoi
+          finish: OutPutData
+	  Finish: ReadMainGrid
+
+8/11/2012 transfer maxfaces in suntans.dat
+	  Finish: suntan.dat
+	  Finish: defaults.h
+	  Finish: fielo.c
+	  start: debug first
+	  correct: ReadNfaces and Initmaingrid to make check maxFaces in Suntans.dat
+	  suntans can compile;
+
+9/11/2012 update to newest version of suntans
+	  finish: util.c grid.c 
+15/2/2013 make sure when maxface>3 never use CorrectVoronoi.
+
+
+
+
+
+
+
+            change it to only correct triangle grid
+
+
+10/11/2012 find a new problem in Partition fixed!!!!
+           LIMIT:  IN GETAREA: ONLY FOR 3 AND 4 EDGES GRIDS        find error in  CreateMomentumCV(*localgrid) fixed!!!!!!!!
+
+14/11/2012 update OutPutdata 
+                  make celldatabackup.dat and cellbackup.dat without nfaces when maxfaces is 3 to test the codes
+           changes: suntans.dat 
+                    ReadFileNames in grid.c
+15/11/2012 New BUG for OutPutData when maxfaces is 4 while using the same data
+           fix it by deleting the changes in backup data
+1/4/2013   fix bug in voronoistats to make it calculate correctly when grad[2n]==-1
+           quad data for neigh should be clockwise or counter-clockwise for each cell
+           fix it by quadgrid.m
+1/5/2013   new bug in Geometry in calculate xe ye
+           fix it , make it can calculate when grad[2n]==-1
+1/6/2013   find new bug in createfacearray in gradf
+           find new bug in connectivity for cells for the last cell ===> bug in reordercellspoints
+           fixit by reorderfacearray!
+           add Reordergradf
+2/20/2013  not use ReadNfaces when -t is used
+           in Initmaingrid function
+           when -t maxfaces is set to be 3, nfaces is set to be 3, in phys.c interp and prettyplot can be 1. 
+
+2/25/2013  change GetArea to use for any polygon with any number of edges. Edge index should be in the consequentive order.
+
+07/04/2013 find bug in outputdata, for TRIANGLE==1, the output cell.dat is not right fixed!
+
+07/28/2013 comment out codes for Actotal, never use interp==1 grid.h not changed if comment actotal in grid.h will have segmentation fault
+
+08/05/2013 make actotal can work with interp==1 same as in phys.c
+
+08/06/2013 add outvwgt in suntans.dat to output vwgt for each cell to check parmetis
+           add outvwgt in fielo.c and defaults.h
+           add VWGTFILE in suntans.h
+           add output vwgt process in GetDepth functions
+
+08/06/2013 some error in GetNk finished
+           change it into a new version to consider when localdepth<dz[]
+
+09/03/2013 prepare for 8-point interpolation for quad grid 
+           line 3802
+
+09/27/2013 add fclose(ifile) in ReadNfaces function
+
+
+10/14/2013 find new bug in pcneigh numpcneigh to calculate Node.dat 
+           works well with one proc, but error occurs when use multiplecores
+
+10/15/2013 change outputdata only output useful node with numpcneighs!=0 if numpcneighs==0 output n and xp yp only
+
+10/15/2013 make grid compatible with tri grid
+           change readmaingrid function 
+           no use Readnfaces when maxfaces==3
+           set nfaces=3 for all cells
+           reordercellpoints add maxfaces=3 when no sharednode
+
+10/30/2013 fix bug in CorrectVoronoi function
+
+12/9/2013 delete file name for SEDIFILE
+
+12/21/2013 delete CULVERTFILE
+
+12/24/2013 find error in geomery out of memory due to the assumption that localgrid->Np=maingrid->Np when interp=1 so Actotal=Np*Nkp*numprocs
+
+05/08/2014 change createfacearray to make sure no strange happens when triangle has quad neighbours
+
+10/08/2015 
+change the function Interpdepth when subgrid is on. To make sure grid->dv=dmax within the cell to avoid error in horizonal momentum advection
+
+05/20/2016
+bug found in createFacearray function when 1 cell has two wall boundaries
+

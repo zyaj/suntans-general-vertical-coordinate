@@ -1,0 +1,114 @@
+08/10/2014 add subgrid.h and subgrid.c finished (08/14/2014)
+1. need to add ReturnSubPointDepth function in Initialization.c done
+2. need to add ReturnSubCellArea function in Initialization.c done
+3. need to add ReturnFluxHeight function in intialization.c done
+4. add functionality with culvert model
+5. add outputSubgrid to test accuracy // only work for single processor
+
+08/25/2014 
+1. subgrid->dzratioprof and subgrid->dzeff not finished when hprofe[base] happens.
+2. not add subgrid->dzeff into phys->CdB
+
+09/01/2014
+1. add 3d model to change UpdateSubgridFluxheight function done 
+2. change scalar.c to work with subgrid module done 
+
+
+09/02/2014
+1. add UpdateSubgridVerticalAceff to prepare for scalar transport and nonhydrostatic pressure
+
+
+09/07/2014
+1. add requirement for dpe and dp to lower than grid->dv may need to change
+
+09/10/2014
+1. add Updatesubgriddz to consider when subgrid->hmin < -grid->Dv
+
+02/05/2015
+need to change continuity equation and nonhydrostatic part (not completed!!!!!) 
+
+02/15/2015
+nonhydrostatic and other parts have been finished.
+the way to interpolate cell centered velocity is not finished.
+
+02/21/2015
+upredictor for drag term is finished
+new method to calculate erosion
+
+05/03/2015
+bottom shear stress
+1. add subgrid->dc subgrid->de for depth for each sub cell and edge finished!
+2. add subgrid hmarshp hmarshpe hmarshc hmarshe for subcell subedge marsh height
+3. add interpsubgridhmarsh to calculate hmarsh for each subcell and subedge
+4. add new function to output hmarsh results in subgrid module
+5. add hpe to store the freesufcace at flux height
+6. add CalculateSubgridDragCoef to calculate subgrid coefficient
+7. call the new function in SetDragCoefficient when subgrid module is on and only have 1 layer.
+8. add Cdmean to store the total drag coefficient calculated by mean depth and vegetation height
+9. add CalculateSubgridCdmean to calculate Cdmean
+10. modify and add CalculateSubgridActiveErosion function
+11. add taubsub and delta to fullfill parameterization
+12. change SedimentSource and CalculateDeposition to add delta effects
+13. add freesubgrid Function
+14. add erosionpara to control whether to use the new methods to calculate erosion
+15. add dragpara to control whether to use the bottom drag parameterization
+
+05/10/2015
+1. fix a bug in the calculation of Cdmean use kb/30
+2. add dragpara to control bottom drag parameterization
+3. add erosionpara to control erosion paramterization
+4. add ReturnSubgridErosionParameterizationEpslon in intialization.c
+
+10/07/2015
+1. make sure grid->dv=dmax in the whole cell
+2. modify the Interpdepth function in grid.c
+3. add a function calculatecellsubgridXY to calculate subgrid x y in a specified cell
+4. when using Interpdepth=2, you must make sure grid->dv==subgrid->dmax
+
+12/08/2015
+1. modify computeUC for subgrid method
+2. add a new function SubgridCellAverageTau to add windstress and phys->uc_new/dt to subgrid->tau_x subgrid->tau_y
+3. new method to calculate erosion is finished
+4. however it not very efficient which means a new more efficient numerical implementation must be made
+
+02/08/2016
+1. add different methods to calculate erosion para
+erosionpara=1 use tau_c_x tau_c_y
+erosionpara=2 use cdmean
+2. should add more for subgridcalculatecdmean for different z0b. should define cell-center z0b add one function to infer z0b at subgrid-scale
+
+
+02/22/2016
+1. turn off subgrid method for momentum advection when wetdry is on
+2. use finite difference for momentum advection when wetdry is on
+
+02/24/2016
+1. use calculatewetperi and calculatefluxheight and stop using Updatewetperi and updatefluxheight
+2. the drag for bufferheight limit now is controlled by dzboteff
+
+02/29/2016
+1. give a minimum aceff for free surface solver: now set as minimum=1/1000grid->Ac
+
+03/05/2016
+1. add udrag in propT to control whether to use udrag to calculate bottom shear stress
+2. add function computeUdrag in phys.c to calculate udrag
+3. add udrag in to physT 
+
+03/17/2016
+1. add subgrid->hmax to store the minimum depth of each cell
+2. add dzfmeth==3 to use upwind h for drying to wetting (flooding) and central differencing for wetting to drying (ebbing)
+3. stop using pow for negative power
+
+
+03/24/2016
+1. add subgrid->d1 d2 d3 for each subcell to store the ordered depth
+2. modify calculatesubgridcdmean with more accurate Htmp
+
+03/28/2016
+1. calculate accurate volume and wet area for each subcell to calculate cdmean
+2. output Veff and aceff for each cell, add opensubgridfiles
+3. 
+
+05/20/2016
+1. subgrid->veff<1e-3 || subgrid->veff<1e-2 + total volume different <1e-3 ==> phys->active=0
+2. when culvert model is on, subgrid->dp=grid->dv subgrid->dpe=min(grid->dv[nc1],grid->dv[nc2])

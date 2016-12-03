@@ -1,0 +1,155 @@
+06/04/2013 create sediment.h and sediment.c
+1. in phys.h add prop->sedi switch in suntans add sedi
+2. Readproperties add prop->sedi
+3. flieo.c and defaults.h add sedi default value 0
+4. add SEDIFILE in suntans.h give default value 'sedi.dat'
+5. add Readsediproperties function not finished
+6. add allocatesediment/initsediment not finished
+7. add setsediment not finished
+06/06/2013
+1. finish sedi.dat
+2. ReadSediProperties finished!
+3. AllocateSediment finished!
+4. need to add ReturnSedimentConcentration in Intialization.c finished!
+5. SetSediment finished!
+6. FreeSediment finished!
+7. SettlingVelocity finished! but with questions
+06/09/2013
+1. add boundary_sediment in boundary.c not finished yet!!!
+06/12/2013
+1. add CalculateErosion finished! and BedChange not finished
+06/20/2013
+1. delete deposition_old erosion erosion_old finished!
+
+
+
+2. add CalculateDeposition finished! 
+3. finish BedChange finished!
+4. finish CalculateErosion finished!
+5. Add CbedInitialization finished!
+6. make several adjust for initializationSediment give the initial value of Ws SediCbed Deposition finished
+7. change something in Suntans.c finished!
+8. add BoundarySediment in boundary.c finished!
+9. change something in phys.c
+10.change makefile
+11. sediment.c and sediment.h can compile now
+12. finish update scalars for suspended sediment transport !not finished!
+
+
+06/22/2013
+1. add sediment.h in initialization.c boundaries.c phys.c scalars.c sediment.c suntans.c
+2. add SedimentSource in sediment.c
+3. add settling effects in scalar.c finished!
+4. add erosion term finished!
+5. add Nosize in update scalars
+06/23
+1. add sediment.h in profiles.c
+2. need to change something in profiles.c
+3. add **SedimentFID in phy.h 
+4. add Sedimentfile in suntans.dat
+5. change Openfiles add prop->Sedi
+6. change outputdata the max type for output is 5!!!!
+06/24
+1. change outputdragandmarsh only intcdv inthmarsh and marshmodel==1, output will start.
+2. change sunplot, when intcdv==0 inthmarsh intz0b intz0t==0, data->data==prop->data no need to read
+3. change outputdata sediment part discuss prop->sedi and Nsize
+06/25
+1. change outputdata add layerthickness output
+2. add layerthicknessfile in suntan.dat
+3. add sedi1~5 layer buttons in sunplot finished!
+4. read data in sunplot finished!!
+5. add SedimentFile1~5 in suntans.dat
+6. finish add sediment part in sunplot
+
+06/27 debug
+1. bug in initializesedi boundary_sediC get 0 finished!
+2. bug in fILENAME change sedifile to read in readfilenames not as default finished!
+3. bug sunplot str is mistaken use by string, in loaddata part finished!
+4. bug in bedchange, deposition[fraction][cell] finished!
+5. wrong codes for ws*dc/dz , for k=0, ws=0-C[k+1]/dzz not finished! finished!
+
+07/01 
+1. bug in when grid->ctop increases, the freesurface decreases a lot the sediment concentration is not right
+2. bug in scalar.c search ctopold 
+3. bug in phys.c in StoreVariables, add wtmp2[i][grid->Nk[i]]
+4. add phys->wnewsedi phys->woldsedi 
+5. add function SedimentVerticalVelocity
+6. change updatescalar add **wold
+
+
+07/03 
+1. add OpensediFiles and outputSediment to make phys.c more clean
+
+
+07/05
+1. settling velocity calculation not correct yet
+2. the erosion equation for soft mud is not good, may cause wierd results
+
+07/08 
+1. add CalculateSediDiffusivity function
+2. add parabolKappa to show whether to use parabolic diffusivity
+
+08/20
+1. add Seditb to store the biggest tb for each cell during simulation
+
+08/21
+1. change way to calculate taub with z0
+2. add maxerosion for bedcomplex==0
+
+09/29/2013
+add wavemodel in CalculateErosion
+
+
+12/07/2013 
+1. modify the sediment model  add sedimentsT sediments
+2. add the ComputeSediments as the main sediments calculation function
+3. delete the function SETsediments
+4. still have question for output
+5. fix bug in output tbmax Nsize->nosize
+6. delete sedi.dat
+
+12/10 
+make sure returnsediration have 1.0/nsize
+
+01/16 
+update for bed model, change Erosion=[fraction][cell][Nlayer]
+add deposition[fraction][cell]
+add angle of repose
+add taue for each fraction
+add drydensity for each fraction
+delete erosiontotal sediCbed
+change the allocation for depostion erosion layerthickness
+delete TBMAX switch, always output taub
+add first layer to store the first layer thickness for the 
+add layertop Toplayerratio 
+
+04/09/2014 
+add Sedikb to store the bottom roughness height in order to consistent with Yi-Ju's wave model
+1. allocate sediments
+2. initializesediment
+3. calculateerosion
+4. calculatekb
+5. add UpdateWaveCr UpdateWaveFw in ComputeSediments
+6. move useless function in sediments.h into sediments.c
+7. add new function CalculateSediKb
+
+09/15/2014
+add support of subgrid module 
+1. change function sedisource
+
+04/14/2015
+1. add one parameter alphaSSC to represent the ratio between bottom SSC and depth-averaged SSC
+2. two options (vprof) are added 1 is for Rouse curve 2 if for constant 
+3. add RouseCurveAlpha to calculate alpha from rouse curve 
+4. modify the sedimentsource function to add effects from alpha SSC
+5. modify the CalculateDeposition function to add effects from alpha SSC
+
+05/07/2015
+1. modify CalculateErosion function to make it more clear
+2. add SubgridCalculateActiveErosion in ComputeSediments function.
+
+01/28/2016 
+1. initializesediment for boundary_sediC add line to use grid->Nke[grid->edgep[j]] not just grid->Nke[j
+
+05/21/2016
+1. phys->active=0 ==>taub==0

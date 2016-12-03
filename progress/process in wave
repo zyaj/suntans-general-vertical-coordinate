@@ -1,0 +1,50 @@
+5/27 copy wave.c and wave.h into suntanshybrid version start to change not finished!
+
+09/26 create simple wave model by calculating fetch of each cell (new model added in the future)
+add wavemodel in suntans.dat and propT, readproperties
+add WAVEFILE in suntans.dat and suntans.h and readfilenames in grid.c
+add default wavemodel value in default.h and fielo.c
+
+1. create wave.h, and set up parameters
+   variable:
+             Hwsig, Twsig, Winddir, Uwind, Fetch, Fw, 
+   switch: 
+             wavemodel(in PropT), fetchmodel, windconstant
+   input: rough boundary if use fetch model
+   
+   output: new erosion calculation for wavemodel and hwsig and Twsig output every time step 
+ 
+2. create wave.c
+   ReadWaveProperties;
+   AllocateWaveVariable;
+   InitializeWaveVariable;
+   FreeWaveVariable;
+   CalculateFetch;
+   CalculateHsigandTsig;
+   CalculateFw;
+   
+3. modify boundary.c 
+   add WindFieldFunction;
+
+09/29 finish wave.c wave.h wave.dat
+      modify phys.c suntans.c
+      add WindSpeedandDirection function in Boundaries.c
+      no test right now.
+
+09/30 find bug in CalculateWaveexcur fixed use fabs!!!!!!!!!!!
+
+10/1 find new bug in CalculateWaveexcur value incorrect -> Fw incorrect fixed 
+     there is another error for fetch
+      
+04/08 add UpdateWave
+      add Yi-Ju's model, stop at line853
+      add updatewavefw and updatewavecr function used in sediments.c
+      delete all use of sediT and spropT
+      delete phys->de in obtainedgeKfield
+      add phys->dhdt in main
+      add blowup for updatewave function
+      add isendrecvedgedata2d in sendrecv.c
+      change openwavefiles and outputwavedata with the functionality to mergearray 
+      add merge in openwavefiles
+05/10 make sure Dmax in windfield is big enough
+

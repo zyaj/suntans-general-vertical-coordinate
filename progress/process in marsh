@@ -1,0 +1,33 @@
+07/03/2013 seperate marsh part out from phys.c
+1. create new marsh.h and marsh.c
+2. add freemarsh outputmarsh readmarshproperties allocatemarsh
+3. change makefile in 'main' folder
+4. add marsh.dat
+
+08/07/2013
+1. add limit for maxcdv and maxhmarsh to prevent hmarsh and CdV out of limit
+
+09/06/2013
+1. change marsh model into stone & shen (2002)
+2. add Na and change the definition of shape coefficient
+3. delete coefficient Dv
+
+10/11/2013
+1. add ConstantMarsh coefficient to use ReturnMarshheight
+2. add ConstantCdV coefficient to use ReturnMarshDragCoefficient
+
+10/10/2014
+change the marsh structure, 
+1. move it into phys.c from suntans.c
+2. change data structure to *marsh->
+3. add new function initialize.c for hmarsh and cdv
+4. delete other unuseful function
+
+05/03/2015
+1. for 1D model stop use marsh momentum term in momentum equation, use CdV_total
+
+05/06/2015
+1. clean the code for explicit and implicit term function
+
+05/10/2015
+1. change the equation to calculate marsh drag term pow(p,1.5) to pow(p,2)

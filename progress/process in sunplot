@@ -1,0 +1,48 @@
+process in sunplot.c:     
+
+11/17/12    finish all the change about nfaces. Add nfaces and maxfaces in ReadData.
+         questions in Drawedgelines.
+         looking for some error using 3*i not NFACES.
+
+1/5/13   find bug in Readdata. it cannot load into quad grid
+         fixed
+1/6/13   find bug in Drawedgeline 
+
+1/7/13   find bug in Unsurf->Fill 
+         fix it!
+
+2/4/13   find bug in reading data from multiple processor
+
+3/10/13 add 2 buttons for CdT and CdB
+        CdT and CdB are allocated at the center of edge, should plot in the center of cell -> we should do an intepolation
+        readdata: read into cdt and cdb data into *data
+                  use fopen here not MYopen
+        change: mydraw
+
+pay attention 1130line
+
+
+4/8/13 for original examples. we need to change suntans.dat and run them again to show in sunplot with z0b.dat and z0t.dat
+
+4/9/13 add CdV button to show the max CdV along the depth, CdV=0 means there is no marsh, CdV can be different for different types of vegetation
+       Here only assume CdV is constant with time, because there is no difference when water go over marsh part.
+       Finish here, not test yet!!!!!!!!!!!!!!!  finished!
+4/10/13 remember to change NUMBUTTONS after make a change!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
+
+4/12/13 add hmarsh button to show the distribution of hmarsh in the calculation domain
+
+07/05/2013 change sunplot will not load sedi marsh file when marshmodel=0 sedi=0
+
+07/05/2013 make sure maxFaces>3 for new sunplot!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+
+22/10/2013 make sunplot can work without maxfaces value in suntans.dat
+           if maxfaces==0 maxface=3
+06/12/2013 new bug for allsedic when with more than one sediment type to make allsedic=2*EMPTY=2000000; 
+
+
+12/08/2013 delete SEDIFILE and change data->sedi=prop->computeSediments
+
+
+04/14/2014 add new wave module part, Winds, Windd, Waveub, Waveh, keep the fetch model 
+
+05/13/2014 delete tbmax

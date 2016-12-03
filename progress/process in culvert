@@ -1,0 +1,87 @@
+10/06/2013 
+1. add culvert.c culvert.h culvert.dat 
+           for culvert simulations
+2. add CULVERTFILE in suntans.h and change ReadFilenames in grid.c 
+
+3. add culvertmodel in propT change fielo.c phys.c phys.h default.h
+
+4. change CGSolve function to add CulvertHCoefficients function
+
+5. change Upredictor to add check condition steps
+
+6. change Updatedz add culvertmodel==1 condition
+
+
+10/07/2013 
+1. find bug in CulvertHCoefficients 
+10/10/2013
+   fixed!!!!!!!!!!!!!!!!!!!!!1
+   the only approximation is when 0->1 partial -> fully
+   assume dt1=dt
+
+10/23/2013 
+1. add function CulvertIteration to calculate source term for free surface equation
+2. change CulvertHCoefficient
+
+12/23/2013
+1. create culvert structure
+2. create CalculateCulvertPressure function to include all the process in culvertmodel
+3. bug error in SetCulvertDragCoefficient
+4. delete culvert.dat merge into suntans.dat
+
+
+10/11/2014
+change culvert model data stucture set culvert->
+add setupculvertmodel function
+
+04/07/2014
+1. use casulli's method for h(n)<culverttop, and h(n+1)>culverttop, after this time step, use 2. 
+2. use sum(u*dz)=0 to solve after the time step for partially discharge to fully discharge
+
+06/02/2014
+1. add new wetting and drying method 
+2. change CulvertHcoefficient and CulvertSource method and CulvertCondition function
+
+
+08/15/2014 
+1. add functionality with hiter
+2. add functionality with subgrid
+
+09/03/2014
+1. assume water free surface cannot drop from culverttop to bottom.
+2. be careful when you use hiter
+
+09/18/2014
+1. change the check convergence method for culvert model with subgrid 
+2. add nested method into all the culvert model
+   add culvertpressure2 to store h value for outer iteration
+   the value of inner iteration is stored in phys->h
+3. add CulvertUpdateQcoef function to update outer iteration coef
+4. add SubgridCulverttopArea in subgrid.c to store culvert top wet area for culvert part
+
+
+10/01/2014
+1. bug found!
+   when initial condition is h[all]=1.0 culverttop[all]=-0.8, and with all closed b.c. 
+   we cannot get the constant h results
+   because the matrix for coef and fcoef is singular
+   which is reasonable we cannot solve a pressure based on the volume conservation when pressure is uncoupled with volume
+
+10/01/2014
+1. bug found! 
+   when subgrid
+   htmp=veff-sum*dt, here veff=ac*(dv+h), should substract the volume beyond culverttop because Veff here is the effective volume, not v1 in iteration
+2. still have problem when water from blow increases to the culverttop
+   solve with use Veffold and culvertpressure in CulvertSource function!
+3. bug found!
+   with culvert, set h=culverttop if(h>culverttop) and then update dz and setfluxheight
+4. change the condition of Culvertpressure>top && h>top to h_prev >top && h>top (still questionable)
+
+10/03/2014
+other option for culvert, try to use 1. culvert flux function
+                            2. two cells in culvert part
+
+10/18/2015
+move Setculverdragcoefficient after storeculvertpressure in phys.c
+the old location doesn't include the top drag from culvert
+

@@ -1,0 +1,258 @@
+  10/11 finish change: AllocatePhysicalVariables
+		       FreePhysicalVariables
+  13/11 finish change:  InitializeVertGrid
+                        OpenFiles               not need to be changed
+                        ComputeQuadraticInterp
+  15/11 change:         in ComputeUC if maxfaces>3 and interp=1, exit program and output error
+                        complete ComputeUC (still in ReadPhysicalVariables)
+                        at SetDensity
+  17/11 finish: ReadPhysicalVariables InitialPhysicalVariables (not need to be changed)
+        finish: phys.c
+                turbulenc.c scalars.c tvd.c
+  21/1/2013 find error in freephysicalvariables cn_R cn_T
+  29/1/2013 make sure when maxface>3 never use interp and prettyplot
+  2/2/2013 find segmentation fault in HORIZONTALSOURCE 
+           error in phys->q[nc1][k]
+           find error in grid->edgedist[0] in Makepointers in grid.c //not the codes is the data
+  2/15/2013 find bug in codes in horizontalsource and updatescalars in scalars.c they need grad[2*j]!=-1, but when grid from quadgrid.m, it always give segmentation fault.
+            segmentation fault always due to scalars[i],i<0
+            make a judgement for open bc keep using grad!=-1
+            !!!!!!!!!!!!!!1BIG BUG IN profiles.c in  InitializeOutputIndices. Input cells in wrong order!!!!!! fixed
+
+  2/20/2013 in ReadProperties: max=grid->maxfaces, not maxFaces any more. So you can use interp and prettyplot when use -t
+            change ReadProperties input, add *grid 
+8/3/2013   find segmentation bug in function UpdateScalars when boundary type =2 in scalars.c
+
+09/26/2013 add wavemodel switch into codes and default value is 0; then find segmentation error in HorizontalFaceScalars in tvd.c fixed (avoiding grad(2*j)==-1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!)
+
+10/3/2013   add function InterpCd in Phys.c 
+            revised file: phys->Cd is allocated to each edge, first get the centerpoint of each
+                          edge and then interpolate
+                          suntans.dat: add IntCdB and IntCdT and add inputfile cdtint.dat 
+                                        cdbint.dat
+                          defaults.h: add default value of IntCdB and IntCdT are 0
+                          phys.h : add IntCdB and IntCdT in propT
+                                   change setdragcoefficient(int myproc)
+                                   also void InterpDrag(gridT *grid, physT *phys, propT *prop);
+                          suntans.h: add inputfile for cdt.dat cdb.dat
+                          grid.c: ReadFileName add INPUTCDBFILE and INPUTCDTFILE
+                          phys.c: 1. ReadProperties: read into IntCdB and IntCdT
+                                  2. SetDragCoefficient: add InterpDrag functions
+                                     1 interp at the centerpoint of edge
+                                     2 read edge center data
+                                     otherwise end program
+                                  3. outputdata for sunplot, add outputfile cdt.dat and cdb.dat  
+                                     in suntans.dat
+                                     add function: outputdrag(grid, phys, myproc)
+                         fileio.c: change GetDefaultValue add IntCdB IntCdT          
+
+
+12/3/2013 find bug for phys.c
+          solution: have to keep setdrag in hoop due to dz change
+          give z0B and z0T at first step into phys->z0B, phys->z0T
+
+13/3/2013  phys.h: add z0B and z0T;
+           phys.c: allocatephysicalvariables
+           use interpdrag out of setDragcoefficient 
+           change IntCdB IntCdT to Intz0B Intz0T
+
+08/04/2013  ADD CDV
+            revised file: phys->Cd is allocated to each edge, first get the centerpoint of each
+                          edge and then interpolate
+                          suntans.dat: add IntCdV add inputfile cdvint.dat 
+                                       
+                          defaults.h: add default value of IntCdV=0
+                          phys.h : add IntCdV in propT
+                                   change setdragcoefficient(int myproc)
+                                   also void InterpDrag(gridT *grid, physT *phys, propT *prop);
+                          suntans.h: add inputfile for cdvint.dat
+                          grid.c: ReadFileName add INPUTCDVFILE
+                          phys.c: 1. ReadProperties: read into IntCdV
+                                  2. allocate space:
+                                  3. SetDragCoefficient: for intCdV==0
+                                  4. add InterpDrag functions for intCdV~=0
+                                     1 interp at the centerpoint of edge
+                                     2 read edge center data
+                                     otherwise end program
+                                  5. outputdata for sunplot, if IntCdV==0
+                                     add outputfile cdv.dat  
+                                     in suntans.dat
+                                     add function: outputdrag(grid, phys, myproc)
+                         fileio.c: change GetDefaultValue add IntCdV          
+
+4/09/13 change CdV to a 3D variable 
+        because when water depth is higher than marsh height, CdV should be zero
+        max along depth is constant                
+1)for suntans.dat
+        1. add phov: volume of vegetation/total volume 
+        2. add alphav: the shape coefficients of vegetation Vv/Av/r, r=sqrt(Av/pi)
+        3. add r: r=sqrt(Av/pi)
+        4. hmarsh: the height of vegetation
+2)for phys.h 
+        for propT: add rv alphav hmarsh phov
+        change CdV to 3D **CdV
+        for physT: add CdVM which is the max exising value for vegetation
+
+3)for phys.c
+        readproperties: when intcdv or Cdv !=0, we will read in the coefficients of vegetation
+        allocatephysicalvariables: allocate phys->CdV=(** real) same as u
+        freevariables: free phys->CdV same as u
+        interpdrag: interpolate phys->CdVm the max value for the edge
+        setdragcoefficients: set phys->CdV as phys->CdVm for face below hmarsh
+
+4/13/2013 1. add marshmodel variable and Inthmarsh in suntans.dat add inputhmarshfile and hmarshfile
+          2. add default value for marshmodel and Inthmarsh in defaults.h and fielo.c 
+          3. add function InterpMarsh to interp and output CdVm and hmarsh    
+          4. add hmarsh and Inthmarsh marshmodel in phys.h
+          5. if marshmodel=1, we do marshmodel variables in ReadProperties
+          6. change ReadFileNames in grid.c
+          7. change outputdragandmarsh with marshmodel
+          8. change in allocatephysical only if marshmodel==1 have CDV CDVM HMARSH
+          9. delete phys->CdV as **group change CdVm to CdV in Interpmarsh setdragcoef freephy allocate phys.h outputdrag
+          10. add function SetMarshTop to find the top layer which consist vegetation to add friction term on to all the layers below that layer, only works for marshmodel==1
+          11. add marshtop in phys.h and allocatephysical and freephysical to store the toplayer which have marsh part
+
+4/14/2013 1. add hmarshleft in phys.h, allocatephysical, freephysical to store the left hmarsh in marshtop layer
+          2. 
+
+07/02/2013 1. new bug after grid generation in quadgrid.m
+
+07/28/2013 comment out all the nrt1 nrt2 tr1 codes, all these work when interp==quad
+
+09/06/2013 delete some codes unused for marsh model
+
+09/06/2013 make interp can work for triangle when maxfaces=4
+1. change function ComputeUCRT it will use interp1 for triangles and interp 0 for others
+2. change ReadProperties, if maxfaces>3 it will not change prettyplot and interp to 0
+
+09/09/2013 bug in scalar.c with line180 fixed
+
+
+09/26/2013 add WAVEFILE in grid.c and suntans.h and suntans.dat
+09/27/2013 add ReturnWindSpeed and ReturnWindDirection in initialization.c 
+
+09/29/2013 add wavemodel part, you can find it by searching wavemodel
+
+09/29/2013 add wavemodel part, suntans.c
+
+10/22/2013 add htmp4 for culvertmodel. to store freesurface sourceterm
+
+10/16/2013 find fug for culvert iteration model you should add sum=innerproduct and sendrecvCULVERTCONDTION
+           FIXED with mpi!!!!!!!!!!!!!!!!!!!!1111
+12/9/2013 make sediment part into one function ComputeSediments
+
+04/09/2014 add phys->dhdt for Yi-Ju's wave model
+
+05/07/2014 add new interp method for uc based on the paper from O. Kleptsova, switch kinterp==1
+
+06/02/2014 add new wetting and drying method like culvert model 
+           change Hcoefficient and upredictor function
+           add a new phys->htmp4 to store the original phys->htmp
+
+08/10/2014 
+1. add hiterp,subgrid variable in suntans.dat and prop->
+2. modify for hiterp
+3. change default.h and fileo.c to add hiter and subgrid
+4. add subgrid functionality 
+
+
+
+08/20/2014
+1. change Hcoefficients and CulvertHcoefficients to make sure when coef[i]==phys->htmp[i]==0, the system still works.
+
+
+09/02/2014
+1. change FUNCTION computeqSOURCE for subgrid module not start
+2. change function Qcoefficients for subgrid module not start
+
+09/16/2014
+1. add hold2 to store old results of h
+
+09/30/2014
+Bug found: in function updatedz, when dz is very small as drycell, sometimes you may not get correct ctop due to numerical error(problem in h<z) 
+
+10/06/2014
+bug found.
+change InitializephysicalVariables the way to set velocity field from 'Nkc' to 'Nke'
+
+02/01/2015 
+apply sean's method into phys to test whether the advection is stable or not(apply AB3 for explicit term for implicit term an new method should be use)
+
+1. HorizontalSource: function for horizontal source in u equations has been written as AB3: KEEP
+2. Upredictor: vertical diffusion is the same, keep it!.
+               pressure gradient should use sean's method, 
+               1. add array as phys->hold2 to store the h_n-1
+               2. add new parameter as prop->im to set the method you want to use for implicit term in momentum equation
+                  0 as theta method, 1 as AM2, 2 as AI2 method, for the first step, do as im=0
+               3. add array utmp3 as u_n-1
+                  change defaults as 0
+               4. change upredictor search prop->im, fac1 fac2 fac3 
+                  change the calculation for freesurface gradient and the calculation of the source term of free surface eqn
+                  broadcast hold2 after upreditor
+               5. change Hcoefficients to have im method
+               6. change culvertHcoefficients to have im method 
+               7. change continuity function to use im method, add wtmp4 to calcuate w^im for update scalar 
+               8. add array wtmp3 to store w_n-1
+               9. Wpredictor unchanged! no implicit method need to change, AB3 has been finished!
+               10. nonhydrostatic part 
+               11. change updatescalar function with prop->im
+               12. change the way to calculate q source in ComputeQSource function
+               13. in store variables update utmp2 utmp3 wtmp2 wtmp3
+            
+Bug find in calculation of w, solved in Upredictor function to update u with h gradient should use fac1
+
+02/11/2015
+change code for subgrid in momentum advection and nonhydrostatic pressure
+should also change the way to interpolate cell center velocity
+1. change horizontal advection calculation in HorizontalSource function
+new bug found in HorizontalSource line with // type 2 boundary condition, should be nc not nc2
+
+2. change continuity function to calculate w, assume vertical area is explicit
+   always use acveffold
+   note: acveff at different layers
+
+3. change Wpredictor to subgrid, use Acceff as the explicit to consistent with dzz
+
+4. change ComputeQsource function to make it consistent with continuity equation, use Acveffold
+
+5. change Qcoefficients to add Acveff  ?? why no k+1 part
+
+02/21/2015
+1. change the way to calculate drag term in function Upredictor about CdB and CdT to use subgrid->dzboteff
+2. add new way to calculate erosion
+
+04/14/2015
+1. change the way to calculate drag coefficient in SetDragCoefficient function
+
+05/03/2015
+1. always allocate phys->z0b and phys->z0t, simplify process in setdragcoefficient
+
+05/07/2015
+1. add CalculateSubgridDragCoef in SetDragCoefficient function to calculate the parameterized CdB when subgrid==1 and Nkmax==1
+
+09/19/2015
+1. modify horizontalsource to calculate vertical advection to use subgrid->acveff
+2. assume prop->thetaM=-1 when subgrid is turned on
+3. modify wpredictor to use subgrid->acveffold and subgrid->acceffold for explicit advection and diffusion
+4. there may some problem when use laxwendroff to calculate vertical, find problem in line 2503
+
+
+12/10/2015
+1. modify ComputeUc and ComputeUCperot to make it suitable for subgrid method
+
+12/11/2015
+1. modify horizontal source for subgrid to store cell center source term when subgrid and sediment transport is on and Nkmax=1 
+2. cannot work with momentumsource 
+3. in Horizontalsource function, the cell center momentum balance is calculated by including uc_old/dt, baroclinic pressure, coriolis, momentum advection and diffusion
+4. subgrid windstress for cell center momentum balance is modified in WindStress Function in boundaries.c
+
+
+02/18/2016 the subgrid interpolation has been disabled when wetting and drying happens.
+
+
+02/25/2016 modify the subgrid for horizontal diffusion. not finish nonhydrostatic pressure don't use when nonhydrostatic=1
+
+02/26/2016 in horizontalsource function for horizontal diffusion check the wall drag term. should be ctop not nke
+
+05/20/2016 if the upwind cell phys->active=0, dzf=0
+

@@ -1,0 +1,3 @@
+09/01 change scalar.c to work with subgrid module 
+      add alpha to account different area effect 
+

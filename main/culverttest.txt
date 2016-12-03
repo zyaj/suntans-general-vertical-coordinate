@@ -1,0 +1,24 @@
+fileio.c: } else if(!strcmp(str,"culvertmodel")){
+fileio.c:    return culvertmodel_DEFAULT;
+phys.c:  if(prop->culvertmodel){
+phys.c:    if(prop->culvertmodel)
+phys.c:  if(prop->culvertmodel)
+phys.c:      if(prop->culvertmodel)
+phys.c:  if(prop->culvertmodel)
+phys.c:  if(!prop->culvertmodel)
+phys.c:  // make sure Culvert height is much bigger than DRYCELLHEIGHT when culvertmodel==1 
+phys.c:  if(prop->culvertmodel){
+phys.c:    if(prop->culvertmodel){
+phys.c:  if(!prop->culvertmodel){
+phys.c:  (*prop)->culvertmodel = MPI_GetValue(DATAFILE,"culvertmodel","ReadProperties",myproc);
+sediments.c:    if(prop->culvertmodel)
+subgrid.c:        if(prop->culvertmodel)
+subgrid.c:      if(prop->culvertmodel)
+subgrid.c:    //if(prop->culvertmodel)
+subgrid.c:    if(prop->culvertmodel){
+subgrid.c:      if(!prop->culvertmodel)
+subgrid.c:    if(prop->culvertmodel)
+subgrid.c:    if(prop->culvertmodel)
+subgrid.c:   // if(prop->culvertmodel==1)
+subgrid.c:    if(prop->culvertmodel)
+subgrid.c:      if(prop->culvertmodel)
