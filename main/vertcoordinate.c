@@ -148,7 +148,7 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
  */
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
-  
+
 }
 
 
@@ -161,7 +161,7 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
  */
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
 {
-
+  
 }
 
 /*
