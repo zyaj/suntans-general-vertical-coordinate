@@ -477,6 +477,10 @@ double GetDefaultValue(char *str, int *status) {
     
     return im_DEFAULT;
  
+ } else if(!strcmp(str,"vertcoord")){
+    
+    return vertcoord_DEFAULT;
+ 
  } else {
     *status=0;
     return 0;

@@ -257,3 +257,8 @@ const int im_DEFAULT = 0;
 */
 const int udrag_DEFAULT = 0;
 
+/* vertcoord
+  default 1 which means z-level coordinate
+*/
+const int vertcoord_DEFAULT = 0;
+

@@ -31,6 +31,7 @@
 #include "merge.h"
 #include "sediments.h"
 #include "marsh.h"
+#include "vertcoordinate.h"
 #include "culvert.h"
 #include "wave.h"
 #include "subgrid.h"
