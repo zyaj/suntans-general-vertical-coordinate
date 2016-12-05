@@ -5,6 +5,5 @@ The general vertical coordinate is added to the new code.
 
 Update progress:
 12/03/2016:
-1. add new file vertcoordinate.c
-2. add new variable for u v w at each edge center
-3. add ComputeUf to calculate uf
+1. add new file vertcoordinate.c vertcoordinate.h for all the basic functions for the new general vertical coordinate
+2. add uservertcoordinate.c uservertcoordinate.h include all functions for user-defined verticall coordinate
