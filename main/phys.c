@@ -587,6 +587,7 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
 
   // Need to update the vertical grid and fix any cells in which
   // dzz is too small when h=0.
+  if(prop->vertcoord==1)
    UpdateDZ(grid,phys,prop, -1);
  
   /*
@@ -619,8 +620,11 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
 
   // Need to update the vertical grid after updating the free surface.
   // The 1 indicates that this is the first call to UpdateDZ
-  UpdateDZ(grid,phys,prop, 1);
-
+  if(prop->vertcoord!=1)
+   VertCoordinateBasic(grid,prop,phys,myproc);
+  else
+   UpdateDZ(grid,phys,prop, 1);
+  
   // initailize variables to 0 (except for filter "pressure")
   for(i=0;i<Nc;i++) {
     phys->w[i][grid->Nk[i]]=0;
@@ -654,10 +658,17 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
     for(i=0;i<Nc;i++) {
       z = 0;
       for(k=grid->ctop[i];k<grid->Nk[i];k++) {
-        z-=grid->dz[k]/2;
-        phys->s[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],z);
-        phys->s0[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],z);
-        z-=grid->dz[k]/2;
+        z-=grid->dzz[i][k]/2;
+        if(prop->vertcoord!=1)
+        {
+          phys->s[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],vert->zc[i][k]);
+          phys->s0[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],vert->zc[i][k]);                 
+        } else {     
+          phys->s[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],z);
+          phys->s0[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],z);                
+        }
+
+        z-=grid->dzz[i][k]/2;
       }
     }
   }
@@ -679,9 +690,12 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
     for(i=0;i<Nc;i++) {
       z = 0;
       for(k=grid->ctop[i];k<grid->Nk[i];k++) {
-        z-=grid->dz[k]/2;
-        phys->T[i][k]=ReturnTemperature(grid->xv[i],grid->yv[i],z,grid->dv[i]);
-        z-=grid->dz[k]/2;
+        z-=grid->dzz[i][k]/2;
+        if(prop->vertcoord!=1)
+          phys->T[i][k]=ReturnTemperature(grid->xv[i],grid->yv[i],vert->zc[i][k],grid->dv[i]);          
+        else
+          phys->T[i][k]=ReturnTemperature(grid->xv[i],grid->yv[i],z,grid->dv[i]);
+        z-=grid->dzz[i][k]/2;
       }
     }
   }
@@ -689,15 +703,25 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
   // Initialize the velocity field 
   for(j=0;j<grid->Ne;j++) {
     z = 0;
+    nc1 = grid->grad[2*j];
+    nc2 = grid->grad[2*j+1];
+    if(nc1==-1)
+      nc1=nc2;
+    if(nc2==-1)
+      nc2=nc1;
+    
     for(k=0;k<grid->Nke[j];k++) {
       z-=grid->dz[k]/2;
-      phys->u[j][k]=ReturnHorizontalVelocity(
-          grid->xe[j],grid->ye[j],grid->n1[j],grid->n2[j],z);
+      if(prop->vertcoord==1)
+        phys->u[j][k]=ReturnHorizontalVelocity(
+                grid->xe[j],grid->ye[j],grid->n1[j],grid->n2[j],z);
+      else
+        phys->u[j][k]=ReturnHorizontalVelocity(
+                grid->xe[j],grid->ye[j],grid->n1[j],grid->n2[j],InterpToFace(j,k,vert->zc,0,grid));
       z-=grid->dz[k]/2;
     }
    
-    nc1 = grid->grad[2*j];
-    nc2 = grid->grad[2*j+1];
+
   }
   
   // Initialise the heat flux arrays
@@ -1646,6 +1670,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // subgrid
       if(prop->subgrid)
         OutputSubgridVariables(grid, prop, myproc, numprocs, comm);
+      if(prop->vertcoord!=1)
+        OutputVertCoordinate(grid,prop,myproc,numprocs,comm);
     }else {
       // Output data to netcdf
       WriteOutputNC(prop, grid, phys, met, blowup, myproc);
@@ -1764,7 +1790,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
   // Adams-Bashforth terms at time step n-1
 
  // Adams Bashforth coefficients
-  if(prop->n==1 || prop->wetdry) {
+  if(prop->n==1) {
 //  if(prop->n==1){
     fab1=1;
     fab2=fab3=0;
@@ -1777,16 +1803,9 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     fab2=-1.0/2.0;
     fab3=0;
   } else {
-    if(prop->AB==2) {
-      fab1=3.0/2.0;
-      fab2=-1.0/2.0;
-      fab3=0;
-    } else {
-      // AB3:
-      fab1=23.0/12.0;
-      fab2=-4.0/3.0;
-      fab3=5.0/12.0;
-    }
+    fab1=prop->exfac1;
+    fab2=prop->exfac2;
+    fab3=prop->exfac3;   
   }
 
   // Set utmp and ut to zero since utmp will store the source term of the
@@ -2433,17 +2452,10 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     fab1=3.0/2.0;
     fab2=-1.0/2.0;
     fab3=0;
-  } else {
-    if(prop->AB==2) {
-      fab1=3.0/2.0;
-      fab2=-1.0/2.0;
-      fab3=0;
-    } 
-    else {
-      fab1=23.0/12.0;
-      fab2=-4.0/3.0;
-      fab3=5.0/12.0;
-    }
+  }  else {
+    fab1=prop->exfac1;
+    fab2=prop->exfac2;
+    fab3=prop->exfac3;   
   }
 
   // Add on the nonhydrostatic pressure gradient from the previous time
@@ -2764,20 +2776,9 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
   REAL *ap=phys->a, *am=phys->b, thetafactor=(1-prop->theta)/prop->theta,fac1,fac2,fac3;
 
   // new implicit method
-  if(prop->n==1 || prop->im==0 || prop->wetdry)
-  {
-    fac1=prop->theta;
-    fac2=1-prop->theta;
-    fac3=0;
-  } else if(prop->im==1){
-    fac1=3.0/4.0;
-    fac2=0;
-    fac3=1.0/4.0;
-  } else {
-    fac1=5.0/4.0;
-    fac2=-1;
-    fac3=3.0/4.0;
-  }
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
  
   // for each cell
   for(i=0;i<grid->Nc;i++)
@@ -3027,10 +3028,12 @@ static void UPredictor(gridT *grid, physT *phys,
   b0 = phys->bp;
   c0 = phys->bm;
   
-  if(prop->n==1 || prop->wetdry) {
-    fac1=theta;
-    fac2=1-theta;
-    fac3=0;
+
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
+  
+  if(prop->n==1) {
     for(j=0;j<grid->Ne;j++)
       for(k=0;k<grid->Nke[j];k++)
         phys->utmp3[j][k]=phys->u[j][k];
@@ -3043,21 +3046,6 @@ static void UPredictor(gridT *grid, physT *phys,
       }
     for(i=0;i<grid->Nc;i++)
       phys->hold2[i]=phys->h[i]; 
-  } else {
-    if(prop->im==0)
-    {
-      fac1=theta;
-      fac2=1-theta;
-      fac3=0;
-    } else if(prop->im==1){
-      fac1=3.0/4.0;
-      fac2=0;
-      fac3=1.0/4.0;
-    } else {
-      fac1=5.0/4.0;
-      fac2=-1;
-      fac3=3.0/4.0;
-    }
   }
 
   // Set D[j] = 0 
@@ -4153,14 +4141,8 @@ static void HCoefficients(REAL *coef, REAL *fcoef, gridT *grid, physT *phys, pro
   int i, j, iptr, jptr, ne, nf, check;
   REAL tmp, h0, boundary_flag,fac;
 
-  if(prop->n==1 || prop->im==0 || prop->wetdry)
-  {
-    fac=prop->theta;
-  } else if(prop->im==1){
-    fac=3.0/4.0;
-  } else {
-    fac=5.0/4.0;
-  }
+  fac=prop->imfac1;
+
   tmp=prop->grav*pow(fac*prop->dt,2);
 
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
@@ -4778,20 +4760,9 @@ void Continuity(REAL **w, gridT *grid, physT *phys, propT *prop)
   int i, k, nf, iptr, ne, nc1, nc2, j, jptr;
   REAL ap, am, dzfnew, theta=prop->theta,fac1,fac2,fac3,Ac,sum;
   
-  if(prop->n==1 || prop->im==0 || prop->wetdry)
-  {
-    fac1=theta;
-    fac2=1-theta;
-    fac3=0;
-  } else if(prop->im==1){
-    fac1=3.0/4.0;
-    fac2=0;
-    fac3=1.0/4.0;
-  } else {
-    fac1=5.0/4.0;
-    fac2=-1;
-    fac3=3.0/4.0;
-  }
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
 
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
     i = grid->cellp[iptr];
@@ -5086,8 +5057,6 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
   (*prop)->TVDtemp = MPI_GetValue(DATAFILE,"TVDtemp","ReadProperties",myproc);
   (*prop)->TVDturb = MPI_GetValue(DATAFILE,"TVDturb","ReadProperties",myproc);
   (*prop)->stairstep = MPI_GetValue(DATAFILE,"stairstep","ReadProperties",myproc);
-  (*prop)->AB = MPI_GetValue(DATAFILE,"AB","ReadProperties",myproc); //AB3
-  (*prop)->im = MPI_GetValue(DATAFILE,"im","ReadProperties",myproc); //implicit method for momentum eqn.
   (*prop)->TVDmomentum = MPI_GetValue(DATAFILE,"TVDmomentum","ReadProperties",myproc); 
   (*prop)->conserveMomentum = MPI_GetValue(DATAFILE,"conserveMomentum","ReadProperties",myproc); 
   (*prop)->thetaM = MPI_GetValue(DATAFILE,"thetaM","ReadProperties",myproc); 
@@ -5098,6 +5067,40 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
   (*prop)->marshmodel = MPI_GetValue(DATAFILE,"marshmodel","ReadProperties",myproc);
   (*prop)->wavemodel = MPI_GetValue(DATAFILE,"wavemodel","ReadProperties",myproc);
   (*prop)->culvertmodel = MPI_GetValue(DATAFILE,"culvertmodel","ReadProperties",myproc);
+  (*prop)->vertcoord = MPI_GetValue(DATAFILE,"vertcoord","ReadProperties",myproc);
+  (*prop)->ex = MPI_GetValue(DATAFILE,"ex","ReadProperties",myproc); //AB3
+  (*prop)->im = MPI_GetValue(DATAFILE,"im","ReadProperties",myproc); //implicit method for momentum eqn.
+  
+  // setup the factors for implicit and explicit schemes
+  if((*prop)->ex==1) // AX2
+  {
+    (*prop)->exfac1=7.0/4.0;
+    (*prop)->exfac2=-1.0;
+    (*prop)->exfac3=1.0/4.0;
+  } else if((*prop)->ex==2) { // AB2
+    (*prop)->exfac1=1.5;
+    (*prop)->exfac2=-0.5;
+    (*prop)->exfac3=0;
+  } else { //AB3
+    (*prop)->exfac1=23.0/12.0;
+    (*prop)->exfac2=-4.0/3.0;
+    (*prop)->exfac3=5.0/12.0;
+  }
+
+  if((*prop)->im==0) // theta
+  {
+    (*prop)->imfac1=(*prop)->theta;
+    (*prop)->imfac2=1.0-(*prop)->theta;
+    (*prop)->imfac3=0;
+  } else if((*prop)->im==1) { // AM2
+    (*prop)->imfac1=3.0/4.0;
+    (*prop)->imfac2=0;
+    (*prop)->imfac3=1.0/4.0;
+  } else { //AI2
+    (*prop)->imfac1=5.0/4.0;
+    (*prop)->imfac2=-1.0;
+    (*prop)->imfac3=3.0/4.0;
+  }
 
   // When wetting and drying is desired:
   // -Do nonconservative momentum advection (conserveMomentum=0)

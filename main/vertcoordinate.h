@@ -23,14 +23,17 @@ REAL **omegac; // the cell-centered vertical contravariant flux [Nc][Nk]
 REAL **zc,**zcold; // the cell center vertical location in the Cartesian coordinate [Nc][Nk]
 REAL **dvdx, **dudy, **dwdx, **dwdy, **dzdx, **dzdy; // the cell-centered averaged gradient of different variables
 REAL *dsigma; // the dsigma for the sigma coordinate to define the vertical coordinate density [Nkmax]
-int vertcoord; // the switch for different choice of vertical coordinates 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
+REAL *tmp; //temporary array for output
+//int vertcoord; // the switch for different choice of vertical coordinates 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
+FILE *zcFID, *dzzFID, *omegaFID;
 
 } vertT;
 
 vertT *vert;
 
-void AllocateVertCoordinate(gridT *grid, int myproc);
+void AllocateVertCoordinate(gridT *grid, propT *prop, int myproc);
 void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
+void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc);
 void LayerAveragedContinuity(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeOmega(gridT *grid, propT *prop, physT *phys, int myproc);
@@ -38,4 +41,8 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL **scalar, gridT *grid, propT *prop, physT *phys, int myproc);
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
 REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid);
+void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);
+void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);
+void OpenVertCoordinateFiles(gridT *grid,int mergeArrays, int myproc);
+void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 #endif

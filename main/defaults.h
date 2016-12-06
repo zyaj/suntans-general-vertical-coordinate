@@ -91,12 +91,6 @@ const int hprecond_DEFAULT = 1;
 */
 const int ntoutStore_DEFAULT = 0;
 
-/* AB:
-   Adam-Bashforth for explicit terms.
-*/
-const int AB_DEFAULT = 2;
-
-
 /* TVDmomentum
    TVD for advection of momentum, default is vanleer
 */
@@ -243,12 +237,18 @@ const int marshmodel_DEFAULT = 0;
    casulli subgrid method
 */
 const int subgrid_DEFAULT = 0;
+
 const REAL subgrideps_DEFAULT = 1e-3;
 /* im
    which implicit method to use for momentum equation 
    0 as theta method, 1 as AM2, 2 as AI2
 */
 const int im_DEFAULT = 0;
+
+/* ex:
+   1: AX2 2:AB2 3:AB3
+*/
+const int ex_DEFAULT = 2;
 
 
 /* udrag
@@ -260,5 +260,5 @@ const int udrag_DEFAULT = 0;
 /* vertcoord
   default 1 which means z-level coordinate
 */
-const int vertcoord_DEFAULT = 0;
+const int vertcoord_DEFAULT = 1;
 

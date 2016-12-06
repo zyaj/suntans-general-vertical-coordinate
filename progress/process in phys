@@ -256,3 +256,17 @@ new bug found in HorizontalSource line with // type 2 boundary condition, should
 
 05/20/2016 if the upwind cell phys->active=0, dzf=0
 
+12/05/2016
+1. add im ex to replace the original im AB
+2. add imfac1-3 and exfac1-3 to store the variable for different schemes
+3. change all the function associated with different explicit and implicit schemes. 
+4. for explicit method n==1 use theta n==2 AB2 n>2 use selected
+5. for implicit method use selected directly
+hold2= h_n-1
+utmp2=u_n
+utmp3=u_n-1
+wtmp3=w_n-1
+wtmp2=w_n
+6. modify Initializephysicalvariable to add new vertical coordinate feature
+
+

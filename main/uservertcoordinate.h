@@ -15,5 +15,8 @@
 #include "phys.h"
 
 void UserDefinedVerticalCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
-void UserDefinedSigmaCoordinate(gridT *grid, int myproc);
+void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
+void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
+void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
+void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
 #endif

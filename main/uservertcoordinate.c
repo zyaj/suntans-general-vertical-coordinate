@@ -28,8 +28,41 @@
  * ----------------------------------------------------
  * the original code has already include 1 z-level, 2 isopycnal, 3 sigma, 4 variational 
  */
-void UserDefinedVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc){
+void UserDefinedVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
+{
+	// one for other update scheme
 	
+}
+
+/*
+ * Function: InitializeVerticalCoordinate
+ * to setup the initial condition of dzz for user defined vertical coordinate
+ * ----------------------------------------------------
+ */
+void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
+{
+	// one for other update scheme
+	
+}
+
+/*
+ * Function: InitializeIsopycnalCoordinate
+ * User define isopycnal coordinate 
+ * define the initial dzz for each cell under isopycnal coordinate
+ * ----------------------------------------------------
+ */
+void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
+{
+}
+
+/*
+ * Function: InitializeVariationalCoordinate
+ * Initialize dzz for variational vertical coordinate
+ * ----------------------------------------------------
+ */
+void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
+{
+	// one for prop->n==1
 }
 
 /*
@@ -38,9 +71,15 @@ void UserDefinedVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
  * basically to define the dsigma for each layer
  * ----------------------------------------------------
  */
-void UserDefinedSigmaCoordinate(gridT *grid, int myproc)
+void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
-  int k;
+  int i,k;
   for(k=0;k<grid->Nkmax;k++)
   	vert->dsigma[k]=1.0/grid->Nkmax;
+  for(i=0;i<grid->Nc;i++)
+  	for(k=grid->ctop[i];k<grid->Nk[i];k++)
+  	{
+  	  grid->dzz[i][k]=vert->dsigma[k]*(grid->dv[i]+phys->h[i]);
+  	  grid->dzzold[i][k]=grid->dzz[i][k];
+  	}
 }

@@ -1453,7 +1453,7 @@ static void FreeGrid(gridT *grid, int numprocs)
  */
 static void VertGrid(gridT *maingrid, gridT **localgrid, MPI_Comm comm)
 {
-  int i, j, k, ne, npc, myproc, numprocs, vertgridcorrect, stairstep, maxNk;
+  int i, j, k, ne, npc, myproc, numprocs, vertgridcorrect, stairstep, maxNk, vertcoord;
   REAL dz0, dmin, dmax, dmaxtest;
 
   MPI_Comm_size(comm,&numprocs);
@@ -1462,6 +1462,7 @@ static void VertGrid(gridT *maingrid, gridT **localgrid, MPI_Comm comm)
   maingrid->Nkmax = MPI_GetValue(DATAFILE,"Nkmax","VertGrid",myproc);
   vertgridcorrect = MPI_GetValue(DATAFILE,"vertgridcorrect","VertGrid",myproc);
   stairstep = MPI_GetValue(DATAFILE,"stairstep","VertGrid",myproc);
+  vertcoord = MPI_GetValue(DATAFILE,"vertcoord","VertGrid",myproc); // new vertical coordinate
 
   // compute dmin and dmax for all the points on the main grid
   if(myproc==0) {
@@ -1565,6 +1566,16 @@ static void VertGrid(gridT *maingrid, gridT **localgrid, MPI_Comm comm)
     for(i=0;i<maingrid->Nc;i++)
       maingrid->Nk[i] = maingrid->Nkmax;
   }
+
+  // if not z-level all cells have the same number of layers= Nkmax
+  if(vertcoord!=1)
+  {
+    for(i=0;i<(*localgrid)->Nc;i++)
+      (*localgrid)->Nk[i] = (*localgrid)->Nkmax;
+    for(i=0;i<maingrid->Nc;i++)
+      maingrid->Nk[i] = maingrid->Nkmax;
+  }
+
 
   // initialize ctop, dztop
   for(i=0;i<(*localgrid)->Nc;i++) {

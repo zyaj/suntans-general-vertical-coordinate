@@ -72,26 +72,9 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
       phys->stmp[i][k]=scal[i][k];
 
   // prop->im
-  if(prop->n==1 || prop->wetdry) {
-    fac1=theta;
-    fac2=1-theta;
-    fac3=0;
-  } else {
-    if(prop->im==0)
-    {
-      fac1=theta;
-      fac2=1-theta;
-      fac3=0;
-    } else if(prop->im==1){
-      fac1=3.0/4.0;
-      fac2=0;
-      fac3=1.0/4.0;
-    } else {
-      fac1=5.0/4.0;
-      fac2=-1;
-      fac3=3.0/4.0;
-    }
-  }
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
   
   // Add on boundary fluxes, using stmp2 as the temporary storage
   // variable

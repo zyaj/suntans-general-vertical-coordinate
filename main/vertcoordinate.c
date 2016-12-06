@@ -28,7 +28,7 @@
  * ----------------------------------------------------
  *
  */
-void AllocateandInitializeVertCoordinate(gridT *grid, int myproc)
+void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
 { 
   int i,j,k;
 
@@ -100,14 +100,52 @@ void AllocateandInitializeVertCoordinate(gridT *grid, int myproc)
     }
   }
 
+  // temporary array for output 
+  vert->tmp = (REAL *)SunMalloc(10*grid->Nc*sizeof(REAL),"AllocatePhysicalVariables");
+
+
   // read vertical coordinate switch
-  vert->vertcoord = MPI_GetValue(DATAFILE,"vertcoord","AllocateVertCoordinate",myproc);
-  if(vert->vertcoord==3){
+  if(prop->vertcoord==3)
     vert->dsigma=(REAL *)SunMalloc(grid->Nkmax*sizeof(REAL),"AllocateVertCoordinate");
-    // initialize dsigma
-    UserDefinedSigmaCoordinate(grid, myproc);
-  }
 }
+
+/*
+ * Function: InitializeLayerThickness
+ * Calculate dz for the first time step based on the vertical coordinate chosen
+ * ----------------------------------------------------
+ * The switch is vertcoord 
+ * 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
+ * need to modify grid.c to make sure ctop=0 and Nk=Nkmax for all cells 
+ */
+void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
+{
+  int i,j,k;
+  for(i=0;i<grid->Nc;i++)
+  {
+    grid->ctopold[i]=grid->ctop[i]=0;
+    if(grid->Nk[i]!=grid->Nkmax){
+      printf("There is something wrong in setting the Nkmax for each cell\n");
+      exit(1);
+    }
+  }
+
+  for(j=0;j<grid->Ne;j++)
+    grid->etopold[j]=grid->etop[j]=0;
+
+  switch(prop->vertcoord)
+  {
+    case 0: // user defined
+      InitializeVerticalCoordinate(grid,prop,phys,myproc);      
+    case 2:
+      InitializeIsopycnalCoordinate(grid,prop,phys,myproc);
+    case 3:
+      InitializeSigmaCoordinate(grid, prop, phys, myproc);
+    case 4:
+      InitializeVariationalCoordinate(grid, prop,phys, myproc);
+
+  }  
+}
+
 
 /*
  * Function: UpdateLayerThickness
@@ -121,32 +159,18 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k,j,nf,ne;
   REAL fac1,fac2,fac3,Ac;
-  if(prop->n==1 || prop->im==0 || prop->wetdry)
-  {
-    fac1=prop->theta;
-    fac2=1-prop->theta;
-    fac3=0;
-  } else if(prop->im==1){
-    fac1=3.0/4.0;
-    fac2=0;
-    fac3=1.0/4.0;
-  } else {
-    fac1=5.0/4.0;
-    fac2=-1;
-    fac3=3.0/4.0;
+
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
+
+  // ctop and etop is always 0 and Nke and Nk is always Nkmax
+  for(i=0;i<grid->Nc;i++) {
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+      grid->dzzold[i][k]=grid->dzz[i][k];
   }
 
-  if(vert->vertcoord!=1) {
-    for(j=0;j<grid->Ne;j++)
-      grid->etopold[j]=grid->etop[j];
-    for(i=0;i<grid->Nc;i++) {
-      grid->ctopold[i]=grid->ctop[i];
-      for(k=grid->ctop[i];k<grid->Nk[i];k++)
-        grid->dzzold[i][k]=grid->dzz[i][k];
-    }
-  }
-
-  switch(vert->vertcoord)
+  switch(prop->vertcoord)
   {
     case 0:
       UserDefinedVerticalCoordinate(grid,prop,phys,myproc);
@@ -245,7 +269,7 @@ REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid) {
     return phi[i][k+1];
   } else if(def2==0 && k==grid->Nk[i]-1){
     // means the bottom layer is dry
-    return 0.0;
+    return phi[i][k];
   }else {
     return (phi[i][k-1]*def2+phi[i][k]*def1)/Dj;
   }
@@ -262,20 +286,9 @@ void LayerAveragedContinuity(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k,nf,ne;
   REAL fac1,fac2,fac3,flux,Ac;
-  if(prop->n==1 || prop->im==0 || prop->wetdry)
-  {
-    fac1=prop->theta;
-    fac2=1-prop->theta;
-    fac3=0;
-  } else if(prop->im==1){
-    fac1=3.0/4.0;
-    fac2=0;
-    fac3=1.0/4.0;
-  } else {
-    fac1=5.0/4.0;
-    fac2=-1;
-    fac3=3.0/4.0;
-  }
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
 
   for(i=0;i<grid->Nc;i++)
   {
@@ -361,3 +374,94 @@ void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL 
     }
   }
 }
+
+/* 
+ * Function: OpenVertCoordinateFiles
+ * Usage: OpenFiles(myproc);
+ * ------------------------------
+ * Open all of the files used for i/o to store the file pointers.
+ * include dzz, zc, omega for each cell at different time steps
+ * 
+ */
+void OpenVertCoordinateFiles(gridT *grid,int mergeArrays, int myproc)
+{
+  char str[BUFFERLENGTH], filename[BUFFERLENGTH];
+  MPI_GetFile(filename,DATAFILE,"zcFile","OpenFiles",myproc);
+  if(mergeArrays)
+    strcpy(str,filename);
+  else
+    sprintf(str,"%s.%d",filename,myproc);
+  vert->zcFID = MPI_FOpen(str,"w","OpenFiles",myproc);
+
+  MPI_GetFile(filename,DATAFILE,"dzzFile","OpenFiles",myproc);
+  if(mergeArrays)
+    strcpy(str,filename);
+  else
+    sprintf(str,"%s.%d",filename,myproc);
+  vert->dzzFID = MPI_FOpen(str,"w","OpenFiles",myproc);
+
+  MPI_GetFile(filename,DATAFILE,"omegaFile","OpenFiles",myproc);
+  if(mergeArrays)
+    strcpy(str,filename);
+  else
+    sprintf(str,"%s.%d",filename,myproc);
+  vert->omegaFID = MPI_FOpen(str,"w","OpenFiles",myproc);
+}
+
+/*
+ * Function: OutputVertcoordinate
+ * Usage: OutputVertcoordinate(grid,phys,prop,myproc,numprocs,comm);
+ * ---------------------------------------------------------------------------
+ * Output the data every ntout steps as specified in suntans.dat
+ * now include zc,dzz,omega
+ *
+ */
+void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MPI_Comm comm)
+{
+  int i, j, jptr, k, nwritten, arraySize, writeProc,nc1,nc2;
+  char str[BUFFERLENGTH], filename[BUFFERLENGTH];
+
+  if(!(prop->n%prop->ntout) || prop->n==1+prop->nstart) {
+    Write3DData(vert->zc,vert->tmp,prop->mergeArrays,vert->zcFID,
+    "Error outputting uc-data!\n",grid,numprocs,myproc,comm);
+    Write3DData(grid->dzz,vert->tmp,prop->mergeArrays,vert->dzzFID,
+    "Error outputting uc-data!\n",grid,numprocs,myproc,comm);
+    Write3DData(vert->omega,vert->tmp,prop->mergeArrays,vert->zcFID,
+    "Error outputting uc-data!\n",grid,numprocs,myproc,comm);
+  }
+
+  if(prop->n==prop->nsteps+prop->nstart && myproc==0) {
+    fclose(vert->zcFID);
+    fclose(vert->dzzFID);
+    fclose(vert->omegaFID);
+  }
+
+}
+
+
+/*
+ * Function: VertCoordinateBasic
+ * Setup the basics and initial condition for the vertical coordinate
+ * ----------------------------------------------------
+ * 
+ */
+void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
+{
+  // allocate subgrid struture first
+  vert=(vertT *)SunMalloc(sizeof(vertT),"VertCoordinateBasic");
+
+  // allocate necessary variable
+  AllocateandInitializeVertCoordinate(grid,prop, myproc);
+
+  // output 
+  OpenVertCoordinateFiles(grid,prop->mergeArrays,myproc);
+
+  // if not z-level setup dzz
+  InitializeLayerThickness(grid, prop, phys,myproc);
+
+  // compute zc
+  ComputeZc(grid,prop,phys,myproc);
+}
+
+
+

@@ -193,12 +193,12 @@ typedef struct _propT {
   REAL dt, Cmax, rtime, amp, omega, flux, timescale, theta0, theta, thetaM, 
        thetaS, thetaB, nu, nu_H, tau_T, z0T, CdT, z0B, CdB, CdW, relax, epsilon, qepsilon, resnorm, 
        dzsmall, beta, kappa_s, kappa_sH, gamma, kappa_T, kappa_TH, grav, Coriolis_f, CmaxU, CmaxW, 
-       laxWendroff_Vertical, latitude;
+       laxWendroff_Vertical, latitude,exfac1,exfac2,exfac3,imfac1,imfac2,imfac3;
   int ntout, ntoutStore, ntprog, nsteps, nstart, n, ntconserve, nonhydrostatic, cgsolver, maxiters, 
       qmaxiters, hprecond, qprecond, volcheck, masscheck, nonlinear,im, linearFS, newcells, wetdry, sponge_distance,subgrid,
     sponge_decay, thetaramptime, readSalinity, readTemperature, turbmodel, 
-    TVD, horiTVD, vertTVD, TVDsalt, TVDtemp, TVDturb, laxWendroff, stairstep, AB, TVDmomentum, conserveMomentum,
-    mergeArrays, computeSediments,Intz0B, Intz0T, marshmodel,wavemodel,culvertmodel;
+    TVD, horiTVD, vertTVD, TVDsalt, TVDtemp, TVDturb, laxWendroff, stairstep, ex, TVDmomentum, conserveMomentum,
+    mergeArrays, computeSediments,Intz0B, Intz0T, marshmodel,wavemodel,culvertmodel,vertcoord;
   FILE *CdBFID, *CdTFID, *FreeSurfaceFID, *HorizontalVelocityFID, *VerticalVelocityFID, *SalinityFID, *BGSalinityFID, 
        *InitSalinityFID, *InitTemperatureFID, *TemperatureFID, *PressureFID, *VerticalGridFID, *ConserveFID,    
        *StoreFID, *StartFID, *EddyViscosityFID, *ScalarDiffusivityFID; 

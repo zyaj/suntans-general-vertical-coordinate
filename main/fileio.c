@@ -329,9 +329,9 @@ double GetDefaultValue(char *str, int *status) {
 
     return ntoutStore_DEFAULT;
 
-  } else if(!strcmp(str,"AB")) {
+  } else if(!strcmp(str,"ex")) {
 
-    return AB_DEFAULT;
+    return ex_DEFAULT;
 
  } else if(!strcmp(str,"TVDmomentum")) {
 
