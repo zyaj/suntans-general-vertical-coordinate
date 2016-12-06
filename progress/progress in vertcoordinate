@@ -1,0 +1,15 @@
+12/03/2016:
+1. add new file vertcoordinate.c vertcoordinate.h for all the basic functions for the new general vertical coordinate
+2. add uservertcoordinate.c uservertcoordinate.h include all functions for user-defined verticall coordinate
+12/04/2016:
+basic functions have been added
+12/05/2016:
+1. add vertcoordinatebasic function
+2. problem with initialize omega/ density field
+3. allocate phys.c and grid.c to make sure
+  grid.c decide Nk -> all Nk[i]=Nkmax
+  etop and ctop=0 forever
+  use initialize vertical coordinate for different coordindates after setting the initial value of free surface
+  all the initial function is in userdefinedverticalcoordinate.c
+4. Modify the initializephysicalvariable function to add the initialization of the new vertical coordinate variable
+5. add output files for dzz zc and omega
