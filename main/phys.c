@@ -624,7 +624,7 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
    VertCoordinateBasic(grid,prop,phys,myproc);
   else
    UpdateDZ(grid,phys,prop, 1);
-  
+
   // initailize variables to 0 (except for filter "pressure")
   for(i=0;i<Nc;i++) {
     phys->w[i][grid->Nk[i]]=0;
@@ -636,6 +636,10 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       phys->s0[i][k]=0;
     }
   }
+
+  for(j=0;j<grid->Ne;j++)
+    for(k=0;k<grid->Nke[j];k++)
+      phys->u[i][j]=0;  
 
   // Initialize the temperature, salinity, and background salinity
   // distributions.  Since z is not stored, need to use dz[k] to get
@@ -709,7 +713,6 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       nc1=nc2;
     if(nc2==-1)
       nc2=nc1;
-    
     for(k=0;k<grid->Nke[j];k++) {
       z-=grid->dz[k]/2;
       if(prop->vertcoord==1)
@@ -717,13 +720,11 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
                 grid->xe[j],grid->ye[j],grid->n1[j],grid->n2[j],z);
       else
         phys->u[j][k]=ReturnHorizontalVelocity(
-                grid->xe[j],grid->ye[j],grid->n1[j],grid->n2[j],InterpToFace(j,k,vert->zc,0,grid));
+                grid->xe[j],grid->ye[j],grid->n1[j],grid->n2[j],InterpToFace(j,k,vert->zc,phys->u,grid));     
       z-=grid->dz[k]/2;
     }
-   
 
   }
-  
   // Initialise the heat flux arrays
   for(i=0;i<Nc;i++) {
     ktop = grid->ctop[i];
@@ -1249,7 +1250,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   metinT *metin;
   metT *met;
   averageT *average;
-  
+
   // Compute the initial quantities for comparison to determine conservative properties
   prop->n=0;
   // this make sure that we aren't loosing mass/energy
@@ -1257,7 +1258,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
 
   // Print out memory usage per processor and total memory if this is the first time step
   if(VERBOSE>2) MemoryStats(grid,myproc,numprocs,comm);
-
   // initialize theta0
   prop->theta0=prop->theta;
 
@@ -5214,11 +5214,16 @@ REAL InterpToFace(int j, int k, REAL **phi, REAL **u, gridT *grid) {
   REAL def1, def2, Dj;
   nc1 = grid->grad[2*j];
   nc2 = grid->grad[2*j+1];
+  if(nc1==-1)
+    nc1=nc2;
+  if(nc2==-1)
+    nc2=nc1;
+
   Dj = grid->dg[j];
+
   def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
       pow(grid->yv[nc1]-grid->ye[j],2));
   def2 = Dj-def1;
-
   if(def1==0 || def2==0) {
     return UpWind(u[j][k],phi[nc1][k],phi[nc2][k]);
   }
@@ -5358,7 +5363,7 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
   }
 
   // assuming central differencing
-  if(grid->smoothbot)
+  if(grid->smoothbot && prop->vertcoord==1)
     for(i=0;i<grid->Nc;i++)
       grid->dzz[i][grid->Nk[i]-1]=Max(grid->dzbot[i],grid->smoothbot*grid->dz[grid->Nk[i]-1]); 
 
@@ -5402,14 +5407,12 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
       if(grid->dzf[j][k]<=DRYCELLHEIGHT)
         grid->dzf[j][k]=0;
       
-
     for(k=grid->etop[j];k<grid->Nke[j];k++)
       grid->hf[j]+=grid->dzf[j][k];
   }
   
-  
   //set minimum dzz
-  if(grid->smoothbot)
+  if(grid->smoothbot && prop->vertcoord==1)
     for(i=0;i<grid->Nc;i++)
       grid->dzz[i][grid->Nk[i]-1]=Max(grid->dzz[i][grid->Nk[i]-1],dzsmall*grid->dz[grid->Nk[i]-1]);
 }

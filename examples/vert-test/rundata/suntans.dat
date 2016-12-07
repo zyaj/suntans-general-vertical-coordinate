@@ -44,7 +44,6 @@ marshmodel              0       # if 1 consider marsh effects, 0 otherwise
 culvertmodel            0       # if 1 consider culvert model, 0 otherwise
 computeSediments        0       # if 1 consider sediment model 0 otherwise
 subgrid                 0     # if 1 consider subgrid model 0 otherwise
-vertcoord               3       #
 hiter                   0       # if 1 consider iteration method to calculate h 0 otherwise
 turbmodel		1	# Turbulence model (0 for none, 1 for MY25)
 dt 			1	# Time step
@@ -350,3 +349,12 @@ subpointinFile         subpointin.dat
 subpointeinFile        subpointein.dat
 subgriddFile         depthsub.dat
 subdmaxFile          subdmax.dat
+########################################################################
+#
+# General vertical coordinate data
+#
+########################################################################
+vertcoord               3       #
+zcFile                  vert_zc.dat
+dzzFile                 vert_dzz.dat
+omegaFile               vert_omega.dat

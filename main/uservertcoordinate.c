@@ -77,9 +77,11 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
   for(k=0;k<grid->Nkmax;k++)
   	vert->dsigma[k]=1.0/grid->Nkmax;
   for(i=0;i<grid->Nc;i++)
+  {
   	for(k=grid->ctop[i];k<grid->Nk[i];k++)
   	{
   	  grid->dzz[i][k]=vert->dsigma[k]*(grid->dv[i]+phys->h[i]);
   	  grid->dzzold[i][k]=grid->dzz[i][k];
-  	}
+    }
+  }
 }

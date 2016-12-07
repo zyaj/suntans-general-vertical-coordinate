@@ -52,11 +52,11 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->omegaf[j][k]=0;
     }
   }
-
   // velocity field at the top and bottom face of each layer
   vert->ul=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->vl=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omega=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->omegac=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zc=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zcold=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dvdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -103,7 +103,6 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
 
   // temporary array for output 
   vert->tmp = (REAL *)SunMalloc(10*grid->Nc*sizeof(REAL),"AllocatePhysicalVariables");
-
 
   // read vertical coordinate switch
   if(prop->vertcoord==3)
@@ -315,16 +314,16 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k;
   REAL z;
-
   for(i=0;i<grid->Nc;i++)
   {
     for(k=0;k<grid->Nk[i];k++)
       vert->zcold[i][k]=vert->zc[i][k];
     z=-grid->dv[i];
     vert->zc[i][grid->Nk[i]-1]=z+grid->dzz[i][grid->Nk[i]-1]/2;
-    for(k=grid->Nk[i]-2;k>=grid->ctop[i];k--)
+    for(k=grid->Nk[i]-2;k>=grid->ctop[i];k--){
       vert->zc[i][k]=vert->zc[i][k+1]+grid->dzz[i][k+1]/2+grid->dzz[i][k]/2;
-    if(prop->n==1)
+    }
+    if(prop->n==0)
       for(k=0;k<grid->Nk[i];k++)
         vert->zcold[i][k]=vert->zc[i][k];
   }  
@@ -422,12 +421,12 @@ void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MP
   int i, j, jptr, k, nwritten, arraySize, writeProc,nc1,nc2;
   char str[BUFFERLENGTH], filename[BUFFERLENGTH];
 
-  if(!(prop->n%prop->ntout) || prop->n==1+prop->nstart) {
+  if(!(prop->n%prop->ntout) || prop->n==1+prop->nstart) { 
     Write3DData(vert->zc,vert->tmp,prop->mergeArrays,vert->zcFID,
     "Error outputting uc-data!\n",grid,numprocs,myproc,comm);
     Write3DData(grid->dzz,vert->tmp,prop->mergeArrays,vert->dzzFID,
     "Error outputting uc-data!\n",grid,numprocs,myproc,comm);
-    Write3DData(vert->omega,vert->tmp,prop->mergeArrays,vert->zcFID,
+    Write3DData(vert->omega,vert->tmp,prop->mergeArrays,vert->omegaFID,
     "Error outputting uc-data!\n",grid,numprocs,myproc,comm);
   }
 
@@ -462,6 +461,7 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 
   // compute zc
   ComputeZc(grid,prop,phys,myproc);
+
 }
 
 
