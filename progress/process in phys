@@ -269,4 +269,6 @@ wtmp3=w_n-1
 wtmp2=w_n
 6. modify Initializephysicalvariable to add new vertical coordinate feature
 
+12/07/2016
+1. find problem why baraclinic pressure is applied only when Nke>1
 

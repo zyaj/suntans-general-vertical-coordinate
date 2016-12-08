@@ -59,6 +59,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->omegac=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zc=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zcold=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->f_r=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dvdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dudy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dwdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -75,6 +76,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->zc[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zcold[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dvdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->f_r[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dudy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dwdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dwdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
@@ -92,6 +94,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->omegac[i][k]=0;
       vert->zc[i][k]=0;
       vert->zcold[i][k]=0;
+      vert->f_r[i][k]=0;
       vert->dvdx[i][k]=0;
       vert->dudy[i][k]=0;
       vert->dwdx[i][k]=0;
@@ -346,6 +349,31 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int myproc)
     }
 }
 
+/*
+ * Function: VerticalCoordinateHorizontalSource
+ * Compute all the preparation due to the new general vertical
+ * coordinate for the horizontal source of momentum conservation
+ * ----------------------------------------------------
+ * 
+ */
+void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
+    int myproc, int numprocs, MPI_Comm comm)
+{
+   int i,k;
+   // compute the relative vorticity
+   // 1. compute v and u at each edge center
+   ComputeUf(grid, prop, phys,myproc);
+   // 2. compute dvdx and dudy
+   ComputeCellAveragedHorizontalGradient(vert->dvdx, 0, vert->vf, grid, prop, phys, myproc);
+   ComputeCellAveragedHorizontalGradient(vert->dudy, 1, vert->uf, grid, prop, phys, myproc);
+   // 3. compute f_r
+   for(i=0;i<grid->Nc;i++)
+    for(k=0;k<grid->Nk[i];k++)
+      vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
+
+    // compute Zc for slope term in baraclinic pressure
+    ComputeZc(grid,prop,phys,myproc); 
+}
 /*
  * Function: ComputeCellAveragedGradient
  * Compute the cell averaged gradient for scalars

@@ -1775,7 +1775,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
 {
   int i, ib, iptr, boundary_index, nf, j, jptr, k, nc, nc1, nc2, ne, 
   k0, kmin, kmax;
-  REAL *a, *b, *c, fab1, fab2, fab3, sum, def1, def2, dgf, Cz, tempu,Ac; //AB3
+  REAL *a, *b, *c, fab1, fab2, fab3, sum, def1, def2, dgf, Cz, tempu,Ac, f_sum, ke1,ke2; //AB3
   // additions to test divergence averaging for w in momentum calc
   REAL wedge[3], lambda[3], wik, tmp_x, tmp_y,tmp;
   int aneigh;
@@ -1833,7 +1833,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
       // note that EE is used for the first time step
       phys->utmp[j][k]=fab2*phys->Cn_U[j][k]+fab3*phys->Cn_U2[j][k]+phys->u[j][k]
         -prop->dt/grid->dg[j]*(phys->q[nc1][k]-phys->q[nc2][k]);
-
+  
       phys->Cn_U2[j][k]=phys->Cn_U[j][k];
       phys->Cn_U[j][k]=0;
     }
@@ -1861,16 +1861,24 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
 
   // 3D Coriolis terms
   // note that this uses linear interpolation to the faces from the cell centers
+  
+  // set up total vorticity
+  f_sum=prop->Coriolis_f;
+
   for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
   {
     j = grid->edgep[jptr];
 
     nc1 = grid->grad[2*j];
     nc2 = grid->grad[2*j+1];
-    for(k=grid->etop[j];k<grid->Nke[j];k++) 
-      phys->Cn_U[j][k]+=prop->dt*prop->Coriolis_f*(
+    for(k=grid->etop[j];k<grid->Nke[j];k++) {
+      // if not z-level add relative voricity due to momentum advection
+      if(prop->vertcoord!=1 && prop->nonlinear)  
+        f_sum=prop->Coriolis_f+InterpToFace(j,k,vert->f_r,phys->u,grid);
+      phys->Cn_U[j][k]+=prop->dt*f_sum*(
           InterpToFace(j,k,phys->vc,phys->u,grid)*grid->n1[j]-
           InterpToFace(j,k,phys->uc,phys->u,grid)*grid->n2[j]);
+    }
   }
 
   // Baroclinic term
@@ -1881,10 +1889,9 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     nc1 = grid->grad[2*j];
     nc2 = grid->grad[2*j+1];
 
+    // why only has baroclinic pressure when Nke=1
     if(grid->etop[j]<grid->Nke[j]-1) 
       for(k=grid->etop[j];k<grid->Nke[j];k++) {
-        // this next line seems completely unncessary and computationally wasteful
-        k0=grid->etop[j];
         // from the top of the water surface to the bottom edge layer for the given step
         for(k0=Max(grid->ctop[nc1],grid->ctop[nc2]);k0<k;k0++) {
           // for the Cn_U at the particular layer, integrate density gradient over the depth
@@ -1898,6 +1905,12 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
           (phys->rho[nc1][k]-phys->rho[nc2][k])*
           (grid->dzz[nc1][k]+grid->dzz[nc2][k])/grid->dg[j];
       }
+
+    // add the baroclinic pressure due to slope term
+    if(prop->vertcoord!=1)
+      for(k=grid->etop[j];k<grid->Nke[j];k++)
+         phys->Cn_U[j][k]-=prop->dt*prop->grav*InterpToFace(j,k,phys->rho,phys->u,grid)*
+           (vert->zc[nc1][k]-vert->zc[nc2][k])/grid->dg[j];
   }
 
   // Set stmp and stmp2 to zero since these are used as temporary variables for advection and
@@ -1906,8 +1919,29 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     for(k=0;k<grid->Nk[i];k++) 
       phys->stmp[i][k]=phys->stmp2[i][k]=0;
 
+  // compute horizontal momentum advection when not z-level 
+  // the horizontal momentum advection has been divided into two parts
+  // one is from the relative vorticity which is combined in f_sum with coriolis
+  // the other part is from the gradient of (u^2+v^2)/2
+  // the vertical momentum advection will be automatically implemented implicitly. 
+  if(prop->nonlinear && prop->vertcoord!=1)
+  {
+     for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
+     {
+        j = grid->edgep[jptr];
+        nc1 = grid->grad[2*j];
+        nc2 = grid->grad[2*j+1];
+        for(k=grid->etop[j];k<grid->Nke[j];k++) 
+        {  
+          ke1=phys->uc[nc1][k]*phys->uc[nc1][k]+phys->vc[nc1][k]*phys->vc[nc1][k];
+          ke2=phys->uc[nc2][k]*phys->uc[nc2][k]+phys->vc[nc2][k]*phys->vc[nc2][k];
+          phys->Cn_U[i][k]-=prop->dt*(ke1-ke2)/grid->dg[j];
+        }  
+     }
+  }
+
   // Compute Eulerian advection of momentum (nonlinear!=0)
-  if(prop->nonlinear) {
+  if(prop->nonlinear && prop->vertcoord==1) {
     // Interpolate uc to faces and place into ut
     GetMomentumFaceValues(phys->ut,phys->uc,phys->boundary_u,phys->u,grid,phys,prop,comm,myproc,prop->nonlinear);
 
@@ -1923,7 +1957,6 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     // Now compute the cell-centered source terms and put them into stmp
     for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
       i=grid->cellp[iptr];
-
       // Store dzz in a since for conservative scheme need to divide by depth (since ut is a flux)
       if(prop->conserveMomentum) {
 	for(k=grid->ctop[i];k<grid->Nk[i];k++)

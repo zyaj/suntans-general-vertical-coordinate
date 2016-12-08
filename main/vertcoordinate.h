@@ -21,6 +21,7 @@ REAL **ul,**vl; // the u v at the top and bottom face of each layer at each edge
 REAL **omega; // the vertical contravariant flux [Nc][Nk+1]
 REAL **omegac; // the cell-centered vertical contravariant flux [Nc][Nk]
 REAL **zc,**zcold; // the cell center vertical location in the Cartesian coordinate [Nc][Nk]
+REAL **f_r; // the cell center relative vorticity dvdx-dudy [Nc][Nk]
 REAL **dvdx, **dudy, **dwdx, **dwdy, **dzdx, **dzdy; // the cell-centered averaged gradient of different variables
 REAL *dsigma; // the dsigma for the sigma coordinate to define the vertical coordinate density [Nkmax]
 REAL *tmp; //temporary array for output
@@ -38,6 +39,7 @@ void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc);
 void LayerAveragedContinuity(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeOmega(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc);
+void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL **scalar, gridT *grid, propT *prop, physT *phys, int myproc);
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
 REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid);

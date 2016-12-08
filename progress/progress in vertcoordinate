@@ -13,3 +13,12 @@ basic functions have been added
   all the initial function is in userdefinedverticalcoordinate.c
 4. Modify the initializephysicalvariable function to add the initialization of the new vertical coordinate variable
 5. add output files for dzz zc and omega
+12/06/2016:
+1. add a test case for vert-test
+2. fix several bugs for the initial setup of the general vertical coordinate
+12/07/2016:
+Problems found: if solved will add (solved), if not all need to be solved
+1. how to setup drag coefficient if dzf(Nke-1)<Bufferheight while total height>bufferheight. 
+solution: can adjust bottom layer to make sure dzf>4z0 how ever will ruin the coordinate (although just a little since 4z0 is very small)
+if hf<buffer height, cd is set as 100
+2. 
