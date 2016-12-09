@@ -225,6 +225,11 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,j,k;
+  // compute omegac 
+  for(i=0;i<grid->Nc;i++)
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+      vert->omegac[i][k]=(vert->omega[i][k]+vert->omega[i][k+1])/2;
+
   // uf vf and wf
   for(j=0;j<grid->Ne;j++)
     for(k=grid->etop[j];k<grid->Nke[j];k++)

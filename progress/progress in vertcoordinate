@@ -21,4 +21,11 @@ Problems found: if solved will add (solved), if not all need to be solved
 1. how to setup drag coefficient if dzf(Nke-1)<Bufferheight while total height>bufferheight. 
 solution: can adjust bottom layer to make sure dzf>4z0 how ever will ruin the coordinate (although just a little since 4z0 is very small)
 if hf<buffer height, cd is set as 100
-2. 
+12/08/2016
+1. finish the change of Horizontalsource
+add slope term for baroclinic pressure
+divide horizontal momentum advection into two parts
+the horizontal diffusion term is the same as the original method
+12/09/2016
+
+

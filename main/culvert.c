@@ -217,14 +217,9 @@ void CulvertHCoefficients(REAL *coef, REAL *fcoef, gridT *grid, physT *phys, pro
 {
   int i,iptr,ne, jptr, nf,k,check;
   REAL sum,normal, tmp,fac;
-  if(prop->n==1 || prop->im==0 || prop->wetdry)
-  {
-    fac=prop->theta;
-  } else if(prop->im==1){
-    fac=3/4;
-  } else {
-    fac=5/4;
-  }
+   
+  fac=prop->imfac1;
+
   tmp=prop->grav*pow(fac*prop->dt,2);
   // calculate fcoef and coef
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {

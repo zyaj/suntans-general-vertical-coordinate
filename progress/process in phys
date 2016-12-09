@@ -271,4 +271,12 @@ wtmp2=w_n
 
 12/07/2016
 1. find problem why baraclinic pressure is applied only when Nke>1
+2. find problem for the implementation of bottom shear stress if only the bottom layer get dry
 
+12/09/2016
+1. finish change in horizontalsource with the new vertical coordinate
+2. finish the change in calculation of u* in upredictor function
+3. for the vertical momentum advection
+omega dudz=d(omega u)dz-ud(omega)/dz 
+reason check the file
+4. add new updatelayerthickness in upredictor after the calculation of h^n+1
