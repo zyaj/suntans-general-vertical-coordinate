@@ -27,5 +27,8 @@ add slope term for baroclinic pressure
 divide horizontal momentum advection into two parts
 the horizontal diffusion term is the same as the original method
 12/09/2016
-
+1. add new variables omega_old omega_old2 to store the old values of omega
+2. modify the LayerAveragedContinuity function to calculate omega
+3. adjust the location of ComputeZc function and put it directly after UpdateLayerthickness
+4. Modify the UpdateScalars Function
 

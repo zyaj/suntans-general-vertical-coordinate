@@ -1,3 +1,5 @@
-09/01 change scalar.c to work with subgrid module 
+2015/09/01 change scalar.c to work with subgrid module 
       add alpha to account different area effect 
 
+2016/12/09 start the modification of UpdateScalar function
+1. first modify it into new implicit schemes

@@ -19,6 +19,9 @@ REAL **uf,**wf,**vf; // the u v w at the layer center of each edge [Nj][Nke]
 REAL **omegaf; // the vertical contravariant flux at the face [Ne][Nke]
 REAL **ul,**vl; // the u v at the top and bottom face of each layer at each edge [Nc][Nk+1]
 REAL **omega; // the vertical contravariant flux [Nc][Nk+1]
+REAL **omega_old; // omega^(n) [Nc][Nk+1]
+REAL **omega_old2; // omega^(n-2) [Nc][Nk+1]
+REAL **omega_star; // the vertical contravariant flux [Nc][Nk+1] for hydrostatic calculation and prepare for scalar transport 
 REAL **omegac; // the cell-centered vertical contravariant flux [Nc][Nk]
 REAL **zc,**zcold; // the cell center vertical location in the Cartesian coordinate [Nc][Nk]
 REAL **f_r; // the cell center relative vorticity dvdx-dudy [Nc][Nk]
@@ -36,7 +39,7 @@ void AllocateVertCoordinate(gridT *grid, propT *prop, int myproc);
 void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
 void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc);
-void LayerAveragedContinuity(gridT *grid, propT *prop, physT *phys, int myproc);
+void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeOmega(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc);
 void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm);
@@ -47,4 +50,5 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);
 void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);
 void OpenVertCoordinateFiles(gridT *grid,int mergeArrays, int myproc);
 void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MPI_Comm comm);
+void StoreVertVariables(gridT *grid, physT *phys);
 #endif

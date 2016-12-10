@@ -1419,6 +1419,10 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // Store the old velocity and scalar fields
       // Store the old values of s, u, and w into stmp3, utmp2, and wtmp2
       StoreVariables(grid,phys);
+      
+      // store old omega for the new vertical coordinate
+      if(prop->vertcoord!=1)
+        StoreVertVariables(grid,phys);
 
       // Compute the horizontal source term phys->utmp which contains the explicit part
       // or the right hand side of the free-surface equation. 
@@ -1451,6 +1455,9 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
        * 4) Horizontal and vertical advection of horizontal momentum with AB2
        * 5) Horizontal laminar+turbulent diffusion of horizontal momentum
        */
+      // calculate the preparation for HorizontalSource function due to the new vertical coordinate
+      if(prop->vertcoord!=1)
+        VertCoordinateHorizontalSource(grid, phys, prop, myproc, numprocs, comm);
       HorizontalSource(grid,phys,prop,myproc,numprocs,comm);
 
       // add wave part 
@@ -1479,8 +1486,17 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       t_check+=Timer()-t0;
  
       // apply continuity via Eqn 82
-      Continuity(phys->wnew,grid,phys,prop);
-      ISendRecvWData(phys->wnew,grid,myproc,comm);
+      if(prop->vertcoord==1)
+      {
+        Continuity(phys->wnew,grid,phys,prop);
+        ISendRecvWData(phys->wnew,grid,myproc,comm);
+      } else {
+        // here only calculates the omega value which means the w* is still unknown.
+        // the reason is that w is not used for hydrostatic calculation and scalar transport
+        // after this calculation vert->omega=omega* vert->omega_old=omega^n vert->omega_old2=omega^n-1
+        LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
+        ISendRecvWData(vert->omega,grid,myproc,comm);
+      }
 
       // calculate flux in/out to each cell to ensure bounded scalar concentration under subgrid
       if(prop->subgrid)
@@ -1737,8 +1753,7 @@ static void StoreVariables(gridT *grid, physT *phys) {
     for(k=0;k<grid->Nk[i];k++) {
       phys->stmp3[i][k]=phys->s[i][k];
       phys->wtmp3[i][k]=phys->wtmp2[i][k];
-      phys->wtmp2[i][k]=phys->w[i][k];
-      
+      phys->wtmp2[i][k]=phys->w[i][k];      
     }
 
   for(j=0;j<grid->Ne;j++) {
@@ -1844,8 +1859,8 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     j = grid->edgep[jptr]; 
 
     for(k=grid->etop[j];k<grid->Nke[j];k++) {
-      phys->utmp[j][k]=(1-fab1)*phys->Cn_U[j][k]+phys->u[j][k];
-
+      phys->utmp[j][k]=fab3*phys->Cn_U2[j][k]+fab2*phys->Cn_U[j][k]+phys->u[j][k];
+      phys->Cn_U2[j][k]=phys->Cn_U[j][k];
       phys->Cn_U[j][k]=0;
     }
   }
@@ -4025,9 +4040,12 @@ static void UPredictor(gridT *grid, physT *phys,
   // can comment this out to linearize the free surface 
   if(prop->vertcoord==1)
     UpdateDZ(grid,phys,prop, 0); 
-  else
+  else {
     // use new method to update layerthickness
-    UpdateLayerThickness(grid, prop, phys, myproc)
+    UpdateLayerThickness(grid, prop, phys, myproc);
+    // compute the new zc, the old value is stored in zc_old
+    ComputeZc(grid,prop,phys,myproc);
+  }
 
   // update vertical ac for scalar transport
   if(prop->subgrid)

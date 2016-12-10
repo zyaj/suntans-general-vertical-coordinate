@@ -56,6 +56,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->ul=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->vl=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omega=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->omega_old=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->omega_old2=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omegac=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zc=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zcold=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -72,6 +74,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->ul[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->vl[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omega[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
+    vert->omega_old[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
+    vert->omega_old2[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omegac[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zc[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zcold[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
@@ -88,6 +92,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->ul[i][k]=0;
       vert->vl[i][k]=0;
       vert->omega[i][k]=0;
+      vert->omega_old[i][k]=0;
+      vert->omega_old2[i][k]=0;
     }
     for(k=0;k<grid->Nk[i];k++)
     {
@@ -290,7 +296,41 @@ REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid) {
  * ----------------------------------------------------
  * 
  */
-void LayerAveragedContinuity(gridT *grid, propT *prop, physT *phys, int myproc)
+void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys, int myproc)
+{
+  int i,k,nf,ne;
+  REAL fac1,fac2,fac3,flux,Ac;
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
+
+  for(i=0;i<grid->Nc;i++)
+  {
+    Ac=grid->Ac[i];
+    omega[i][grid->Nk[i]]=0;
+    for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--){
+      flux=0;
+      for(nf=0;nf<grid->nfaces[i];nf++) {
+        ne = grid->face[i*grid->maxfaces+nf];
+        if(k<grid->Nke[ne])
+          flux+=(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
+      }
+      omega[i][k]=(fac1*vert->omega[i][k+1]+fac2*vert->omega_old[i][k+1]+fac3*vert->omega_old2[i][k+1])-
+      (fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k])-flux-
+      (grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
+      omega[i][k]/=fac1;
+    }
+  }
+}
+
+/*
+ * Function: ComputeVerticalVelocity
+ * Compute w for for the top and bottom face of each layer
+ * from the layer-averaged continuity equation
+ * ----------------------------------------------------
+ * 
+ */
+void ComputeVerticalVelocity(REAL **omega, REAL **zc, gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k,nf,ne;
   REAL fac1,fac2,fac3,flux,Ac;
@@ -308,7 +348,7 @@ void LayerAveragedContinuity(gridT *grid, propT *prop, physT *phys, int myproc)
         if(k<grid->Nke[ne])
           flux+=(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
       }
-      vert->omega[i][k]=vert->omega[i][k+1]-flux-(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
+      omega[i][k]=vert->omega[i][k+1]-flux-(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
     }
   }
 }
@@ -375,9 +415,6 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
    for(i=0;i<grid->Nc;i++)
     for(k=0;k<grid->Nk[i];k++)
       vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
-
-    // compute Zc for slope term in baraclinic pressure
-    ComputeZc(grid,prop,phys,myproc); 
 }
 /*
  * Function: ComputeCellAveragedGradient
@@ -497,5 +534,21 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 
 }
 
+/*
+ * Function: StoreVariables
+ * Usage: StoreVariables(grid,phys);
+ * ---------------------------------
+ * Store the old values of s, u, and w into stmp3, utmp2, and wtmp2,
+ * respectively.
+ *
+ */
+void StoreVertVariables(gridT *grid, physT *phys) {
+  int i, j, k, iptr, jptr;
 
-
+  for(i=0;i<grid->Nc;i++) 
+    for(k=0;k<grid->Nk[i];k++) {
+      // store omega^n-1 and omega^n
+      vert->omega_old2[i][k]=vert->omega_old[i][k];
+      vert->omega_old[i][k]=vert->omega[i][k];
+    }
+}
