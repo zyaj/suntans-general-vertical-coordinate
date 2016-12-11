@@ -65,6 +65,8 @@ typedef struct _physT {
   REAL **qc;
   REAL **s;
   REAL **T;
+  REAL **s_old; // store s^n-1
+  REAL **T_old; // store T^n-1
   REAL **s0;
   REAL **rho;
   REAL *h;
@@ -92,6 +94,8 @@ typedef struct _physT {
   REAL *z0T;
   REAL **qT;
   REAL **lT;
+  REAL **qT_old; //store qT^n-1
+  REAL **lT_old; // store lT^n-1
 
   REAL mass;
   REAL mass0;
@@ -110,7 +114,7 @@ typedef struct _physT {
   REAL *dhdt;
   REAL *htmp;
   REAL *hold;
-  REAL *hold2;
+  REAL *h_old;
   REAL *htmp2;
   REAL *htmp3;
   REAL *hcoef;
@@ -119,8 +123,8 @@ typedef struct _physT {
   REAL **stmp2;
   REAL **stmp3;
   REAL **utmp;
-  REAL **utmp2;
-  REAL **utmp3; // store u_n-1
+  REAL **u_old;
+  REAL **u_old2; // store u_n-1
   REAL **ut;
   REAL **Cn_R;
   REAL **Cn_T;
@@ -132,9 +136,9 @@ typedef struct _physT {
   REAL **Cn_l;
   REAL **wnew;
   REAL **wtmp;
-  REAL **wtmp2;
-  REAL **wtmp3; // store w_n-1
-  REAL **wtmp4; // calculate wtmp^im in scalar.c
+  REAL **w_old;
+  REAL **w_old2; // store w_n-1
+  REAL **w_im; // calculate wtmp^im in scalar.c
   REAL **user_def_nc;
   REAL **user_def_ne;
   REAL **qtmp;

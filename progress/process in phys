@@ -280,3 +280,12 @@ wtmp2=w_n
 omega dudz=d(omega u)dz-ud(omega)/dz 
 reason check the file
 4. add new updatelayerthickness in upredictor after the calculation of h^n+1
+
+12/10/2016
+2. add s_old T_old qt_old lt_old to store n-1 values
+1. since the input statement is change in Updatescalar function
+my25 is modified to input q_old and l_old into the function.
+3. change all the name of scalars 
+ scal_old=scal^n, scal_old2=scal^n-1
+4 problem found whether to keep vertical momentum diffusion theta method for drag
+5. same for scalar transport 

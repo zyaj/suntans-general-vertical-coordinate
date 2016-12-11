@@ -21,7 +21,7 @@ REAL smin_value, smax_value;
 
 /*
  * Function: UpdateScalars
- * Usage: UpdateScalars(grid,phys,prop,wnew,scalar,Cn,kappa,kappaH,kappa_tv,theta);
+ * Usage: UpdateScalars(grid,phys,prop,w_im,scalar,Cn,kappa,kappaH,kappa_tv,theta);
  * ---------------------------------------------------------------------------
  * Update the scalar quantity stored in the array denoted by scal using the
  * theta method for vertical advection and vertical diffusion and Adams-Bashforth
@@ -33,7 +33,7 @@ REAL smin_value, smax_value;
  * kappa_tv denotes the vertical turbulent scalar diffusivity
  *
  */
-void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **scal, REAL **boundary_scal, REAL **Cn, 
+void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **scal, REAL **scal_old, REAL **boundary_scal, REAL **Cn, 
     REAL kappa, REAL kappaH, REAL **kappa_tv, REAL theta,
     REAL **src1, REAL **src2, REAL *Ftop, REAL *Fbot, int alpha_top, int alpha_bot,
     MPI_Comm comm, int myproc, int checkflag, int TVDscheme) 
@@ -41,9 +41,9 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
   int i, iptr, j, jptr, ib, k, nf, ktop;
   int Nc=grid->Nc, normal, nc1, nc2, ne;
   REAL df, dg, Ac, dt=prop->dt, fab, *a, *b, *c, *d, *ap, *am, *bd, dznew, mass, *sp, *temp;
-  REAL smin, smax, div_local, div_da, alpha,fac1,fac2,fac3,sum,sum1,sum2;
+  REAL smin, smax, div_local, div_da, alpha,sum,sum1,sum2;
   int k1, k2, kmin, imin, kmax, imax, mincount, maxcount, allmincount, allmaxcount, flag;
-
+  REAL fab1,fab2,fab3,fac1,fac2,fac3; // implicit and explicit scheme factors
   prop->TVD = TVDscheme;
   // These are used mostly debugging to turn on/off vertical and horizontal TVD.
   prop->horiTVD = 1;
@@ -58,7 +58,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
   c = phys->c;
   d = phys->d;
 
-  // Never use AB2
+  // Never use AB2 //?
   if(1) {
     fab=1;
     for(i=0;i<grid->Nc;i++)
@@ -66,7 +66,23 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
         Cn[i][k]=0;
   } else
     fab=1.5;
+  
+  /*
+  if(prop->n==1) {
+    fab1=1;
+    fab2=fab3=0;
+  } else if(prop->n==2) {
+    fab1=3.0/2.0;
+    fab2=-1.0/2.0;
+    fab3=0;
+  } else {
+    fab1=prop->exfac1;
+    fab2=prop->exfac2;
+    fab3=prop->exfac3;   
+  }*/
 
+  // store the old value
+  // here stmp=scal^n scal_old=scal^n-1
   for(i=0;i<Nc;i++) 
     for(k=0;k<grid->Nk[i];k++) 
       phys->stmp[i][k]=scal[i][k];
@@ -81,7 +97,6 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
   //for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
   for(iptr=grid->celldist[0];iptr<grid->celldist[2];iptr++) {
     i = grid->cellp[iptr];
-
     for(k=grid->ctop[i];k<grid->Nk[i];k++)
       phys->stmp2[i][k]=0;
   }
@@ -89,9 +104,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
   if(boundary_scal) {
     for(jptr=grid->edgedist[2];jptr<grid->edgedist[5];jptr++) {
       j = grid->edgep[jptr];
-
       ib = grid->grad[2*j];
-
       // Set the value of stmp2 adjacent to the boundary to the value of the boundary.
       // This will be used to add the boundary flux when stmp2 is used again below.
       for(k=grid->ctop[ib];k<grid->Nk[ib];k++)
@@ -128,24 +141,14 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
         else
           alpha=1.0;
 
-        if(!prop->im)
-        {
-          ap[k] = alpha*0.5*(wnew[i][k]+fabs(wnew[i][k]));
-          am[k] = alpha*0.5*(wnew[i][k]-fabs(wnew[i][k]));
-        } else {
-          ap[k] = alpha*0.5*(phys->wtmp4[i][k]+fabs(phys->wtmp4[i][k]));
-          am[k] = alpha*0.5*(phys->wtmp4[i][k]-fabs(phys->wtmp4[i][k]));
-        }
+        ap[k] = alpha*0.5*(w_im[i][k]+fabs(w_im[i][k]));
+        am[k] = alpha*0.5*(w_im[i][k]-fabs(w_im[i][k])); 
       }
     else  // Compute the ap/am for TVD schemes
     {
-      if(!prop->im)
-        GetApAm(ap,am,phys->wp,phys->wm,phys->Cp,phys->Cm,phys->rp,phys->rm,
-          wnew,grid->dzz,scal,i,grid->Nk[i],ktop,prop->dt,prop->TVD);
-      else
-        GetApAm(ap,am,phys->wp,phys->wm,phys->Cp,phys->Cm,phys->rp,phys->rm,
-          phys->wtmp4,grid->dzz,scal,i,grid->Nk[i],ktop,prop->dt,prop->TVD);    
-   
+      GetApAm(ap,am,phys->wp,phys->wm,phys->Cp,phys->Cm,phys->rp,phys->rm,
+        w_im,grid->dzz,scal,i,grid->Nk[i],ktop,prop->dt,prop->TVD);
+
       for(k=0;k<grid->Nk[i]+1;k++) 
       {
         //add subgrid part
@@ -153,6 +156,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
           alpha=subgrid->Acveff[i][k]/Ac;
         else
           alpha=1.0;
+
         ap[k]= ap[k]*alpha;
         am[k]= am[k]*alpha;
       }
@@ -166,7 +170,6 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
         alpha=subgrid->Acceff[i][k]/Ac;
       else
         alpha=1.0;
-    
       a[k-ktop]=theta*dt*am[k];
       b[k-ktop]=alpha*grid->dzz[i][k]+theta*dt*(ap[k]-am[k+1]);
       c[k-ktop]=-theta*dt*ap[k+1];
@@ -293,18 +296,18 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
           alpha=1.0;
         if(!prop->im) // if prop->im!=0, ap and am should be the same as above no need to calculate
         {
-          ap[k] = alpha*0.5*(phys->wtmp2[i][k]+fabs(phys->wtmp2[i][k]));
-          am[k] = alpha*0.5*(phys->wtmp2[i][k]-fabs(phys->wtmp2[i][k]));
+          ap[k] = alpha*0.5*(phys->w_old[i][k]+fabs(phys->w_old[i][k]));
+          am[k] = alpha*0.5*(phys->w_old[i][k]-fabs(phys->w_old[i][k]));
         } 
       }
     else // Compute the ap/am for TVD schemes
     {
       if(!prop->im)
         GetApAm(ap,am,phys->wp,phys->wm,phys->Cp,phys->Cm,phys->rp,phys->rm,
-            phys->wtmp2,grid->dzzold,phys->stmp,i,grid->Nk[i],ktop,prop->dt,prop->TVD);
+            phys->w_old,grid->dzzold,phys->stmp,i,grid->Nk[i],ktop,prop->dt,prop->TVD);
       else
         GetApAm(ap,am,phys->wp,phys->wm,phys->Cp,phys->Cm,phys->rp,phys->rm,
-          phys->wtmp4,grid->dzz,scal,i,grid->Nk[i],ktop,prop->dt,prop->TVD);    
+          phys->w_im,grid->dzz,scal,i,grid->Nk[i],ktop,prop->dt,prop->TVD);    
    
       for(k=0;k<grid->Nk[i]+1;k++) 
       {
@@ -421,7 +424,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
       if(!(prop->TVD && prop->horiTVD)) {
         for(k=0;k<grid->Nke[ne];k++) {
           
-          temp[k]=UpWind((fac2*phys->utmp2[ne][k]+fac1*phys->u[ne][k]),phys->stmp[nc1][k],sp[k]);
+          temp[k]=UpWind((fac2*phys->u_old[ne][k]+fac1*phys->u[ne][k]),phys->stmp[nc1][k],sp[k]);
           // new edit
           if(k<grid->ctopold[nc1])
             temp[k]=sp[k];
@@ -430,14 +433,14 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
         }
       } else {
         for(k=0;k<grid->Nke[ne];k++) 
-          if(phys->utmp2[ne][k]>0)
+          if(phys->u_old[ne][k]>0)
             temp[k]=phys->SfHp[ne][k];
           else
             temp[k]=phys->SfHm[ne][k];	    
       }
       // this part don't need to be changed
       for(k=0;k<grid->Nke[ne];k++)
-        ap[k]+= dt*df*normal/Ac*(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])
+        ap[k]+= dt*df*normal/Ac*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])
           *temp[k]*grid->dzf[ne][k];
     }
 
@@ -552,20 +555,20 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **wnew, REAL **sc
           div_local=0;
           for(nf=0;nf<grid->nfaces[i];nf++) {
             ne=grid->face[i*grid->maxfaces+nf];
-            div_local+=(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])
+            div_local+=(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])
               *grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne];
           }
           div_da+=div_local;
           if(!prop->subgrid)
           {
-            div_local+=grid->Ac[i]*(fac1*(wnew[i][k]-wnew[i][k+1])+
-                fac2*(phys->wtmp2[i][k]-phys->wtmp2[i][k+1])+fac3*(phys->wtmp3[i][k]-phys->wtmp3[i][k+1]));
+            div_local+=grid->Ac[i]*(fac1*(w_im[i][k]-w_im[i][k+1])+
+                fac2*(phys->w_old[i][k]-phys->w_old[i][k+1])+fac3*(phys->w_old2[i][k]-phys->w_old2[i][k+1]));
           } else {
-            div_local+=(fac1*(wnew[i][k]*subgrid->Acveff[i][k]-subgrid->Acveff[i][k+1]*wnew[i][k+1])+
-                fac2*(subgrid->Acveffold[i][k]*phys->wtmp2[i][k]
-                -subgrid->Acveffold[i][k]*phys->wtmp2[i][k+1])
-                +fac3*(subgrid->Acveffold2[i][k]*phys->wtmp3[i][k]
-                -subgrid->Acveffold2[i][k]*phys->wtmp3[i][k+1]));                          
+            div_local+=(fac1*(w_im[i][k]*subgrid->Acveff[i][k]-subgrid->Acveff[i][k+1]*w_im[i][k+1])+
+                fac2*(subgrid->Acveffold[i][k]*phys->w_old[i][k]
+                -subgrid->Acveffold[i][k]*phys->w_old[i][k+1])
+                +fac3*(subgrid->Acveffold2[i][k]*phys->w_old2[i][k]
+                -subgrid->Acveffold2[i][k]*phys->w_old2[i][k+1]));                          
           }
           if(fabs(div_local)>1e-10){
             printf("div_local %e i %d k %d\n",div_local,i,k);

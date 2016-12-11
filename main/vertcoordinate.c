@@ -56,6 +56,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->ul=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->vl=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omega=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->omega_im=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omega_old=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omega_old2=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omegac=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -74,6 +75,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->ul[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->vl[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omega[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
+    vert->omega_im[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omega_old[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omega_old2[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omegac[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
@@ -92,6 +94,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->ul[i][k]=0;
       vert->vl[i][k]=0;
       vert->omega[i][k]=0;
+      vert->omega_im[i][k]=0;
       vert->omega_old[i][k]=0;
       vert->omega_old2[i][k]=0;
     }
@@ -192,7 +195,7 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
           for(nf=0;nf<grid->nfaces[i];nf++) {
             ne = grid->face[i*grid->maxfaces+nf];
             if(k<grid->Nke[ne])
-              grid->dzz[i][k]-=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
+              grid->dzz[i][k]-=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
           }
         }
       }
@@ -306,6 +309,8 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
 
   for(i=0;i<grid->Nc;i++)
   {
+    // compute omega from bottom layer using the omega_bot=0
+    // worry about the numerical accuracy to ensure omega_top==0
     Ac=grid->Ac[i];
     omega[i][grid->Nk[i]]=0;
     for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--){
@@ -313,13 +318,16 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
       for(nf=0;nf<grid->nfaces[i];nf++) {
         ne = grid->face[i*grid->maxfaces+nf];
         if(k<grid->Nke[ne])
-          flux+=(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
+          flux+=(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
       }
       omega[i][k]=(fac1*vert->omega[i][k+1]+fac2*vert->omega_old[i][k+1]+fac3*vert->omega_old2[i][k+1])-
       (fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k])-flux-
       (grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
       omega[i][k]/=fac1;
     }
+    //compute omega_im for updatescalar function
+    for(k=grid->ctop[i];k<=grid->Nk[i];k++)
+      vert->omega_im[i][k]=fac1*omega[i][k]+fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k];
   }
 }
 
@@ -346,7 +354,7 @@ void ComputeVerticalVelocity(REAL **omega, REAL **zc, gridT *grid, propT *prop, 
       for(nf=0;nf<grid->nfaces[i];nf++) {
         ne = grid->face[i*grid->maxfaces+nf];
         if(k<grid->Nke[ne])
-          flux+=(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
+          flux+=(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
       }
       omega[i][k]=vert->omega[i][k+1]-flux-(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
     }
@@ -531,14 +539,13 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 
   // compute zc
   ComputeZc(grid,prop,phys,myproc);
-
 }
 
 /*
  * Function: StoreVariables
  * Usage: StoreVariables(grid,phys);
  * ---------------------------------
- * Store the old values of s, u, and w into stmp3, utmp2, and wtmp2,
+ * Store the old values of s, u, and w into stmp3, u_old, and wtmp2,
  * respectively.
  *
  */

@@ -148,8 +148,8 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   (*phys)->vold = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->D = (REAL *)SunMalloc(Ne*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->utmp = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
-  (*phys)->utmp2 = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
-  (*phys)->utmp3 = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->u_old = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->u_old2 = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->ut = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->Cn_U = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->Cn_U2 = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables"); //AB3
@@ -165,8 +165,8 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
     // allocate memory for the max (cell-centered) quanity on the edge (from definition above)
     (*phys)->u[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->utmp[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
-    (*phys)->utmp2[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
-    (*phys)->utmp3[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->u_old[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->u_old2[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->ut[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->Cn_U[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->Cn_U2[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");//AB3
@@ -197,7 +197,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   (*phys)->hcorr = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->active = (unsigned char *)SunMalloc(Nc*sizeof(char),"AllocatePhysicalVariables");
   (*phys)->hold = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
-  (*phys)->hold2 = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
+  (*phys)->h_old = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->htmp = (REAL *)SunMalloc(10*Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->htmp2 = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->htmp3 = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
@@ -210,9 +210,9 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   (*phys)->w = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->wnew = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->wtmp = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
-  (*phys)->wtmp2 = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
-  (*phys)->wtmp3 = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
-  (*phys)->wtmp4 = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->w_old = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->w_old2 = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->w_im = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->Cn_W = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->Cn_W2 = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables"); //AB3
   (*phys)->q = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
@@ -220,6 +220,8 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   (*phys)->qtmp = (REAL **)SunMalloc(grid->maxfaces*Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->s = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->T = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->s_old = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->T_old = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->Ttmp = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->s0 = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->rho = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
@@ -234,6 +236,8 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   if(prop->turbmodel>=1) {
     (*phys)->qT = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
     (*phys)->lT = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+    (*phys)->qT_old = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+    (*phys)->lT_old = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
     (*phys)->Cn_q = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
     (*phys)->Cn_l = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   }
@@ -283,9 +287,9 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
     (*phys)->w[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->wnew[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->wtmp[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
-    (*phys)->wtmp2[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
-    (*phys)->wtmp3[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
-    (*phys)->wtmp4[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->w_old[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->w_old2[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->w_im[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->Cn_W[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->Cn_W2[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables"); //AB3
     (*phys)->q[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
@@ -294,6 +298,8 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
       (*phys)->qtmp[i*grid->maxfaces+nf] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->s[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->T[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->s_old[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->T_old[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->Ttmp[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->s0[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->rho[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
@@ -304,6 +310,8 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
       (*phys)->Cn_l[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
       (*phys)->qT[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
       (*phys)->lT[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
+      (*phys)->qT_old[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
+      (*phys)->lT_old[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     }
     (*phys)->stmp[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->stmp2[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
@@ -420,8 +428,8 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   for(j=0;j<Ne;j++) {
     free(phys->u[j]);
     free(phys->utmp[j]);
-    free(phys->utmp2[j]);
-    free(phys->utmp3[j]);
+    free(phys->u_old[j]);
+    free(phys->u_old2[j]);
     free(phys->ut[j]);
     free(phys->Cn_U[j]);
     free(phys->Cn_U2[j]); //AB3
@@ -437,9 +445,9 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
     free(phys->w[i]);
     free(phys->wnew[i]);
     free(phys->wtmp[i]);
-    free(phys->wtmp2[i]);
-    free(phys->wtmp3[i]);
-    free(phys->wtmp4[i]);
+    free(phys->w_old[i]);
+    free(phys->w_old2[i]);
+    free(phys->w_im[i]);
     free(phys->Cn_W[i]);
     free(phys->Cn_W2[i]); //AB3
     free(phys->q[i]);
@@ -448,6 +456,8 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
       free(phys->qtmp[i*grid->maxfaces+nf]);
     free(phys->s[i]);
     free(phys->T[i]);
+    free(phys->s_old[i]);
+    free(phys->T_old[i]);
     free(phys->s0[i]);
     free(phys->rho[i]);
     free(phys->Cn_R[i]);
@@ -457,6 +467,8 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
       free(phys->Cn_l[i]);
       free(phys->qT[i]);
       free(phys->lT[i]);
+      free(phys->qT_old[i]);
+      free(phys->lT_old[i]);
     }
     free(phys->stmp[i]);
     free(phys->stmp2[i]);
@@ -471,7 +483,7 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   free(phys->htmp);
   free(phys->htmp2);
   free(phys->htmp3);
-  free(phys->hold2);
+  free(phys->h_old);
   free(phys->hold);
   free(phys->hcoef);
   free(phys->hfcoef);
@@ -481,9 +493,9 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   free(phys->w);
   free(phys->wnew);
   free(phys->wtmp);
-  free(phys->wtmp2);
-  free(phys->wtmp3);
-  free(phys->wtmp4);
+  free(phys->w_old);
+  free(phys->w_old2);
+  free(phys->w_im);
   free(phys->Cn_W);
   free(phys->Cn_W2); //AB3
   free(phys->q);
@@ -491,6 +503,8 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   free(phys->qtmp);
   free(phys->s);
   free(phys->T);
+  free(phys->s_old);
+  free(phys->T_old);
   free(phys->s0);
   free(phys->rho);
   free(phys->Cn_R);
@@ -500,6 +514,8 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
     free(phys->Cn_l);
     free(phys->qT);
     free(phys->lT);
+    free(phys->qT_old);
+    free(phys->lT_old);
   }  
   free(phys->stmp);
   free(phys->stmp2);
@@ -516,12 +532,11 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   free(phys->u);
   free(phys->D);
   free(phys->utmp);
-  free(phys->utmp2);
-  free(phys->utmp3);
+  free(phys->u_old);
+  free(phys->u_old2);
   free(phys->ut);
   free(phys->Cn_U);
   free(phys->Cn_U2);
-
   free(phys->ap);
   free(phys->am);
   free(phys->bp);
@@ -633,6 +648,8 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       phys->q[i][k]=0;
       phys->s[i][k]=0;
       phys->T[i][k]=0;
+      phys->s_old[i][k]=0;
+      phys->T_old[i][k]=0;
       phys->s0[i][k]=0;
     }
   }
@@ -703,6 +720,14 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       }
     }
   }
+
+  // set the old values s^n-1 T^n-1=s^n T^n at prop->n==1
+  for(i=0;i<Nc;i++)
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+    {
+      phys->T_old[i][k]=phys->T[i][k];
+      phys->s_old[i][k]=phys->s[i][k];      
+    }
 
   // Initialize the velocity field 
   for(j=0;j<grid->Ne;j++) {
@@ -778,6 +803,8 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       for(k=0;k<grid->Nk[i];k++) {
         phys->qT[i][k]=0;
         phys->lT[i][k]=0;
+        phys->qT_old[i][k]=0;
+        phys->lT_old[i][k]=0;
       }
     }
   }
@@ -1417,7 +1444,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           exp(-prop->rtime/prop->thetaramptime);
 
       // Store the old velocity and scalar fields
-      // Store the old values of s, u, and w into stmp3, utmp2, and wtmp2
+      // Store the old values of s, u, and w into stmp3, u_old, and w_old
       StoreVariables(grid,phys);
       
       // store old omega for the new vertical coordinate
@@ -1477,7 +1504,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
 
       // compute U^* and h^* (Eqn 40 and Eqn 31)
       UPredictor(grid,phys,prop,myproc,numprocs,comm);
-      ISendRecvCellData2D(phys->hold2,grid,myproc,comm);
+      ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
       ISendRecvCellData2D(phys->h,grid,myproc,comm);
       t_predictor+=Timer()-t0;
 
@@ -1488,12 +1515,14 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // apply continuity via Eqn 82
       if(prop->vertcoord==1)
       {
+        // w_im is calculated
         Continuity(phys->wnew,grid,phys,prop);
         ISendRecvWData(phys->wnew,grid,myproc,comm);
       } else {
         // here only calculates the omega value which means the w* is still unknown.
         // the reason is that w is not used for hydrostatic calculation and scalar transport
         // after this calculation vert->omega=omega* vert->omega_old=omega^n vert->omega_old2=omega^n-1
+        // omega_im is calculated 
         LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
         ISendRecvWData(vert->omega,grid,myproc,comm);
       }
@@ -1526,7 +1555,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         t0=Timer();
         getTsurf(grid,phys); // Find the surface temperature
         HeatSource(phys->wtmp,phys->uold,grid,phys,prop,met, myproc, comm);
-        UpdateScalars(grid,phys,prop,phys->wnew,phys->T,phys->boundary_T,phys->Cn_T,
+        UpdateScalars(grid,phys,prop,phys->wnew,phys->T,phys->T_old,phys->boundary_T,phys->Cn_T,
             prop->kappa_T,prop->kappa_TH,phys->kappa_tv,prop->theta,
             phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,0,prop->TVDtemp);
             getchangeT(grid,phys); // Get the change in surface temp
@@ -1555,11 +1584,11 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         t0=Timer();
         if(prop->metmodel>0){
             SaltSource(phys->wtmp,phys->uold,grid,phys,prop,met);
-            UpdateScalars(grid,phys,prop,phys->wnew,phys->s,phys->boundary_s,phys->Cn_R,
+            UpdateScalars(grid,phys,prop,phys->wnew,phys->s,phys->s_old,phys->boundary_s,phys->Cn_R,
                 prop->kappa_s,prop->kappa_sH,phys->kappa_tv,prop->theta,
                 phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,1,prop->TVDsalt);
         }else{ 
-             UpdateScalars(grid,phys,prop,phys->wnew,phys->s,phys->boundary_s,phys->Cn_R,
+             UpdateScalars(grid,phys,prop,phys->wnew,phys->s,phys->s_old,phys->boundary_s,phys->Cn_R,
                 prop->kappa_s,prop->kappa_sH,phys->kappa_tv,prop->theta,
                 NULL,NULL,NULL,NULL,0,0,comm,myproc,1,prop->TVDsalt);
         }
@@ -1742,7 +1771,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
  * Function: StoreVariables
  * Usage: StoreVariables(grid,phys);
  * ---------------------------------
- * Store the old values of s, u, and w into stmp3, utmp2, and wtmp2,
+ * Store the old values of s, u, and w into stmp3, u_old, and w_old,
  * respectively.
  *
  */
@@ -1752,16 +1781,16 @@ static void StoreVariables(gridT *grid, physT *phys) {
   for(i=0;i<grid->Nc;i++) 
     for(k=0;k<grid->Nk[i];k++) {
       phys->stmp3[i][k]=phys->s[i][k];
-      phys->wtmp3[i][k]=phys->wtmp2[i][k];
-      phys->wtmp2[i][k]=phys->w[i][k];      
+      phys->w_old2[i][k]=phys->w_old[i][k];
+      phys->w_old[i][k]=phys->w[i][k];      
     }
 
   for(j=0;j<grid->Ne;j++) {
     phys->D[j]=0;
     for(k=0;k<grid->Nke[j];k++)
     {  
-      phys->utmp3[j][k]=phys->utmp2[j][k];
-      phys->utmp[j][k]=phys->utmp2[j][k]=phys->u[j][k];
+      phys->u_old2[j][k]=phys->u_old[j][k];
+      phys->utmp[j][k]=phys->u_old[j][k]=phys->u[j][k];
     }
   }
 }
@@ -1806,7 +1835,6 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
 
  // Adams Bashforth coefficients
   if(prop->n==1) {
-//  if(prop->n==1){
     fab1=1;
     fab2=fab3=0;
 
@@ -2542,7 +2570,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     }
 
     // Interpolate wc to faces and place into ut
-    GetMomentumFaceValues(phys->ut,phys->wc,phys->boundary_w,phys->utmp2,grid,phys,prop,comm,myproc,prop->nonlinear);
+    GetMomentumFaceValues(phys->ut,phys->wc,phys->boundary_w,phys->u_old,grid,phys,prop,comm,myproc,prop->nonlinear);
 
     if(prop->conserveMomentum)
       for(jptr=grid->edgedist[0];jptr<grid->edgedist[5];jptr++) {
@@ -2571,17 +2599,17 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
         for(k=grid->ctop[i];k<grid->Nk[i];k++)
           if(!prop->subgrid || prop->wetdry)
             // this is basically Eqn 50, w-component
-            phys->stmp[i][k]+=phys->ut[ne][k]*phys->utmp2[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*grid->Ac[i]);
+            phys->stmp[i][k]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*grid->Ac[i]);
           else 
-            phys->stmp[i][k]+=phys->ut[ne][k]*phys->utmp2[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]); // consistent with dzz not dzzold
+            phys->stmp[i][k]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]); // consistent with dzz not dzzold
 
         // Top cell is filled with momentum from neighboring cells
 	if(prop->conserveMomentum)
 	  for(k=grid->etop[ne];k<grid->ctop[i];k++)
             if(!prop->subgrid || prop->wetdry) 
-	      phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->utmp2[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*grid->Ac[i]);
+	      phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*grid->Ac[i]);
             else
-	      phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->utmp2[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]);
+	      phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]);
       }
 
       // Vertical advection; note that in this formulation first-order upwinding is not implemented.
@@ -2844,11 +2872,11 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
       // compute the vertical contributions to the source term
       if(!prop->subgrid)
         src[i][k] = grid->Ac[i]*(phys->w[i][k]-phys->w[i][k+1])
-          +fac2/fac1*grid->Ac[i]*(phys->wtmp2[i][k]-phys->wtmp2[i][k+1])+fac3/fac1*grid->Ac[i]*(phys->wtmp3[i][k]-phys->wtmp3[i][k+1]);
+          +fac2/fac1*grid->Ac[i]*(phys->w_old[i][k]-phys->w_old[i][k+1])+fac3/fac1*grid->Ac[i]*(phys->w_old2[i][k]-phys->w_old2[i][k+1]);
       else
         src[i][k] = subgrid->Acveff[i][k]*phys->w[i][k]-subgrid->Acveff[i][k+1]*phys->w[i][k+1]
-          +fac2/fac1*(subgrid->Acveffold[i][k]*phys->wtmp2[i][k]-subgrid->Acveffold[i][k+1]*phys->wtmp2[i][k+1])
-          +fac3/fac1*(subgrid->Acveffold2[i][k]*phys->wtmp3[i][k]-subgrid->Acveffold2[i][k+1]*phys->wtmp3[i][k+1]);
+          +fac2/fac1*(subgrid->Acveffold[i][k]*phys->w_old[i][k]-subgrid->Acveffold[i][k+1]*phys->w_old[i][k+1])
+          +fac3/fac1*(subgrid->Acveffold2[i][k]*phys->w_old2[i][k]-subgrid->Acveffold2[i][k+1]*phys->w_old2[i][k+1]);
     }
 
     /* HORIZONTAL CONTRIBUTION */
@@ -2861,8 +2889,8 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
       // for each of the defined edges over depth
       for(k=grid->ctop[i];k<grid->Nke[ne];k++) 
         // compute the horizontal source term via the (D_H)(u^*)
-        src[i][k]+=(phys->u[ne][k]+fac2/fac1*phys->utmp2[ne][k]+fac3/fac1*
-          phys->utmp3[ne][k])*grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne];
+        src[i][k]+=(phys->u[ne][k]+fac2/fac1*phys->u_old[ne][k]+fac3/fac1*
+          phys->u_old2[ne][k])*grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne];
     }
 
     // divide final result by dt
@@ -3043,7 +3071,7 @@ static void CGSolveQ(REAL **q, REAL **src, REAL **c, gridT *grid, physT *phys, p
 static void EddyViscosity(gridT *grid, physT *phys, propT *prop, REAL **wnew, MPI_Comm comm, int myproc)
 {
   if(prop->turbmodel==1) 
-    my25(grid,phys,prop,wnew,phys->qT,phys->lT,phys->Cn_q,phys->Cn_l,phys->nu_tv,phys->kappa_tv,comm,myproc);
+    my25(grid,phys,prop,wnew,phys->qT,phys->qT_old,phys->lT,phys->lT_old,phys->Cn_q,phys->Cn_l,phys->nu_tv,phys->kappa_tv,comm,myproc);
 }
 
 /*
@@ -3084,27 +3112,27 @@ static void UPredictor(gridT *grid, physT *phys,
   if(prop->n==1) {
     for(j=0;j<grid->Ne;j++)
       for(k=0;k<grid->Nke[j];k++)
-        phys->utmp3[j][k]=phys->u[j][k];
+        phys->u_old2[j][k]=phys->u[j][k];
 
     for(i=0;i<grid->Nc;i++) 
       for(k=0;k<grid->Nk[i]+1;k++) 
       {
-        phys->wtmp3[i][k]=phys->w[i][k];
-        phys->wtmp4[i][k]=0;
+        phys->w_old2[i][k]=phys->w[i][k];
+        phys->w_im[i][k]=0;
       }
     for(i=0;i<grid->Nc;i++)
-      phys->hold2[i]=phys->h[i]; 
+      phys->h_old[i]=phys->h[i]; 
   }
 
   // Set D[j] = 0 
   for(i=0;i<grid->Nc;i++) 
     for(k=0;k<grid->Nk[i]+1;k++) 
-      phys->wtmp2[i][k]=phys->w[i][k];
+      phys->w_old[i][k]=phys->w[i][k];
 
   for(j=0;j<grid->Ne;j++) {
     phys->D[j]=0;
     for(k=0;k<grid->Nke[j];k++)
-      phys->utmp2[j][k]=phys->u[j][k];
+      phys->u_old[j][k]=phys->u[j][k];
   }
 
   // note that phys->utmp is the horizontalsource term computed 
@@ -3133,7 +3161,7 @@ static void UPredictor(gridT *grid, physT *phys,
     // 5th term of Eqn 31
     for(k=grid->etop[j];k<grid->Nke[j];k++)
       phys->utmp[j][k]-=
-        prop->grav*dt*(fac2*(phys->h[nc1]-phys->h[nc2])+fac3*(phys->hold2[nc1]-phys->hold2[nc2]))/grid->dg[j];
+        prop->grav*dt*(fac2*(phys->h[nc1]-phys->h[nc2])+fac3*(phys->h_old[nc1]-phys->h_old[nc2]))/grid->dg[j];
   }
   
   // Drag term must be fully implicit
@@ -3371,20 +3399,20 @@ static void UPredictor(gridT *grid, physT *phys,
       {
         // conservative form part
         for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++)
-          phys->utmp[j][k]-=prop->dt*(a0[k]*(fac2*phys->u[j][k-1]+fac3*phys->utmp3[j][k-1])+
-                b0[k]*(fac2*phys->u[j][k]+fac3*phys->utmp3[j][k])+c0[k]*(fac2*phys->u[j][k+1]+fac3*phys->utmp3[j][k+1]));
+          phys->utmp[j][k]-=prop->dt*(a0[k]*(fac2*phys->u[j][k-1]+fac3*phys->u_old2[j][k-1])+
+                b0[k]*(fac2*phys->u[j][k]+fac3*phys->u_old2[j][k])+c0[k]*(fac2*phys->u[j][k+1]+fac3*phys->u_old2[j][k+1]));
         // Top boundary
         phys->utmp[j][grid->etop[j]]-=prop->dt*((a0[grid->etop[j]]+b0[grid->etop[j]])*
-                (fac2*phys->u[j][grid->etop[j]]+fac3*phys->utmp3[j][grid->etop[j]])+
-                c0[grid->etop[j]]*(fac2*phys->u[j][grid->etop[j]+1]+fac3*phys->utmp3[j][grid->etop[j]+1]));
+                (fac2*phys->u[j][grid->etop[j]]+fac3*phys->u_old2[j][grid->etop[j]])+
+                c0[grid->etop[j]]*(fac2*phys->u[j][grid->etop[j]+1]+fac3*phys->u_old2[j][grid->etop[j]+1]));
         
         // Bottom boundary
         phys->utmp[j][grid->Nke[j]-1]-=prop->dt*(a0[grid->Nke[j]-1]*
-                (fac2*phys->u[j][grid->Nke[j]-2]+fac3*phys->utmp3[j][grid->Nke[j]-2])+
-                (b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1])*(fac2*phys->u[j][grid->Nke[j]-1]+fac3*phys->utmp3[j][grid->Nke[j]-1]));
+                (fac2*phys->u[j][grid->Nke[j]-2]+fac3*phys->u_old2[j][grid->Nke[j]-2])+
+                (b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1])*(fac2*phys->u[j][grid->Nke[j]-1]+fac3*phys->u_old2[j][grid->Nke[j]-1]));
         // second part udomegadz
         for(k=grid->etop[j];k<grid->Nke[j];k++)
-          phys->utmp[j][k]+=prop->dt*(fac2*phys->u[j][k]+fac3*phys->utmp3[j][k])*
+          phys->utmp[j][k]+=prop->dt*(fac2*phys->u[j][k]+fac3*phys->u_old2[j][k])*
           (def2*(vert->omega[nc1][k]-vert->omega[nc1][k+1])+def1*(vert->omega[nc2][k]-vert->omega[nc2][k+1]))/
           grid->dg[j]/(0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
       }
@@ -3601,7 +3629,7 @@ static void UPredictor(gridT *grid, physT *phys,
       }
 
   // for computational cells
-  // now phys->u=u^n phys->utmp3=u^n-1 phys->utmp=u*
+  // now phys->u=u^n phys->u_old2=u^n-1 phys->utmp=u*
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
     i = grid->cellp[iptr];
 
@@ -3618,7 +3646,7 @@ static void UPredictor(gridT *grid, physT *phys,
         nc2=nc1;
       for(k=grid->etop[ne];k<grid->Nke[ne];k++) 
       {  
-        sum+=(fac2*phys->u[ne][k]+fac1*phys->utmp[ne][k]+fac3*phys->utmp3[ne][k])*
+        sum+=(fac2*phys->u[ne][k]+fac1*phys->utmp[ne][k]+fac3*phys->u_old2[ne][k])*
           grid->df[ne]*normal*grid->dzf[ne][k];
       }
     }
@@ -3636,12 +3664,13 @@ static void UPredictor(gridT *grid, physT *phys,
       printf("n %d something wrong on the source term of h at cell %d\n",prop->n,i);
       //exit(1);
     }
-    // store the old h as h_n-1 in the next time step
-    phys->hold2[i]=phys->h[i];
   }
 
-  for(i=0;i<grid->Nc;i++)
+  for(i=0;i<grid->Nc;i++){
+    // store the old h as h_n-1 in the next time step
+    phys->h_old[i]=phys->h[i];
     phys->dhdt[i]=phys->h[i];
+  }
   
   sum=0;
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
@@ -3930,7 +3959,7 @@ static void UPredictor(gridT *grid, physT *phys,
           flag=1;
       }
       if(!flag)
-        phys->h[i]=phys->hold2[i]; 
+        phys->h[i]=phys->h_old[i]; 
     }  
 
     if(phys->h[i]<=(-grid->dv[i]+DRYCELLHEIGHT)) {
@@ -3996,7 +4025,7 @@ static void UPredictor(gridT *grid, physT *phys,
         ne = grid->face[i*grid->maxfaces+nf];
         normal = grid->normal[i*grid->maxfaces+nf];
         for(k=grid->etop[ne];k<grid->Nke[ne];k++){ 
-          sum0+=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])*grid->df[ne]*normal*grid->dzf[ne][k];
+          sum0+=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*grid->df[ne]*normal*grid->dzf[ne][k];
         }
       }
       subgrid->Verr[i]=subgrid->Veff[i]-subgrid->Veffold[i]+sum0;
@@ -4918,13 +4947,13 @@ void Continuity(REAL **w, gridT *grid, physT *phys, propT *prop)
     // no flux into bottom cells
     w[i][grid->Nk[i]] = 0;
     for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--) {
-      // wtmp2 is the old value for w (basically at timestep n) where
+      // w_old is the old value for w (basically at timestep n) where
       // w in this context is for n+1
       if(prop->subgrid)
-        w[i][k] = (subgrid->Acveff[i][k+1]*w[i][k+1]- fac2/fac1*(subgrid->Acveffold[i][k]*phys->wtmp2[i][k]-subgrid->Acveffold[i][k+1]*phys->wtmp2[i][k+1])-\
-          fac3/fac1*(phys->wtmp3[i][k]*subgrid->Acveffold2[i][k]-subgrid->Acveffold2[i][k+1]*phys->wtmp3[i][k+1]))/subgrid->Acveff[i][k];
+        w[i][k] = (subgrid->Acveff[i][k+1]*w[i][k+1]- fac2/fac1*(subgrid->Acveffold[i][k]*phys->w_old[i][k]-subgrid->Acveffold[i][k+1]*phys->w_old[i][k+1])-\
+          fac3/fac1*(phys->w_old2[i][k]*subgrid->Acveffold2[i][k]-subgrid->Acveffold2[i][k+1]*phys->w_old2[i][k+1]))/subgrid->Acveff[i][k];
       else
-        w[i][k] = w[i][k+1]- fac2/fac1*(phys->wtmp2[i][k]-phys->wtmp2[i][k+1])-fac3/fac1*(phys->wtmp3[i][k]-phys->wtmp3[i][k+1]);
+        w[i][k] = w[i][k+1]- fac2/fac1*(phys->w_old[i][k]-phys->w_old[i][k+1])-fac3/fac1*(phys->w_old2[i][k]-phys->w_old2[i][k+1]);
 
       for(nf=0;nf<grid->nfaces[i];nf++) {
         ne = grid->face[i*grid->maxfaces+nf];
@@ -4936,19 +4965,21 @@ void Continuity(REAL **w, gridT *grid, physT *phys, propT *prop)
 
         // set the flux vertical area is explicit
         if(k<grid->Nke[ne])
-          w[i][k]-=(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+fac3*phys->utmp3[ne][k])*
+          w[i][k]-=(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*
             grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac/fac1*grid->dzf[ne][k];
       }
     }
   }
 
-  // calculate wtmp4 for update scalar
+  // calculate w_im for update scalar
   for(i=0;i<grid->Nc;i++) 
     for(k=0;k<grid->Nk[i]+1;k++)
       if(!prop->subgrid)
-        phys->wtmp4[i][k]=fac2*phys->wtmp2[i][k]+fac3*phys->wtmp3[i][k]+fac1*w[i][k];
+        phys->w_im[i][k]=fac2*phys->w_old[i][k]+fac3*phys->w_old2[i][k]+fac1*w[i][k];
       else
-        phys->wtmp4[i][k]=(fac2*phys->wtmp2[i][k]*subgrid->Acveffold[i][k]+fac3*phys->wtmp3[i][k]*subgrid->Acveffold2[i][k]+fac1*w[i][k]*subgrid->Acveff[i][k])/subgrid->Acveff[i][k];
+        phys->w_im[i][k]=(fac2*phys->w_old[i][k]*subgrid->Acveffold[i][k]+
+                fac3*phys->w_old2[i][k]*subgrid->Acveffold2[i][k]+
+                fac1*w[i][k]*subgrid->Acveff[i][k])/subgrid->Acveff[i][k];
 }
 
 /*

@@ -3489,8 +3489,8 @@ void SubgridFluxCheck(gridT *grid, physT *phys, propT *prop,int myproc){
       ne = grid->face[i*grid->maxfaces+nf];
       normal = grid->normal[i*grid->maxfaces+nf];
       for(k=grid->etop[ne];k<grid->Nke[ne];k++){ 
-        flux=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->utmp2[ne][k]+
-          fac3*phys->utmp3[ne][k])*grid->df[ne]*normal*grid->dzf[ne][k];
+        flux=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+
+          fac3*phys->u_old2[ne][k])*grid->df[ne]*normal*grid->dzf[ne][k];
         if(flux>0){
           // outflux for each cell layer
           subgrid->fluxp[i][k]+=fabs(flux);
@@ -3514,8 +3514,8 @@ void SubgridFluxCheck(gridT *grid, physT *phys, propT *prop,int myproc){
     // add back vertical flux for each layer of each cell
     if(ktop!=grid->Nk[i]-1)
     {
-      flux=prop->dt*(fac1*phys->wnew[i][ktop+1]*subgrid->Acveff[i][ktop+1]+fac2*phys->wtmp2[i][ktop+1]*subgrid->Acveffold[i][ktop+1]+
-        fac3*phys->wtmp3[i][ktop+1]*subgrid->Acveffold2[i][ktop+1]);
+      flux=prop->dt*(fac1*phys->wnew[i][ktop+1]*subgrid->Acveff[i][ktop+1]+fac2*phys->w_old[i][ktop+1]*subgrid->Acveffold[i][ktop+1]+
+        fac3*phys->w_old2[i][ktop+1]*subgrid->Acveffold2[i][ktop+1]);
 
       if(flux>0)
         subgrid->fluxp[i][ktop]+=fabs(flux);
@@ -3526,8 +3526,8 @@ void SubgridFluxCheck(gridT *grid, physT *phys, propT *prop,int myproc){
       {
          // bottom layer
         flux=prop->dt*(fac1*phys->wnew[i][k+1]*subgrid->Acveff[i][k+1]+
-            fac2*phys->wtmp2[i][k+1]*subgrid->Acveffold[i][k+1]+
-            fac3*phys->wtmp3[i][k+1]*subgrid->Acveffold2[i][k+1]);
+            fac2*phys->w_old[i][k+1]*subgrid->Acveffold[i][k+1]+
+            fac3*phys->w_old2[i][k+1]*subgrid->Acveffold2[i][k+1]);
 
         if(flux<0)
           subgrid->fluxp[i][k]+=fabs(flux);
@@ -3536,8 +3536,8 @@ void SubgridFluxCheck(gridT *grid, physT *phys, propT *prop,int myproc){
           
         // top layer
         flux=prop->dt*(fac1*phys->wnew[i][k]*subgrid->Acveff[i][k]+
-          fac2*phys->wtmp2[i][k]*subgrid->Acveffold[i][k]+
-          fac3*phys->wtmp3[i][k]*subgrid->Acveffold2[i][k]);
+          fac2*phys->w_old[i][k]*subgrid->Acveffold[i][k]+
+          fac3*phys->w_old2[i][k]*subgrid->Acveffold2[i][k]);
         if(flux>0)
           subgrid->fluxp[i][k]+=fabs(flux);
           else

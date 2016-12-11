@@ -243,8 +243,8 @@ void UpdateAverageVariables(gridT *grid, averageT *average, physT *phys, metT *m
         
           //flx = phys->u[j][k]*grid->dzf[j][k]*grid->df[j]; 
 	  // Flux needs to be consistent with continuity equation
-	  flx = (theta*phys->u[j][k] + (1.0-theta)*phys->utmp2[j][k])*grid->dzf[j][k]*grid->df[j]; 
-	  //flx = (theta*phys->u[j][k] + (1.0-theta)*phys->utmp2[j][k])*dz*grid->df[j]; 
+	  flx = (theta*phys->u[j][k] + (1.0-theta)*phys->u_old[j][k])*grid->dzf[j][k]*grid->df[j]; 
+	  //flx = (theta*phys->u[j][k] + (1.0-theta)*phys->u_old[j][k])*dz*grid->df[j]; 
 	  //average->U_F[j][k] += flx; 
 	  average->U_F[j][k] += flx*V0; 
       }
@@ -296,9 +296,9 @@ void UpdateAverageScalars(gridT *grid, averageT *average, physT *phys, metT *met
 	  j = grid->edgep[jptr]; 
 	  for(k=grid->etop[j];k<grid->Nke[j];k++){
 	      //See equation 85 in SUNTANS paper
-	      flx = (theta*phys->u[j][k] + (1.0-theta)*phys->utmp2[j][k])*grid->dzf[j][k]*grid->df[j]; 
+	      flx = (theta*phys->u[j][k] + (1.0-theta)*phys->u_old[j][k])*grid->dzf[j][k]*grid->df[j]; 
 	      //if(phys->u[j][k]>0)
-	      if(phys->utmp2[j][k]>0)
+	      if(phys->u_old[j][k]>0)
 		average->s_F[j][k]+=phys->SfHp[j][k] * flx * V0;
 	      else
 		average->s_F[j][k]+=phys->SfHm[j][k] * flx * V0;
@@ -312,9 +312,9 @@ void UpdateAverageScalars(gridT *grid, averageT *average, physT *phys, metT *met
   	for(jptr=grid->edgedist[0];jptr<grid->edgedist[4];jptr++) {
 	  j = grid->edgep[jptr]; 
 	  for(k=grid->etop[j];k<grid->Nke[j];k++){
-	      flx = (theta*phys->u[j][k] + (1.0-theta)*phys->utmp2[j][k])*grid->dzf[j][k]*grid->df[j]; 
+	      flx = (theta*phys->u[j][k] + (1.0-theta)*phys->u_old[j][k])*grid->dzf[j][k]*grid->df[j]; 
 	      //if(phys->u[j][k]>0)
-	      if(phys->utmp2[j][k]>0)
+	      if(phys->u_old[j][k]>0)
 		average->T_F[j][k]+=phys->SfHp[j][k] * flx * V0;
 	      else
 		average->T_F[j][k]+=phys->SfHm[j][k] * flx * V0;

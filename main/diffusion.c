@@ -33,7 +33,7 @@ void LaxWendroff(gridT *grid, physT *phys, propT *prop, int myproc, MPI_Comm com
     for(i=0;i<grid->Nc;i++) 
       for(k=0;k<grid->Nk[i];k++) {
 	phys->nu_lax[i][k]=
-	  0.5*(pow(laxVertical*0.5*(phys->wtmp2[i][k]+phys->wtmp2[i][k+1]),2)+
+	  0.5*(pow(laxVertical*0.5*(phys->w_old[i][k]+phys->w_old[i][k+1]),2)+
 	       pow(phys->uc[i][k],2)+pow(phys->vc[i][k],2))*prop->dt;
 	if(phys->nu_lax[i][k]<numin) numin=phys->nu_lax[i][k];
 	if(phys->nu_lax[i][k]>numax) numax=phys->nu_lax[i][k];

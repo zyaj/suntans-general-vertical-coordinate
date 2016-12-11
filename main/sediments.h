@@ -15,7 +15,8 @@
 #include "phys.h"
 
 typedef struct _sedimentsT {
-REAL ***SediC,// sediment concentration [fraction][cell][Nkmax]
+REAL ***SediC,// sediment concentration for time step n [fraction][cell][Nkmax]
+     ***SediC_old,// sediment concentration for time step n-1 [fraction][cell][Nkmax]
      //***SediCbed, // sediment concentration in bed [fraction][cell][Nlayer]
      ***boundary_sediC, // sediment transport boundary condition [fraction][cell][Nkmax]
      ***Ws, // settling velocity [fraction][cell][Nkmax]

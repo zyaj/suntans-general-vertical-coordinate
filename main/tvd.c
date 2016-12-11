@@ -36,7 +36,12 @@ void HorizontalFaceScalars(gridT *grid, physT *phys, propT *prop, REAL **scal, R
 			   MPI_Comm comm, int myproc) 
 {
   int i, iptr, j, k, m, mf, jptr, ib, nc1, nc2, ne, neigh, normal;
-  REAL u_nptheta, Qminus, r, si, sm, **sumQC, **sumQ;
+  REAL u_nptheta, Qminus, r, si, sm, **sumQC, **sumQ,fac1,fac2,fac3;
+  
+  // set new implicit scheme
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
 
   // Pointer Variables for TVD scheme
   sumQ = phys->gradSx;
@@ -54,7 +59,7 @@ void HorizontalFaceScalars(gridT *grid, physT *phys, propT *prop, REAL **scal, R
 	neigh = grid->neigh[i*grid->maxfaces+mf];
 	normal = grid->normal[i*grid->maxfaces+mf];
 
-	u_nptheta = normal*(prop->theta*phys->u[ne][k]+(1-prop->theta)*phys->utmp2[ne][k]);
+	u_nptheta = normal*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k]);
 	Qminus = 0.5*grid->dzf[ne][k]*grid->df[ne]*fabs(u_nptheta-fabs(u_nptheta));
 	if(neigh!=-1)
 	  sumQC[i][k]+=Qminus*(scal[i][k]-scal[neigh][k]);
@@ -76,7 +81,7 @@ void HorizontalFaceScalars(gridT *grid, physT *phys, propT *prop, REAL **scal, R
       
     for(k=grid->etop[j];k<grid->Nke[j];k++) {
 
-      u_nptheta = prop->theta*phys->u[j][k]+(1-prop->theta)*phys->utmp2[j][k];
+      u_nptheta = fac1*phys->u[j][k]+fac2*phys->u_old[j][k]+fac3*phys->u_old2[j][k];
 
       if(u_nptheta>0) {
 	i=nc2;
@@ -294,8 +299,8 @@ void HorizontalFaceU(REAL **uc, gridT *grid, physT *phys, propT *prop, int TVD,
 
 
       for(k=0;k<grid->Nke[ne];k++) {
-	Cp[k]= 0.5*(phys->utmp2[ne][k]+fabs(phys->utmp2[ne][k]))*dt/dg;
-	Cm[k]= 0.5*(phys->utmp2[ne][k]-fabs(phys->utmp2[ne][k]))*dt/dg;
+	Cp[k]= 0.5*(phys->u_old[ne][k]+fabs(phys->u_old[ne][k]))*dt/dg;
+	Cm[k]= 0.5*(phys->u_old[ne][k]-fabs(phys->u_old[ne][k]))*dt/dg;
       }
 
       for(k=0;k<grid->Nke[ne];k++) {	

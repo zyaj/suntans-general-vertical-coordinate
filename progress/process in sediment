@@ -20,9 +20,6 @@
 1. add CalculateErosion finished! and BedChange not finished
 06/20/2013
 1. delete deposition_old erosion erosion_old finished!
-
-
-
 2. add CalculateDeposition finished! 
 3. finish BedChange finished!
 4. finish CalculateErosion finished!
@@ -153,3 +150,6 @@ add support of subgrid module
 
 05/21/2016
 1. phys->active=0 ==>taub==0
+
+12/10/2016
+1. add sediC_old for store n-1 value for the update of Updatescalar function

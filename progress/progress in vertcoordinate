@@ -32,3 +32,5 @@ the horizontal diffusion term is the same as the original method
 3. adjust the location of ComputeZc function and put it directly after UpdateLayerthickness
 4. Modify the UpdateScalars Function
 
+12/10/2016
+1. add omega_im=fac1*omega+fac2*omega^n+fac3*omega^n-1 for updatescalar function

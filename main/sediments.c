@@ -150,6 +150,7 @@ void AllocateSediment(gridT *grid, int myproc) {
   sediments->z0s = (REAL *)SunMalloc(grid->Nc*sizeof(REAL), "AllocateSediVariables");
 
   sediments->SediC = (REAL ***)SunMalloc(sediments->Nsize*sizeof(REAL **), "AllocateSediVariables");
+  sediments->SediC_old = (REAL ***)SunMalloc(sediments->Nsize*sizeof(REAL **), "AllocateSediVariables");
   sediments->Erosion = (REAL ***)SunMalloc(sediments->Nsize*sizeof(REAL **), "AllocateSediVariables");
   sediments->Erosion_old = (REAL ***)SunMalloc(sediments->Nsize*sizeof(REAL **), "AllocateSediVariables");   
   sediments->boundary_sediC = (REAL ***)SunMalloc(sediments->Nsize*sizeof(REAL **), "AllocateSediVariables");
@@ -166,6 +167,7 @@ void AllocateSediment(gridT *grid, int myproc) {
   sediments->Seditbmax = (REAL *)SunMalloc(grid->Nc*sizeof(REAL), "AllocateSediVariables");
   for(i=0;i<sediments->Nsize;i++){
     sediments->SediC[i] = (REAL **)SunMalloc(grid->Nc*sizeof(REAL *), "AllocateSediVariables");
+    sediments->SediC_old[i] = (REAL **)SunMalloc(grid->Nc*sizeof(REAL *), "AllocateSediVariables");
     sediments->Deposition[i]=(REAL *)SunMalloc(grid->Nc*sizeof(REAL), "AllocateSediVariables");
     sediments->alphaSSC[i]=(REAL *)SunMalloc(grid->Nc*sizeof(REAL), "AllocateSediVariables");
     sediments->Deposition_old[i]=(REAL *)SunMalloc(grid->Nc*sizeof(REAL), "AllocateSediVariables");
@@ -178,6 +180,7 @@ void AllocateSediment(gridT *grid, int myproc) {
     sediments->Layerthickness[i] = (REAL **)SunMalloc(grid->Nc*sizeof(REAL *), "AllocateSediVariables");
     for(j=0;j<grid->Nc;j++){
       sediments->SediC[i][j] = (REAL *)SunMalloc(grid->Nk[j]*sizeof(REAL), "AllocateSediVariables");
+      sediments->SediC_old[i][j] = (REAL *)SunMalloc(grid->Nk[j]*sizeof(REAL), "AllocateSediVariables");
       sediments->Erosion[i][j] = (REAL *)SunMalloc(sediments->Nlayer*sizeof(REAL), "AllocateSediVariables"); 
       sediments->Erosion_old[i][j] = (REAL *)SunMalloc(sediments->Nlayer*sizeof(REAL), "AllocateSediVariables"); 
       sediments->Layerthickness[i][j]= (REAL *)SunMalloc(sediments->Nlayer*sizeof(REAL), "AllocateSediVariables");
@@ -216,7 +219,8 @@ void InitializeSediment(gridT *grid, physT *phys, propT *prop,  int myproc) {
   for(i=0;i<sediments->Nsize;i++) {
     for(j=0;j<grid->Nc;j++){
       for(k=0;k<grid->Nk[j];k++) {
-        sediments->SediC[i][j][k]=0;        
+        sediments->SediC[i][j][k]=0;   
+        sediments->SediC_old[i][j][k]=0;             
         sediments->Ws[i][j][k]=0;
       }
       sediments->Ws[i][j][grid->Nk[j]]=0;
@@ -308,6 +312,12 @@ void InitializeSediment(gridT *grid, physT *phys, propT *prop,  int myproc) {
     }
   }
 
+  // set SediC_old value assume sediC^n-1=sediC^n for prop->n==1
+  for(i=0;i<sediments->Nsize;i++)
+    for(j=0;j<grid->Nc;j++)
+      for(k=0;k<grid->Nk[j];k++)
+        sediments->SediC_old[i][j][k]=sediments->SediC[i][j][k];
+  
   // give the initial value for thickness
   for(j=0;j<sediments->Nsize;j++)
     for(i=0;i<grid->Nc;i++)
@@ -831,7 +841,7 @@ void SedimentSource(REAL **A, REAL **B, gridT *grid, physT *phys, propT *prop,in
 
 /*
  * Function: SedimentVerticalVelocity
- * Usage: wnewsedi=phys->wnew-ws, woldsedi=phys->wtmp2-ws, ws is explicit
+ * Usage: wnewsedi=phys->wnew-ws, woldsedi=phys->w_old-ws, ws is explicit
  *--------------------------------------------------------------
  * provide the vertical velocity field for updatescalar function
  *
@@ -843,12 +853,12 @@ void SedimentVerticalVelocity(gridT *grid, physT *phys,int Nosize,int symbol, in
     for(i=0;i<grid->Nc;i++) 
       for(k=0;k<grid->Nk[i]+1;k++) {
         sediments->Wnewsedi[i][k]=phys->wnew[i][k]-sediments->Ws[Nosize][i][k];
-        phys->wtmp2[i][k]=phys->wtmp2[i][k]-sediments->Ws[Nosize][i][k];
+        phys->w_old[i][k]=phys->w_old[i][k]-sediments->Ws[Nosize][i][k];
       }
   else
     for(i=0;i<grid->Nc;i++)
       for(k=0;k<grid->Nk[i]+1;k++)
-        phys->wtmp2[i][k]=phys->wtmp2[i][k]+sediments->Ws[Nosize][i][k];
+        phys->w_old[i][k]=phys->w_old[i][k]+sediments->Ws[Nosize][i][k];
 }
 
 /*
@@ -1130,7 +1140,10 @@ void ComputeSediments(gridT *grid, physT *phys, propT *prop, int myproc, int num
     SedimentSource(phys->wtmp,phys->uold,grid,phys,prop,k,prop->theta);
     SedimentVerticalVelocity(grid,phys,k,1,myproc);
     CalculateSediDiffusivity(grid,phys,k,myproc);
-    UpdateScalars(grid,phys,prop,sediments->Wnewsedi,sediments->SediC[k],sediments->boundary_sediC[k],phys->Cn_T,0,0,sediments->SediKappa_tv,prop->theta,phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,0,prop->TVDtemp);
+    UpdateScalars(grid,phys,prop,sediments->Wnewsedi,sediments->SediC[k],sediments->SediC_old[k],
+      sediments->boundary_sediC[k],phys->Cn_T,
+      0,0,sediments->SediKappa_tv,prop->theta,
+      phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,0,prop->TVDtemp);
     SedimentVerticalVelocity(grid,phys,k,-1,myproc);
     ISendRecvCellData3D(sediments->SediC[k],grid,myproc,comm);
   }          

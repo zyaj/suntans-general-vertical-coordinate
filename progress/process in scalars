@@ -3,3 +3,10 @@
 
 2016/12/09 start the modification of UpdateScalar function
 1. first modify it into new implicit schemes
+2. modify the HorizontalFaceScalars function in tvd.c for the new implicit schemes
+
+2016/12/10
+1. add s_old T_old qt_old lt_old to store n-1 values
+2. not finished! for sediments for modification is required for the sedimentSource
+3. change UpdateScalarTransport function add one more input scal_old
+
