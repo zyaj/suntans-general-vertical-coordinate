@@ -1533,9 +1533,13 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
 
       // Compute the eddy viscosity
       t0=Timer();
-      EddyViscosity(grid,phys,prop,phys->wnew,comm,myproc);
-      t_turb+=Timer()-t0;
 
+      if(prop->vertcoord==1)
+        EddyViscosity(grid,phys,prop,phys->w_im,comm,myproc);
+      else
+        EddyViscosity(grid,phys,prop,vert->omega_im,comm,myproc);
+
+      t_turb+=Timer()-t0;
 
       // Update the meteorological data
       if(prop->metmodel>0){
@@ -1555,10 +1559,17 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         t0=Timer();
         getTsurf(grid,phys); // Find the surface temperature
         HeatSource(phys->wtmp,phys->uold,grid,phys,prop,met, myproc, comm);
-        UpdateScalars(grid,phys,prop,phys->wnew,phys->T,phys->T_old,phys->boundary_T,phys->Cn_T,
+        if(prop->vertcoord==1){
+          UpdateScalars(grid,phys,prop,phys->w_im,phys->T,phys->T_old,phys->boundary_T,phys->Cn_T,
+                prop->kappa_T,prop->kappa_TH,phys->kappa_tv,prop->theta,
+                phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,0,prop->TVDtemp);
+          getchangeT(grid,phys); // Get the change in surface temp
+        }else{
+          UpdateScalars(grid,phys,prop,vert->omega_im,phys->T,phys->T_old,phys->boundary_T,phys->Cn_T,
             prop->kappa_T,prop->kappa_TH,phys->kappa_tv,prop->theta,
             phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,0,prop->TVDtemp);
-            getchangeT(grid,phys); // Get the change in surface temp
+          getchangeT(grid,phys);
+        }
         ISendRecvCellData3D(phys->T,grid,myproc,comm);	
         ISendRecvCellData3D(phys->Ttmp,grid,myproc,comm);
         ISendRecvCellData2D(phys->dT,grid,myproc,comm);
@@ -1584,11 +1595,21 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         t0=Timer();
         if(prop->metmodel>0){
             SaltSource(phys->wtmp,phys->uold,grid,phys,prop,met);
-            UpdateScalars(grid,phys,prop,phys->wnew,phys->s,phys->s_old,phys->boundary_s,phys->Cn_R,
+            if(prop->vertcoord==1)
+              UpdateScalars(grid,phys,prop,phys->w_im,phys->s,phys->s_old,phys->boundary_s,phys->Cn_R,
                 prop->kappa_s,prop->kappa_sH,phys->kappa_tv,prop->theta,
                 phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,1,prop->TVDsalt);
+            else
+              UpdateScalars(grid,phys,prop,vert->omega_im,phys->s,phys->s_old,phys->boundary_s,phys->Cn_R,
+                prop->kappa_s,prop->kappa_sH,phys->kappa_tv,prop->theta,
+                phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,1,prop->TVDsalt);        
         }else{ 
-             UpdateScalars(grid,phys,prop,phys->wnew,phys->s,phys->s_old,phys->boundary_s,phys->Cn_R,
+            if(prop->vertcoord==1)
+              UpdateScalars(grid,phys,prop,phys->w_im,phys->s,phys->s_old,phys->boundary_s,phys->Cn_R,
+                prop->kappa_s,prop->kappa_sH,phys->kappa_tv,prop->theta,
+                NULL,NULL,NULL,NULL,0,0,comm,myproc,1,prop->TVDsalt);
+            else
+              UpdateScalars(grid,phys,prop,vert->omega_im,phys->s,phys->s_old,phys->boundary_s,phys->Cn_R,
                 prop->kappa_s,prop->kappa_sH,phys->kappa_tv,prop->theta,
                 NULL,NULL,NULL,NULL,0,0,comm,myproc,1,prop->TVDsalt);
         }

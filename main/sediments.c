@@ -831,11 +831,11 @@ void SedimentSource(REAL **A, REAL **B, gridT *grid, physT *phys, propT *prop,in
     alpha=1.0;
     if(prop->subgrid)
     {
-      alpha=subgrid->Aceff[i]/subgrid->Acceffold[i][grid->Nk[i]-1];
-      if(subgrid->Acceffold[i][grid->Nk[i]-1]==0)
+      alpha=subgrid->Aceff[i]/subgrid->Acceff[i][grid->Nk[i]-1];
+      if(subgrid->Acceff[i][grid->Nk[i]-1]==0)
         alpha=0;
     }
-    A[i][grid->Nk[i]-1]=alpha*((1-theta)*sediments->Erosion_old[Nosize][i][0]+theta*sediments->Erosion[Nosize][i][0])/grid->dzzold[i][grid->Nk[i]-1];
+    A[i][grid->Nk[i]-1]=alpha*((1-theta)*sediments->Erosion_old[Nosize][i][0]+theta*sediments->Erosion[Nosize][i][0])/grid->dzz[i][grid->Nk[i]-1];
   }
 }
 
@@ -848,17 +848,9 @@ void SedimentSource(REAL **A, REAL **B, gridT *grid, physT *phys, propT *prop,in
  */
 void SedimentVerticalVelocity(gridT *grid, physT *phys,int Nosize,int symbol, int myproc) {
   int i,k;
-
-  if(symbol==1)
-    for(i=0;i<grid->Nc;i++) 
-      for(k=0;k<grid->Nk[i]+1;k++) {
-        sediments->Wnewsedi[i][k]=phys->wnew[i][k]-sediments->Ws[Nosize][i][k];
-        phys->w_old[i][k]=phys->w_old[i][k]-sediments->Ws[Nosize][i][k];
-      }
-  else
-    for(i=0;i<grid->Nc;i++)
-      for(k=0;k<grid->Nk[i]+1;k++)
-        phys->w_old[i][k]=phys->w_old[i][k]+sediments->Ws[Nosize][i][k];
+  for(i=0;i<grid->Nc;i++) 
+    for(k=0;k<grid->Nk[i]+1;k++)
+      sediments->Wnewsedi[i][k]=phys->w_im[i][k]-sediments->Ws[Nosize][i][k];
 }
 
 /*
@@ -1144,7 +1136,7 @@ void ComputeSediments(gridT *grid, physT *phys, propT *prop, int myproc, int num
       sediments->boundary_sediC[k],phys->Cn_T,
       0,0,sediments->SediKappa_tv,prop->theta,
       phys->uold,phys->wtmp,NULL,NULL,0,0,comm,myproc,0,prop->TVDtemp);
-    SedimentVerticalVelocity(grid,phys,k,-1,myproc);
+    //SedimentVerticalVelocity(grid,phys,k,-1,myproc);
     ISendRecvCellData3D(sediments->SediC[k],grid,myproc,comm);
   }          
   if(sediments->WSconstant==0)
