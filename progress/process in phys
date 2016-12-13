@@ -289,3 +289,9 @@ my25 is modified to input q_old and l_old into the function.
  scal_old=scal^n, scal_old2=scal^n-1
 4 problem found whether to keep vertical momentum diffusion theta method for drag
 5. same for scalar transport 
+
+12/11/2016
+1. start nonhydrostatic pressure calculation
+2. Wpredictor is finished. modification includes 1. horizontal momentum advection 2 vertical momentum advection 3. add new implicit schemes
+3. modify computeqsource with omega
+4. version 1 for the new model finished!

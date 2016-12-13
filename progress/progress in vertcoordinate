@@ -33,4 +33,8 @@ the horizontal diffusion term is the same as the original method
 4. Modify the UpdateScalars Function
 
 12/10/2016
-1. add omega_im=fac1*omega+fac2*omega^n+fac3*omega^n-1 for updatescalar function
+1. add omega_im=fac1*omega+fac2*omega^n+fac3*omega^n-1 for updatescalar function first wpredictor function
+2. add dvdy dudx in vertcoordinate.c to calculate momentum advection
+12/12/2016
+1. add computeUl function seperated from computeuf function
+2. add computezf function to calculate vertical location for each edge face center

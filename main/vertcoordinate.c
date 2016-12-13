@@ -37,6 +37,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->vf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->wf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omegaf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->zf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
 
   for(j=0;j<grid->Ne;j++)
   {
@@ -44,9 +45,11 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->vf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->wf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->omegaf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->zf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     for(k=0;k<grid->Nkc[j];k++)
     {
       vert->uf[j][k]=0;
+      vert->zf[j][k]=0;
       vert->vf[j][k]=0;
       vert->wf[j][k]=0;
       vert->omegaf[j][k]=0;
@@ -65,6 +68,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->f_r=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dvdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dudy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dudx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dvdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dwdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dwdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -82,8 +87,10 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->zc[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zcold[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dvdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dvdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->f_r[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dudy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dudx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dwdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dwdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
@@ -106,6 +113,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->f_r[i][k]=0;
       vert->dvdx[i][k]=0;
       vert->dudy[i][k]=0;
+      vert->dudx[i][k]=0;
+      vert->dvdy[i][k]=0;
       vert->dwdx[i][k]=0;
       vert->dwdy[i][k]=0;
       vert->dzdx[i][k]=0;      
@@ -223,6 +232,22 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
 
 }
 
+/*
+ * Function: ComputeUl
+ * Calculate u v at the top and bottom face of each layer
+ * ----------------------------------------------------
+ * compute ul vl
+ */
+void ComputeUl(gridT *grid, propT *prop, physT *phys, int myproc)
+{
+  int i,j,k;
+  for(i=0;i<grid->Nc;i++)
+    for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
+    {
+       vert->ul[i][k]=InterpToLayerTopFace(i, k, phys->uc, grid);
+       vert->vl[i][k]=InterpToLayerTopFace(i, k, phys->vc, grid);
+    }
+}
 
 /*
  * Function: ComputeUf
@@ -248,18 +273,10 @@ void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
       vert->wf[j][k]=InterpToFace(j,k,phys->wc,phys->u,grid);
       vert->omegaf[j][k]=InterpToFace(j,k,vert->omegac,phys->u,grid);
     }
-
-  // ul and vl
-  for(i=0;i<grid->Nc;i++)
-    for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
-    {
-       vert->ul[i][k]=InterpToLayerTopFace(i, k, phys->uc, grid);
-       vert->vl[i][k]=InterpToLayerTopFace(i, k, phys->vc, grid);
-    }
 }
 
 /*
- * Function: InterpToLayerTopBotFace
+ * Function: InterpToLayerTopFace
  * Usage: uface = InterpToLayerTopBotFace(j,k,phys->uc,u,grid);
  * -------------------------------------------------
  * Linear interpolation of a Voronoi-centered value to the top and bottom face of each layer
@@ -320,9 +337,19 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
         if(k<grid->Nke[ne])
           flux+=(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
       }
-      omega[i][k]=(fac1*vert->omega[i][k+1]+fac2*vert->omega_old[i][k+1]+fac3*vert->omega_old2[i][k+1])-
-      (fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k])-flux-
-      (grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
+      if(!prop->subgrid)
+        omega[i][k]=(fac1*omega[i][k+1]+fac2*vert->omega_old[i][k+1]+fac3*vert->omega_old2[i][k+1])-
+        (fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k])-flux-
+        (grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
+      else{
+        omega[i][k]=(fac1*omega[i][k+1]*subgrid->Acveff[i][k+1]+
+          fac2*vert->omega_old[i][k+1]*subgrid->Acveffold[i][k+1]+
+          fac3*vert->omega_old2[i][k+1]*subgrid->Acveffold2[i][k+1])-
+        (fac2*vert->omega_old[i][k]*subgrid->Acveffold[i][k]+
+          fac3*vert->omega_old2[i][k]*subgrid->Acveffold2[i][k])-flux*Ac-
+        (subgrid->Acceff[i][k]*grid->dzz[i][k]-subgrid->Acceffold[i][k]*grid->dzzold[i][k])/prop->dt;        
+        omega[i][k]/=subgrid->Acveff[i][k];
+      }
       omega[i][k]/=fac1;
     }
     //compute omega_im for updatescalar function
@@ -364,12 +391,13 @@ void ComputeVerticalVelocity(REAL **omega, REAL **zc, gridT *grid, propT *prop, 
 /*
  * Function: ComputeZc
  * Compute the vertical location of each cell center
+ * also compute the vertical location of each layer center at edge face
  * ----------------------------------------------------
  */
 void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
 {
-  int i,k;
-  REAL z;
+  int i,j,k,nc1,nc2;
+  REAL z,def1,def2,Dj;
   for(i=0;i<grid->Nc;i++)
   {
     for(k=0;k<grid->Nk[i];k++)
@@ -382,7 +410,22 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
     if(prop->n==0)
       for(k=0;k<grid->Nk[i];k++)
         vert->zcold[i][k]=vert->zc[i][k];
-  }  
+  } 
+  for(j=0;j<grid->Ne;j++)
+  {
+    nc1=grid->grad[2*j];
+    nc2=grid->grad[2*j+1];
+    if(nc1==-1)
+      nc1=nc2;
+    if(nc2==-1)
+      nc2=nc1;
+    Dj = grid->dg[j];
+    def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
+        pow(grid->yv[nc1]-grid->ye[j],2));
+    def2 = Dj-def1;
+    for(k=0;k<grid->Nke[j];k++)
+      vert->zf[j][k]=vert->zc[nc1][k]*def2/Dj+vert->zc[nc2][k]*def1/Dj;
+  }
 }
 
 /*
@@ -423,6 +466,10 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
    for(i=0;i<grid->Nc;i++)
     for(k=0;k<grid->Nk[i];k++)
       vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
+   if(prop->nonhydrostatic){
+     ComputeCellAveragedHorizontalGradient(vert->dvdy, 1, vert->vf, grid, prop, phys, myproc);
+     ComputeCellAveragedHorizontalGradient(vert->dudx, 0, vert->uf, grid, prop, phys, myproc);
+   }
 }
 /*
  * Function: ComputeCellAveragedGradient
