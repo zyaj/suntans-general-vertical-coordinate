@@ -30,6 +30,8 @@ REAL **f_r; // the cell center relative vorticity dvdx-dudy [Nc][Nk]
 REAL **dvdx, **dudy, **dvdy, **dudx, **dwdx, **dwdy, **dzdx, **dzdy; // the cell-centered averaged gradient of different variables
 REAL *dsigma; // the dsigma for the sigma coordinate to define the vertical coordinate density [Nkmax]
 REAL *tmp; //temporary array for output
+int *Nkeb; // store the layer index for each edge when ze is higher than buffer height [Ne]
+REAL *zfb; // store the sum of dzf from bottom layer to Nkeb [Ne] 
 //int vertcoord; // the switch for different choice of vertical coordinates 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
 FILE *zcFID, *dzzFID, *omegaFID;
 
@@ -54,4 +56,5 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);
 void OpenVertCoordinateFiles(gridT *grid,int mergeArrays, int myproc);
 void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 void StoreVertVariables(gridT *grid, physT *phys);
+void FindBottomLayer(gridT *grid, propT *prop, physT *phys, int myproc);
 #endif

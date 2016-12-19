@@ -824,7 +824,7 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
  */
 void SetDragCoefficients(gridT *grid, physT *phys, propT *prop) {
   int i, j, k,nc1,nc2;
-  REAL z,dz,u_sum,A_sum;
+  REAL z,dz,u_sum,A_sum,zfb;
   // if set Z0, it will calculate Cd from log law. if Cd is given directly, it will set value to 
   // phys->Cd
   // z0T
@@ -842,16 +842,19 @@ void SetDragCoefficients(gridT *grid, physT *phys, propT *prop) {
   else
     for(j=0;j<grid->Ne;j++) 
     {
-      if(!prop->subgrid)
-        if(grid->Nke[j]>1 && grid->etop[j]!=(grid->Nke[j]-1))
-          phys->CdB[j]=pow(log(0.5*grid->dzf[j][grid->Nke[j]-1]/phys->z0B[j])/KAPPA_VK,-2);
+      if(prop->vertcoord==1)
+        if(!prop->subgrid)
+          zfb=0.5*grid->dzf[j][grid->Nke[j]-1];
         else
-          phys->CdB[j]=pow((log(grid->dzf[j][grid->Nke[j]-1]/phys->z0B[j])+phys->z0B[j]/grid->dzf[j][grid->Nke[j]-1]-1)/KAPPA_VK,-2);
+          zfb=0.5*subgrid->dzboteff[j];
       else
-        if(grid->Nke[j]>1 && grid->etop[j]!=(grid->Nke[j]-1))
-          phys->CdB[j]=pow(log(0.5*subgrid->dzboteff[j]/phys->z0B[j])/KAPPA_VK,-2);
-        else
-          phys->CdB[j]=pow((log(subgrid->dzboteff[j]/phys->z0B[j])+phys->z0B[j]/subgrid->dzboteff[j]-1)/KAPPA_VK,-2);
+        // need new modification for subgrid bathymetry
+        zfb=vert->zfb[j];
+
+      if(grid->Nke[j]>1 && grid->etop[j]!=(grid->Nke[j]-1))
+        phys->CdB[j]=pow(log(zfb/phys->z0B[j])/KAPPA_VK,-2);
+      else
+        phys->CdB[j]=pow((log(2*zfb/phys->z0B[j])+phys->z0B[j]/2/zfb-1)/KAPPA_VK,-2);
     }
 
   if(prop->subgrid && grid->Nkmax==1)
@@ -859,13 +862,22 @@ void SetDragCoefficients(gridT *grid, physT *phys, propT *prop) {
       CalculateSubgridDragCoef(grid,phys,prop);
   
   for(j=0;j<grid->Ne;j++){
-    if(!prop->subgrid){
-      if(grid->dzf[j][grid->Nke[j]-1]<BUFFERHEIGHT && grid->etop[j]==(grid->Nke[j]-1))
+    if(prop->vertcoord==1)
+      if(!prop->subgrid)
+        zfb=0.5*grid->dzf[j][grid->Nke[j]-1];
+      else
+        zfb=0.5*subgrid->dzboteff[j];
+    else
+      // need new modification for subgrid bathymetry
+      zfb=vert->zfb[j];
+  
+    if(prop->vertcoord==1)  
+      if(2*zfb<BUFFERHEIGHT && grid->etop[j]==(grid->Nke[j]-1))
         phys->CdB[j]=100;  
-    }else{
-      if(subgrid->dzboteff[j]<BUFFERHEIGHT && grid->etop[j]==(grid->Nke[j]-1))
-        phys->CdB[j]=100;
-    } 
+    else
+      // for the new vertical coordinate there is always constant layer numbers
+      if(2*zfb<BUFFERHEIGHT)
+        phys->CdB[j]=100; 
   }
 }
 
@@ -1318,6 +1330,9 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   BoundaryScalars(grid,phys,prop,myproc,comm);
   // set the height of the face bewteen cells to compute the flux
   SetFluxHeight(grid,phys,prop);
+  // find the bottom layer number which zfb>Bufferheight only works for new vertical coordinate
+  if(prop->vertcoord!=1)
+    FindBottomLayer(grid,prop,phys,myproc);
   // get the boundary velocities (boundaries.c)
   BoundaryVelocities(grid,phys,prop,myproc, comm); 
   // get the openboundary flux (boundaries.c)
@@ -1457,6 +1472,13 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       t0=Timer();
       // get the flux height (since free surface is changing) which is stored in dzf
       SetFluxHeight(grid,phys,prop);
+      
+      // find the bottom layer number which zfb>Bufferheight only works for new vertical coordinate
+      if(prop->vertcoord!=1)
+        FindBottomLayer(grid,prop,phys,myproc);
+     
+      // compute CdB and CdT
+      SetDragCoefficients(grid,phys,prop);
 
       // use subgrid method
       if(prop->subgrid)
@@ -1713,7 +1735,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       BoundaryScalars(grid,phys,prop,myproc,comm);
 
       WindStress(grid,phys,prop,met,myproc);
-      SetDragCoefficients(grid,phys,prop);
 
       // dz change so hmarshleft and marshtop may change
       if(prop->marshmodel)
@@ -3183,9 +3204,9 @@ static void EddyViscosity(gridT *grid, physT *phys, propT *prop, REAL **wnew, MP
 static void UPredictor(gridT *grid, physT *phys, 
     propT *prop, int myproc, int numprocs, MPI_Comm comm)
 {
-  int i, iptr, j, jptr, ne, nf, nf1, normal, nc1, nc2, k, n0, n1,iv,jv, botinterp,flag;
+  int i, iptr, j, jptr, ne, nf, nf1, normal, nc1, nc2, k, n0, n1,iv,jv, botinterp,flag, Nkeb;
   REAL hmax,sum,sum0,sum1, dt=prop->dt, theta=prop->theta, h0, boundary_flag,fac1,fac2,fac3,tmp,tmp_x,tmp_y,tmp2;
-  REAL *a, *b, *c, *d, *e1, **E, *a0, *b0, *c0, *d0, theta0, alpha,min,min2,def1,def2,l0,l1;
+  REAL *a, *b, *c, *d, *e1, **E, *a0, *b0, *c0, *d0, theta0, alpha,min,min2,def1,def2,l0,l1,zfb;
 
   a = phys->a;
   b = phys->b;
@@ -3287,6 +3308,12 @@ static void UPredictor(gridT *grid, physT *phys,
     phys->utmp[j][grid->etop[j]]+=2.0*dt*phys->tau_T[j]/
       (grid->dzz[nc1][grid->etop[j]]+grid->dzz[nc2][grid->etop[j]]);
 
+    // define the bottom layer
+    if(prop->vertcoord==1 || phys->CdB[j]==-1)
+      Nkeb=grid->Nke[j]-1;
+    else
+      Nkeb=vert->Nkeb[j];
+
     // Create the tridiagonal entries and formulate U***
     // provided that we don't have a zero-depth top cell
     if(!(grid->dzz[nc1][grid->etop[j]]==0 && grid->dzz[nc2][grid->etop[j]]==0)) {
@@ -3383,7 +3410,8 @@ static void UPredictor(gridT *grid, physT *phys,
       if(grid->Nke[j]-grid->etop[j]>1) { // more than one vertical layer on edge
         // Explicit part of the viscous term over wetted parts of edge
         // for the interior cells
-        for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++)
+        // for the new vertical coordinate, the bottom layer should be the layer zfb>bufferheight since interior dzf can be zero.
+        for(k=grid->etop[j]+1;k<Nkeb;k++)
             phys->utmp[j][k]+=dt*(1-theta)*(a[k]*phys->u[j][k-1]-(a[k]+b[k])*phys->u[j][k]+b[k]*phys->u[j][k+1]);
 
         // Top cell
@@ -3414,21 +3442,35 @@ static void UPredictor(gridT *grid, physT *phys,
               (a[grid->Nke[j]-1]+b[grid->Nke[j]-1])*phys->u[j][grid->Nke[j]-1]+
               b[grid->Nke[j]-1]*-phys->u[j][grid->Nke[j]-1]);
 
-        } else{ // standard drag law code
-          if(!prop->subgrid)
-            phys->utmp[j][grid->Nke[j]-1]+=dt*(1-theta)*(
-                a[grid->Nke[j]-1]*phys->u[j][grid->Nke[j]-2] -
-                (a[grid->Nke[j]-1] 
-                 + 2.0*phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
-                 (grid->dzz[nc1][grid->Nke[j]-1]+
-                  grid->dzz[nc2][grid->Nke[j]-1]))*
-                phys->u[j][grid->Nke[j]-1]);
-          else
-            phys->utmp[j][grid->Nke[j]-1]+=dt*(1-theta)*(
-                a[grid->Nke[j]-1]*phys->u[j][grid->Nke[j]-2] -
-                (a[grid->Nke[j]-1] 
-                 + phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
-                subgrid->dzboteff[j])*phys->u[j][grid->Nke[j]-1]);
+        } else{ 
+          // standard drag law code
+          if(prop->vertcoord==1)
+            if(!prop->subgrid)
+              phys->utmp[j][grid->Nke[j]-1]+=dt*(1-theta)*(
+                  a[grid->Nke[j]-1]*phys->u[j][grid->Nke[j]-2] -
+                  (a[grid->Nke[j]-1] 
+                   + 2.0*phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
+                   (grid->dzz[nc1][grid->Nke[j]-1]+
+                    grid->dzz[nc2][grid->Nke[j]-1]))*
+                  phys->u[j][grid->Nke[j]-1]);
+            else
+              phys->utmp[j][grid->Nke[j]-1]+=dt*(1-theta)*(
+                  a[grid->Nke[j]-1]*phys->u[j][grid->Nke[j]-2] -
+                  (a[grid->Nke[j]-1] 
+                   + phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
+                  subgrid->dzboteff[j])*phys->u[j][grid->Nke[j]-1]);
+           else
+           {
+              // apply drag forcing at the layer where zfb>buffer height
+              phys->utmp[j][Nkeb]+=dt*(1-theta)*(
+                  a[Nkeb]*phys->u[j][Nkeb-1] -
+                  (a[Nkeb]+2.0*phys->CdB[j]*fabs(phys->u[j][Nkeb])/
+                   (grid->dzz[nc1][Nkeb]+grid->dzz[nc2][Nkeb]))*phys->u[j][Nkeb]);
+             // for other cell give a 100 drag coefficient
+             for(k=Nkeb+1;k<grid->Nke[j];k++)
+                phys->utmp[j][k]+=-dt*(1-theta)*2.0*100*fabs(phys->u[j][k])/
+                   (grid->dzz[nc1][k]+grid->dzz[nc2][k])*phys->u[j][k];
+           }
         }
       } else {  // one layer for edge
         // drag on bottom boundary
@@ -3439,6 +3481,8 @@ static void UPredictor(gridT *grid, physT *phys,
                (grid->dzz[nc1][grid->etop[j]]+grid->dzz[nc2][grid->etop[j]])));
         }
         else{ // standard drag law formation on bottom
+          // need to change for the new vertical coordinate if there is only one layer
+          // same as the original model
           // subgrid part
           if(!prop->subgrid)
             phys->utmp[j][grid->etop[j]]-=2.0*dt*(1-theta)*(phys->CdB[j])/
@@ -3543,23 +3587,54 @@ static void UPredictor(gridT *grid, physT *phys,
         if(phys->CdB[j] == -1){ // no slip
           b[grid->Nke[j]-1]=1.0+theta*dt*(a[grid->Nke[j]-1]+b[grid->Nke[j]-1]+b[grid->Nke[j]-2]);
         }
-        else{ // standard drag law
-          if(!prop->subgrid)
-            b[grid->Nke[j]-1]=1.0+theta*dt*(a[grid->Nke[j]-1]+
-                2.0*phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
-                (grid->dzz[nc1][grid->Nke[j]-1]+
-                 grid->dzz[nc2][grid->Nke[j]-1]));
+        else{ 
+          // standard drag law
+          if(prop->vertcoord!=1)
+            if(!prop->subgrid)
+              b[grid->Nke[j]-1]=1.0+theta*dt*(a[grid->Nke[j]-1]+
+                  2.0*phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
+                  (grid->dzz[nc1][grid->Nke[j]-1]+
+                   grid->dzz[nc2][grid->Nke[j]-1]));
+            else
+              b[grid->Nke[j]-1]=1.0+theta*dt*(a[grid->Nke[j]-1]+
+                  phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
+                  subgrid->dzboteff[j]);       
           else
-            b[grid->Nke[j]-1]=1.0+theta*dt*(a[grid->Nke[j]-1]+
-                phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
-                subgrid->dzboteff[j]);       
+          {
+            b[Nkeb]=1.0+theta*dt*(a[Nkeb]+
+              2.0*phys->CdB[j]*fabs(phys->u[j][Nkeb])/
+              (grid->dzz[nc1][Nkeb]+
+              grid->dzz[nc2][Nkeb]));
+            for(k=Nkeb+1;k<grid->Nke[j];k++)
+              b[k]=1.0+theta*dt*2.0*100*fabs(phys->u[j][Nkeb])/
+                (grid->dzz[nc1][Nkeb]+grid->dzz[nc2][Nkeb]);
+          }
         }
-        a[grid->Nke[j]-1]=-theta*dt*a[grid->Nke[j]-1];
-        // Interior cells
-        for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++) {
-          c[k]=-theta*dt*b[k];
-          b[k]=1.0+theta*dt*(a[k]+b[k]);
-          a[k]=-theta*dt*a[k];
+        if(prop->vertcoord==1)
+        {
+          a[grid->Nke[j]-1]=-theta*dt*a[grid->Nke[j]-1];
+          // Interior cells
+          for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++) {
+            c[k]=-theta*dt*b[k];
+            b[k]=1.0+theta*dt*(a[k]+b[k]);
+            a[k]=-theta*dt*a[k];
+          }
+        } else {
+          // defined bottom cell
+          a[Nkeb]=-theta*dt*a[Nkeb];
+          c[Nkeb]=0;
+          // interior cell
+          for(k=grid->etop[j]+1;k<Nkeb;k++) {
+            c[k]=-theta*dt*b[k];
+            b[k]=1.0+theta*dt*(a[k]+b[k]);
+            a[k]=-theta*dt*a[k];
+          }    
+          // under the bottom cell
+          for(k=Nkeb+1;k<grid->Nke[j];k++) {
+            c[k]=0.0;
+            b[k]=1.0+theta*dt*b[k];
+            a[k]=0.0;
+          }        
         }
       } else { // for a single vertical layer
         b[grid->etop[j]] = 1.0;

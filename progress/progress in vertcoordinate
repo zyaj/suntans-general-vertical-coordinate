@@ -38,3 +38,9 @@ the horizontal diffusion term is the same as the original method
 12/12/2016
 1. add computeUl function seperated from computeuf function
 2. add computezf function to calculate vertical location for each edge face center
+
+12/16/2016
+1. add two new variables Nkeb and zfb for setting drag coefficient
+2. add FindBottomLayer function to calculate Nkeb and zfb for each edge
+3. move setdragcoefficient after the drag forcing
+4. top drag forcing is not finished!!!!!!!!!!! need to setup zft and find a way to implement surface stress

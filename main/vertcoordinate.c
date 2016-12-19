@@ -38,9 +38,13 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->wf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omegaf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->Nkeb=(int *)SunMalloc(grid->Ne*sizeof(int),"AllocateVertCoordinate");
+  vert->zfb=(REAL *)SunMalloc(grid->Ne*sizeof(REAL),"AllocateVertCoordinate");
 
   for(j=0;j<grid->Ne;j++)
   {
+    vert->Nkeb[j]=0;
+    vert->zfb[j]=0.0;
     vert->uf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->vf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->wf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
@@ -231,6 +235,33 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
 {
 
 }
+
+/*
+ * Function: FindBottomLayer
+ * Calculate Nkeb and zfb for each edge based on dzf
+ * ----------------------------------------------------
+ * these two values will be further used in SetDragCoefficients and calculate drag terms
+ */
+ void FindBottomLayer(gridT *grid, propT *prop, physT *phys, int myproc)
+ {
+    int j,k,Nkeb;
+    REAL zfb;
+    // find 
+    for(j=0;j<grid->Ne;j++)
+    {
+      zfb=0;
+      for(k=grid->Nke[j]-1;k>=0;k--)
+      {
+         zfb+=grid->dzf[j][k]/2;
+         if(zfb>BUFFERHEIGHT){
+           vert->Nkeb[j]=k;
+           vert->zfb[j]=zfb;
+           break;
+         }
+         zfb+=grid->dzf[j][k]/2;
+      }
+    }
+ }
 
 /*
  * Function: ComputeUl
