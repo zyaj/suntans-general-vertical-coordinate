@@ -167,7 +167,6 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
       InitializeSigmaCoordinate(grid, prop, phys, myproc);
     case 4:
       InitializeVariationalCoordinate(grid, prop,phys, myproc);
-
   }  
 }
 
@@ -361,7 +360,8 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
     // worry about the numerical accuracy to ensure omega_top==0
     Ac=grid->Ac[i];
     omega[i][grid->Nk[i]]=0;
-    for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--){
+    for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
+    {
       flux=0;
       for(nf=0;nf<grid->nfaces[i];nf++) {
         ne = grid->face[i*grid->maxfaces+nf];
@@ -454,8 +454,10 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
     def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
         pow(grid->yv[nc1]-grid->ye[j],2));
     def2 = Dj-def1;
-    for(k=0;k<grid->Nke[j];k++)
+    for(k=0;k<grid->Nke[j];k++){
       vert->zf[j][k]=vert->zc[nc1][k]*def2/Dj+vert->zc[nc2][k]*def1/Dj;
+    }
+
   }
 }
 
@@ -464,16 +466,27 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
  * Compute omega from the definition omega=w-udzdx-vdzdy-wg
  * ----------------------------------------------------
  */
-void ComputeOmega(gridT *grid, propT *prop, physT *phys, int myproc)
+void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
 {
   int i,k;
-  for(i=0;i<grid->Nc;i++)
-    for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
-    {
-      vert->omega[i][k]=phys->w[i][k]-vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
-      vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)-(vert->zc[i][k]+grid->dzz[i][k]/2-\
-        vert->zcold[i][k]-grid->dzzold[i][k]/2)/prop->dt;
-    }
+  if(index==1)
+    for(i=0;i<grid->Nc;i++)
+      for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
+      {
+        vert->omega[i][k]=phys->w[i][k]-vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
+        vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)-(vert->zc[i][k]+grid->dzz[i][k]/2-\
+          vert->zcold[i][k]-grid->dzzold[i][k]/2)/prop->dt;
+      }
+  else
+  {
+    for(i=0;i<grid->Nc;i++)
+      for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
+      {
+        phys->w[i][k]=vert->omega[i][k]+vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)+\
+        vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)+(vert->zc[i][k]+grid->dzz[i][k]/2-\
+          vert->zcold[i][k]-grid->dzzold[i][k]/2)/prop->dt;
+      }
+  }
 }
 
 /*
@@ -490,9 +503,11 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
    // compute the relative vorticity
    // 1. compute v and u at each edge center
    ComputeUf(grid, prop, phys,myproc);
+
    // 2. compute dvdx and dudy
    ComputeCellAveragedHorizontalGradient(vert->dvdx, 0, vert->vf, grid, prop, phys, myproc);
    ComputeCellAveragedHorizontalGradient(vert->dudy, 1, vert->uf, grid, prop, phys, myproc);
+   
    // 3. compute f_r
    for(i=0;i<grid->Nc;i++)
     for(k=0;k<grid->Nk[i];k++)
@@ -513,18 +528,21 @@ void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL 
 {
   int i,k,nf,ne;
   REAL vec;
+
   for(i=0;i<grid->Nc;i++)
   {
     for(k=grid->ctop[i];k<grid->Nk[i];k++)
     {
       gradient[i][k]=0;
       for(nf=0;nf<grid->nfaces[i];nf++) {
-        if(direction==0)
-          vec=grid->n1[ne];
-        else
-          vec=grid->n2[ne];
         ne = grid->face[i*grid->maxfaces+nf];
-        gradient[i][k]+=scalar[ne][k]*grid->df[ne]*vec;
+        if(direction==0)
+          vec=grid->n1[ne]*grid->normal[ne];
+        else
+          vec=grid->n2[ne]*grid->normal[ne];
+        gradient[i][k]+=scalar[ne][k]*grid->def[i*grid->maxfaces+nf]*grid->df[ne]*vec;
+        //if(i==50 && k==50)
+          //printf("i %d k %d ne %d xe %e zf %e vec %e nf %d\n",i,k,ne,grid->xe[ne],vert->zf[ne][k],vec,nf);
       }
       gradient[i][k]/=grid->Ac[i];
     }
@@ -617,6 +635,9 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 
   // compute zc
   ComputeZc(grid,prop,phys,myproc);
+
+  ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
+
 }
 
 /*

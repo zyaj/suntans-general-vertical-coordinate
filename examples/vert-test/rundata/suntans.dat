@@ -19,7 +19,7 @@ depthelev               0       # increase the depth elevation, will decrease a 
 scaledepth 		0 	# Scale the depth by scalefactor
 scaledepthfactor 	0 	# Depth scaling factor (to test deep grids with explicit methods)
 thetaramptime	        0  	# Timescale over which theta is ramped from 1 to theta (fs theta only)
-beta			0.0007	# Expansivity of salt 0.0007
+beta			0.0	# Expansivity of salt 0.0007
 theta			0.55	# 0: fully explicit, 1: fully implicit
 thetaS			0.55	# For scalar advection
 thetaB			0.55	# For scalar advection
@@ -34,10 +34,10 @@ tau_T			0 	# Wind shear stress
 z0T	                0.0 	# Top roughness
 z0B	                0.0	# Bottom roughness
 Intz0T                  0       # 2 read cellcenter data, 1 interpCdT, 0 otherwise
-Intz0B                  0.0       # 2 read cellcenter data, 1 interpCdB, 0 otherwise
+Intz0B                  0       # 2 read cellcenter data, 1 interpCdB, 0 otherwise
 grav			9.81    # Rigid lid approximation
 CdT	                0.0	# Drag coefficient at surface
-CdB	                0.0025	# Drag coefficient at bottom
+CdB	                0.0	# Drag coefficient at bottom
 CdW			0.0	# Drag coefficient at sidewalls
 wavemodel               0       # if 1 consider wave model, 0 otherwise   
 marshmodel              0       # if 1 consider marsh effects, 0 otherwise
@@ -52,7 +52,7 @@ nsteps 		        1   # Number of steps 1728000
 ntout   		1	# How often to output data
 ntprog   		5 	# How often to report progress (in %)
 ntconserve 		1	# How often to output conserved data
-nonhydrostatic		1	# 0 = hydrostatic, 1 = nonhydrostatic
+nonhydrostatic		0	# 0 = hydrostatic, 1 = nonhydrostatic
 cgsolver		1	# 0 = GS, 1 = CG
 maxiters		1000	# Maximum number of CG iterations
 qmaxiters		2000	# Maximum number of CG iterations for nonhydrostatic pressure

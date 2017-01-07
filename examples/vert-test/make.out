@@ -1,0 +1,480 @@
+/usr/local/mpich2/bin/mpicc  -c -I../../main -I/usr/local/mpich2 -I/usr/local/Parmetis-2.0/ParMETISLib  initialization.c
+/usr/local/mpich2/bin/mpicc  -c -I../../main -I/usr/local/mpich2 -I/usr/local/Parmetis-2.0/ParMETISLib  boundaries.c
+/usr/local/mpich2/bin/mpicc  -c -I../../main -I/usr/local/mpich2 -I/usr/local/Parmetis-2.0/ParMETISLib  state.c
+cp initialization.o boundaries.o state.o ../../main
+make -C ../../main
+/usr/local/mpich2/bin/mpicc  -o sun mympi.o grid.o gridio.o report.o util.o fileio.o phys.o physio.o suntans.o initialization.o memory.o turbulence.o boundaries.o check.o scalars.o tvd.o timer.o profiles.o state.o tides.o sources.o diffusion.o met.o averages.o age.o merge.o sendrecv.o sediments.o wave.o culvert.o subgrid.o marsh.o vertcoordinate.o uservertcoordinate.o triangulate.o partition.o mynetcdf.o -lm -Wall -L/usr/local/Parmetis-2.0 -L/usr/local/triangle -L/opt/local/lib /usr/local/Parmetis-2.0/libparmetis.a /usr/local/Parmetis-2.0/libmetis.a /usr/local/triangle/triangle.o -lnetcdf
+sh culvert.sh 2
+Creating grid...
+Initializing Main Grid...
+Reading Grid...
+Voronoi statistics:
+	Minimum distance: 5.00e+00
+	Maximum distance: 5.00e+00
+	Mean distance: 5.00e+00
+	Standard deviation: 0.00e+00
+Getting the depth for graph weights...
+Warning in MPI_GetValue...retrieved default value of minimum_depth=0.00 which was not specified in data/suntans.dat.
+Computing Connectivity...
+Partitioning...
+	Computing Graph...
+	Computing Partitioning...
+	Computing Topology...
+	Transferring data...
+	Creating edge markers...
+	Vert grid...
+	Computing edge and voronoi distances and areas...
+	Making pointers...
+Outputting Data...
+Running suntans...
+Warning in MPI_GetValue...retrieved default value of ntoutStore=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of TVDsalt=4.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of TVDtemp=4.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of TVDturb=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of TVDmomentum=3.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of conserveMomentum=1.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of thetaM=-1.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of mergeArrays=1.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of ex=2.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of im=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of calcage=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of agemethod=1.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of calcaverage=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of latitude=29.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of gmtoffset=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of metmodel=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of varmodel=1.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of nugget=0.10 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of sill=0.90 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of range=100000.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of outputNetcdf=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of netcdfBdy=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of readinitialnc=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of Lsw=2.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of Cda=1100.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of Ce=1400.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of Ch=1400.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of hprecond=1.00 which was not specified in data/suntans.dat.
+kinterp is used, so interp is set as perot automatically
+Warning in MPI_GetValue...retrieved default value of prettyplot=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of linearFS=0.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of fixdzz=1.00 which was not specified in data/suntans.dat.
+Warning in MPI_GetValue...retrieved default value of smoothbot=0.00 which was not specified in data/suntans.dat.
+i 0 k 50 zc -1.515000e+00 omega 1.695753e-18 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 1 k 50 zc -1.515000e+00 omega 1.436344e-19 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 2 k 50 zc -1.515000e+00 omega 2.161300e-20 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 3 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 4 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 5 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 6 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 0 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 1 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 2 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 3 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 4 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 5 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 6 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 7 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 8 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 9 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 10 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 11 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 7 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 8 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 9 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 10 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 11 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 12 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 13 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 14 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 15 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 16 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 17 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 18 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 19 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 20 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 21 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 22 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 23 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 24 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 25 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 26 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 27 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 28 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 29 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 30 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 31 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 32 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 33 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 34 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 35 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 36 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 37 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 38 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 39 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 40 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 41 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 42 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 43 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 44 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 45 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 46 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 47 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 48 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 49 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 12 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 13 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 14 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 15 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 16 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 17 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 18 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 19 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 20 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 21 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 22 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 23 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 24 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 25 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 26 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 27 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 28 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 29 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 30 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 31 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 32 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 33 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 50 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 51 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 52 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 53 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 34 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 35 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 36 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 37 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 38 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 39 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 40 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 41 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 42 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 43 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 44 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 45 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 46 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 47 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 48 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 49 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 50 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 54 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 55 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 56 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 57 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 58 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 59 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 60 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 61 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 62 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 63 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 64 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 65 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 66 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 67 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 68 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 69 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 70 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 51 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 71 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 72 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 73 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 74 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 52 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 53 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 54 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 55 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 56 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 57 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 58 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 59 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 60 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 61 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 62 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 63 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 64 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 65 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 66 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 67 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 68 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 69 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 70 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 71 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 72 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 73 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 74 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 75 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 76 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 77 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 78 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 79 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 80 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 75 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 76 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 77 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 78 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 79 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 80 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 81 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 82 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 83 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 84 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 85 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 86 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 87 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 88 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 89 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 90 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 91 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 92 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 93 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 94 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 95 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 96 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 97 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 98 k 50 zc -1.515000e+00 omega -1.861000e-18 dzdx 0.000000e+00 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 99 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 100 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 81 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 82 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 83 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 84 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 85 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 86 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 87 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 88 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 89 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 90 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 91 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 92 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 93 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 94 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 95 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 96 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 97 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 98 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 99 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+i 100 k 50 zc -1.515000e+00 omega 0.000000e+00 dzdx 6.060000e-01 dzdy -3.030000e-01 
+ dudx 0.000000e+00 dudy 0.000000e+00 dvdx 0.000000e+00 dvdy 0.000000e+00 dzz 3.000000e-02
+Outputting data at step 1 of 1
+Outputting restart data at step 1
+Total simulation time: 0.09 s
+Average per time step: 8.85e-02 s
+Timing Summary:
+  Nonhydrostatic pressure: 0.01 s (8.52)
+  Free surface and vertical friction: 0.01 s (10.83)
+  Explicit terms: 0.02 s (17.42)
+  Turbulence: 0.00 s (4.73)
+  Bounds checking: 0.00 s (0.31)
+  I/O: 0.03 s (29.07)
+  Remainder: 0.03 s (29.11)
+  Communication time: 1.50e-02 s
+  Computation/Communication: 4.88e+00

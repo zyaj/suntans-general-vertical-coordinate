@@ -19,7 +19,7 @@ LD = $(CC)
 CFLAGS = 
 MATHLIB = -lm
 
-EXEC = culvert
+EXEC = vert-test
 OBJS = 
 SUN = $(SUNTANSHOME)/sun
 INCLUDES = -I$(SUNTANSHOME) $(MPIINC) $(PARMETISINC)

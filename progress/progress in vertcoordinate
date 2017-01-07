@@ -44,3 +44,8 @@ the horizontal diffusion term is the same as the original method
 2. add FindBottomLayer function to calculate Nkeb and zfb for each edge
 3. move setdragcoefficient after the drag forcing
 4. top drag forcing is not finished!!!!!!!!!!! need to setup zft and find a way to implement surface stress
+
+
+12/19/2016
+1. a bug found in the ComputeCellAveragedGradient function to set the ne values before the calculation.
+2. a bug found in calculation of dzdx and dzdy.

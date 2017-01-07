@@ -97,7 +97,7 @@ PLOTSRCS = sunplot.c fileio.c
 PLOTOBJS = $(PLOTSRCS:.c=.o)
 
 JOINSRCS = sunjoin.c mympi.c grid.c report.c util.c fileio.c phys.c initialization.c memory.c \
-	turbulence.c boundaries.c check.c scalars.c tvd.c timer.c profiles.c state.c tides.c \
+	turbulence.c boundaries.c uservertcoordinate.c check.c scalars.c tvd.c timer.c profiles.c state.c tides.c \
 	sources.c diffusion.c met.c averages no-mpi.c $(TRIANGLESRC) $(PARMETISSRC) $(NETCDFSRC)
 JOINOBJS = $(JOINSRCS:.c=.o)
 
@@ -160,3 +160,4 @@ fileio.o: fileio.h defaults.h suntans.h
 met.o: met.h suntans.h fileio.h memory.h grid.h phys.h util.h mynetcdf.h
 mynetcdf.o: mynetcdf.h suntans.h phys.h grid.h met.h boundaries.h
 averages.o: averages.h phys.h grid.h met.h
+uservertcoordinate.o: suntans.h phys.h grid.h subgrid.h physio.h boundaries.h initialization.h tvd.h util.h scalars.h mympi.h vertcoordinate.h

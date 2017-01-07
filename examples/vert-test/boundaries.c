@@ -6,6 +6,7 @@
 #include "sediments.h"
 #include "wave.h"
 #include "subgrid.h"
+#include "vertcoordinate.h"
 static void SetUVWH(gridT *grid, physT *phys, propT *prop, int ib, int j, int boundary_index, REAL boundary_flag);
 
 /*
@@ -204,4 +205,14 @@ void FetchWindSpeedandDirection(gridT *grid, propT *prop, int myproc){
 }
 void InitBoundaryData(propT *prop, gridT *grid, int myproc, MPI_Comm comm){}
 void AllocateBoundaryData(propT *prop, gridT *grid, boundT **bound, int myproc, MPI_Comm comm){}
-void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc){}
+void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
+{
+  int i,k,j;
+  /*for(i=0;i<grid->Nc;i++)
+    for(k=0;k<grid->Nk[i];k++)
+      if(k==50)
+        printf("i %d k %d zc %e omega %e dzdx %e dzdy %e \n dudx %e dudy %e dvdx %e dvdy %e dzz %e\n",
+      i,k, vert->zc[i][k],vert->omega[i][k],vert->dzdx[i][k],vert->dzdy[i][k],vert->dudx[i][k],vert->dudy[i][k],
+      vert->dvdx[i][k],vert->dvdy[i][k],grid->dzz[i][k]);*/
+
+}

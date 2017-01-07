@@ -635,8 +635,9 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
 
   // Need to update the vertical grid after updating the free surface.
   // The 1 indicates that this is the first call to UpdateDZ
-  if(prop->vertcoord!=1)
+  if(prop->vertcoord!=1){
    VertCoordinateBasic(grid,prop,phys,myproc);
+  }
   else
    UpdateDZ(grid,phys,prop, 1);
 
@@ -1338,7 +1339,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   // get the openboundary flux (boundaries.c)
   OpenBoundaryFluxes(NULL,phys->u,NULL,grid,phys,prop);
 
-
   // Set up arrays to merge output
   if(prop->mergeArrays) {
     if(VERBOSE>2 && myproc==0) printf("Initializing arrays for merging...\n");
@@ -1437,6 +1437,10 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   }
   // get the windstress (boundaries.c) - this needs to go after met data allocation -MR
   WindStress(grid,phys,prop,met,myproc);
+  
+  // output the initial value of vertical coordinate
+  if(prop->vertcoord!=1)
+    OutputVertCoordinate(grid,prop,myproc,numprocs,comm);
   // main time loop
   for(n=prop->nstart+1;n<=prop->nsteps+prop->nstart;n++) {
 
@@ -1507,6 +1511,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // calculate the preparation for HorizontalSource function due to the new vertical coordinate
       if(prop->vertcoord!=1)
         VertCoordinateHorizontalSource(grid, phys, prop, myproc, numprocs, comm);
+
       HorizontalSource(grid,phys,prop,myproc,numprocs,comm);
 
       // add wave part 
@@ -1677,10 +1682,12 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           ComputeUl(grid, prop, phys, myproc);
           // compute zc gradient
           // zf is calculate in ComputeZc function
+  
           ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
           ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
+ 
           // compute omega^*
-          ComputeOmega(grid, prop, phys, myproc);
+          ComputeOmega(grid, prop, phys,1, myproc);
         }
 
         // Source term for the pressure-Poisson equation is in phys->stmp
@@ -1719,11 +1726,12 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       if(prop->vertcoord==1)
       {
         // w_im is calculated
-        Continuity(phys->wnew,grid,phys,prop);
-        ISendRecvWData(phys->wnew,grid,myproc,comm);
+        Continuity(phys->w,grid,phys,prop);
+        ISendRecvWData(phys->w,grid,myproc,comm);
       } else {
         // NOW vert->omega stores the omega^n+1 with nonhydrostatic pressure correction
         LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
+        ComputeOmega(grid, prop, phys,0, myproc);
         ISendRecvWData(vert->omega,grid,myproc,comm);
       }
 

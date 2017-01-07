@@ -45,7 +45,7 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeUl(gridT *grid, propT *prop, physT *phys, int myproc);
 void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys, int myproc);
-void ComputeOmega(gridT *grid, propT *prop, physT *phys, int myproc);
+void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc);
 void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc);
 void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL **scalar, gridT *grid, propT *prop, physT *phys, int myproc);
