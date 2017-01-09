@@ -395,9 +395,6 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
         omega[i][k]/=subgrid->Acveff[i][k];
       }
       omega[i][k]/=fac1;
-      //omega[i][k]+=(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
-      //if(grid->xv[i]==2.5 && k==grid->Nk[i]-1)
-        //printf("i %d dzzdt %e omega %e\n",i,(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt,vert->omega[i][k]);
     }
     //compute omega_im for updatescalar function
     for(k=grid->ctop[i];k<=grid->Nk[i];k++)
@@ -471,9 +468,6 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
     def2 = Dj-def1;
     for(k=0;k<grid->Nke[j];k++){
       vert->zf[j][k]=vert->zc[nc1][k]*def2/Dj+vert->zc[nc2][k]*def1/Dj;
-      //printf("j %d k %d zf %e def1 %e def2 %e Dj %e zc1 %e zc2 %e mean %e dif %e\n",j,k,
-        //vert->zf[j][k],def1,def2,Dj,vert->zc[nc1][k],vert->zc[nc2][k],(vert->zc[nc1][k]+vert->zc[nc2][k])/2,
-        //(vert->zc[nc1][k]+vert->zc[nc2][k])/2-vert->zf[j][k]);
     }
 
   }
@@ -559,8 +553,6 @@ void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL 
         else
           vec=vert->n2[i*grid->maxfaces+nf];
         gradient[i][k]+=scalar[ne][k]*grid->df[ne]*vec;
-        //if(i==50 && k==50)
-          //printf("i %d k %d ne %d xe %e zf %e vec %e nf %d\n",i,k,ne,grid->xe[ne],vert->zf[ne][k],vec,nf);
       }
       gradient[i][k]/=grid->Ac[i];
     }
@@ -650,9 +642,7 @@ void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MP
     fclose(vert->dzzFID);
     fclose(vert->omegaFID);
   }
-
 }
-
 
 /*
  * Function: VertCoordinateBasic
@@ -680,13 +670,11 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 
   // compute normal vector
   ComputeNormalVector(grid,phys,myproc);
-
+  
+  // compute cell centered dzdx and dzdy
   ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
 
   ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc);
-  //for(i=0;i<grid->Nc;i++)
-    //for(k=0;k<grid->Nk[i];k++)
-      //printf("i %d k %d dzdx %e\n",i,k,vert->dzdx[i][k]);
 }
 
 /*

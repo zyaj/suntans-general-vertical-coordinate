@@ -51,7 +51,6 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc);
 void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc);
 void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL **scalar, gridT *grid, propT *prop, physT *phys, int myproc);
-void ComputeCellAveragedHorizontalGradienttt(REAL **gradient, int direction, REAL **scalar, gridT *grid, propT *prop, physT *phys, int myproc);
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
 REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid);
 void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);

@@ -3027,10 +3027,6 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
 
       // get the edge pointer
       ne = grid->face[i*grid->maxfaces+nf];
-      //if(grid->xe[ne]==5 && i==0)
-      //for(k=grid->ctop[i];k<grid->Nke[ne];k++) 
-        //printf("ne %d k %d u %e dzf %e flux %e\n",ne,k,phys->u[ne][k],grid->dzf[ne][k],(phys->u[ne][k])*grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne]);
-     
       // for each of the defined edges over depth
       for(k=grid->ctop[i];k<grid->Nke[ne];k++) 
         // compute the horizontal source term via the (D_H)(u^*)
