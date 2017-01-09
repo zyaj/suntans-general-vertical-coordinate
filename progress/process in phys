@@ -296,4 +296,18 @@ my25 is modified to input q_old and l_old into the function.
 3. modify computeqsource with omega
 4. version 1 for the new model finished!
 
+01/04/2016
+1. find a problem in the transformation of omega and w
+if new coordinate
+fac1(omega^n+1_top)=omega^im_bot-fac2(omega^n_top)-fac3(omega^n-1_top)-flux-d(dz)/dt;
+assume udzdx vdzdy is very small
+w^n+1_top=omega^n+1_top+dz/dt=(omega^im_bot-fac2(omega^n_top)-fac3(omega^n-1_top)-flux)/fac1+(dzdt-d(dz)/dt/fac1);
+if z-level
+w=omega
+there is some inconsistency on the w field especially at the first time step
+this inconsistency will decrease as the time steps increase
+The main reason is the continuity equation is applied at n+im not n+1 step
 
+01/08/2016
+for interptotoplayerface assume Nk>=2 when vertcoord!=1 if Nk=1 use z-level with subgrid directly
+find bug in calculation of dzdx

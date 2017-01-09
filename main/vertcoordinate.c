@@ -59,6 +59,10 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->omegaf[j][k]=0;
     }
   }
+
+  // normal vector
+  vert->n1=(REAL *)SunMalloc(grid->Nc*grid->maxfaces*sizeof(REAL),"AllocateVertCoordinate");
+  vert->n2=(REAL *)SunMalloc(grid->Nc*grid->maxfaces*sizeof(REAL),"AllocateVertCoordinate");
   // velocity field at the top and bottom face of each layer
   vert->ul=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->vl=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -99,6 +103,13 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->dwdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    
+    // initialize normal vector
+    for(k=0;k<grid->maxfaces;k++)
+    {
+      vert->n1[i*grid->maxfaces+k]=0;
+      vert->n2[i*grid->maxfaces+k]=0;
+    }
 
     for(k=0;k<grid->Nk[i]+1;k++)
     {
@@ -323,18 +334,20 @@ REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid) {
     def1=grid->dzz[i][k-1];
     def2=grid->dzz[i][k];
   }else{
-    Dj = grid->dzz[i][k];
+    Dj = grid->dzz[i][k]/2+grid->dzz[i][k+1]/2;
     def1=0;
-    def2=grid->dzz[i][k];    
+    def2=grid->dzz[i][k]/2;    
   }
 
-  if(def2==0 && k<grid->Nk[i]-1) {
+  if(def2==0 && k<grid->Nk[i]-1 && k!=grid->ctop[i]) {
     // means the interior layer is dry
     return phi[i][k+1];
   } else if(def2==0 && k==grid->Nk[i]-1){
     // means the bottom layer is dry
     return phi[i][k];
-  }else {
+  } else if(k==grid->ctop[i]) {
+    return phi[i][k]+def2*(phi[i][k]-phi[i][k+1])/Dj;
+  } else {
     return (phi[i][k-1]*def2+phi[i][k]*def1)/Dj;
   }
 }
@@ -382,6 +395,9 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
         omega[i][k]/=subgrid->Acveff[i][k];
       }
       omega[i][k]/=fac1;
+      //omega[i][k]+=(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt;
+      //if(grid->xv[i]==2.5 && k==grid->Nk[i]-1)
+        //printf("i %d dzzdt %e omega %e\n",i,(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt,vert->omega[i][k]);
     }
     //compute omega_im for updatescalar function
     for(k=grid->ctop[i];k<=grid->Nk[i];k++)
@@ -451,11 +467,13 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
     if(nc2==-1)
       nc2=nc1;
     Dj = grid->dg[j];
-    def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
-        pow(grid->yv[nc1]-grid->ye[j],2));
+    def1 = sqrt(pow((grid->xv[nc1]-grid->xe[j]),2)+pow((grid->yv[nc1]-grid->ye[j]),2));
     def2 = Dj-def1;
     for(k=0;k<grid->Nke[j];k++){
       vert->zf[j][k]=vert->zc[nc1][k]*def2/Dj+vert->zc[nc2][k]*def1/Dj;
+      //printf("j %d k %d zf %e def1 %e def2 %e Dj %e zc1 %e zc2 %e mean %e dif %e\n",j,k,
+        //vert->zf[j][k],def1,def2,Dj,vert->zc[nc1][k],vert->zc[nc2][k],(vert->zc[nc1][k]+vert->zc[nc2][k])/2,
+        //(vert->zc[nc1][k]+vert->zc[nc2][k])/2-vert->zf[j][k]);
     }
 
   }
@@ -473,7 +491,7 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
     for(i=0;i<grid->Nc;i++)
       for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
       {
-        vert->omega[i][k]=phys->w[i][k]-vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
+        vert->omega[i][k]=phys->w[i][k]-0*vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
         vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)-(vert->zc[i][k]+grid->dzz[i][k]/2-\
           vert->zcold[i][k]-grid->dzzold[i][k]/2)/prop->dt;
       }
@@ -537,16 +555,39 @@ void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL 
       for(nf=0;nf<grid->nfaces[i];nf++) {
         ne = grid->face[i*grid->maxfaces+nf];
         if(direction==0)
-          vec=grid->n1[ne]*grid->normal[ne];
+          vec=vert->n1[i*grid->maxfaces+nf];
         else
-          vec=grid->n2[ne]*grid->normal[ne];
-        gradient[i][k]+=scalar[ne][k]*grid->def[i*grid->maxfaces+nf]*grid->df[ne]*vec;
+          vec=vert->n2[i*grid->maxfaces+nf];
+        gradient[i][k]+=scalar[ne][k]*grid->df[ne]*vec;
         //if(i==50 && k==50)
           //printf("i %d k %d ne %d xe %e zf %e vec %e nf %d\n",i,k,ne,grid->xe[ne],vert->zf[ne][k],vec,nf);
       }
       gradient[i][k]/=grid->Ac[i];
     }
   }
+}
+/*
+ * Function: ComputeNormalVector
+ * Compute the outpointing normalized vector from cell center to each face center
+ * ----------------------------------------------------
+ * n1 is the x-component and n2 is y-component
+ */
+void ComputeNormalVector(gridT *grid, physT *phys, int myproc)
+{ 
+  int i,nf,ne;
+  REAL D,Dx,Dy;
+  for(i=0;i<grid->Nc;i++)
+    for(nf=0;nf<grid->nfaces[i];nf++)
+    {
+      ne=grid->face[i*grid->maxfaces+nf];
+      D=(grid->xv[i]-grid->xe[ne])*(grid->xv[i]-grid->xe[ne])+
+      (grid->yv[i]-grid->ye[ne])*(grid->yv[i]-grid->ye[ne]);
+      D=sqrt(D);
+      Dx=grid->xe[ne]-grid->xv[i];
+      Dy=grid->ye[ne]-grid->yv[i];
+      vert->n1[i*grid->maxfaces+nf]=Dx/D;
+      vert->n2[i*grid->maxfaces+nf]=Dy/D;
+    }
 }
 
 /* 
@@ -621,6 +662,7 @@ void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MP
  */
 void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 {
+  int i,k;
   // allocate subgrid struture first
   vert=(vertT *)SunMalloc(sizeof(vertT),"VertCoordinateBasic");
 
@@ -636,8 +678,15 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
   // compute zc
   ComputeZc(grid,prop,phys,myproc);
 
+  // compute normal vector
+  ComputeNormalVector(grid,phys,myproc);
+
   ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
 
+  ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc);
+  //for(i=0;i<grid->Nc;i++)
+    //for(k=0;k<grid->Nk[i];k++)
+      //printf("i %d k %d dzdx %e\n",i,k,vert->dzdx[i][k]);
 }
 
 /*

@@ -1286,7 +1286,7 @@ REAL DepthFromDZ(gridT *grid, physT *phys, int i, int kind) {
 void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm)
 {
   int i, k,kk,j, n, blowup=0,ne,id,nc1,nc2;
-  REAL t0,sum1,v_average;
+  REAL t0,sum1,v_average,flux;
   metinT *metin;
   metT *met;
   averageT *average;
@@ -1667,11 +1667,12 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
        
       // Compute vertical momentum and the nonhydrostatic pressure
       t0=Timer();
+
       if(prop->nonhydrostatic && !blowup) {
 
         // Predicted vertical velocity field is in phys->w
         WPredictor(grid,phys,prop,myproc,numprocs,comm);
- 
+
         // Wpredictor calculate w^*
         // now calculate omega^* for the new generalized vertical coordinate
         if(prop->vertcoord!=1){
@@ -1682,7 +1683,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           ComputeUl(grid, prop, phys, myproc);
           // compute zc gradient
           // zf is calculate in ComputeZc function
-  
           ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
           ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
  
@@ -1721,7 +1721,11 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       }
       t_nonhydro+=Timer()-t0;
 
-
+      //for(i=0;i<grid->Nc;i++)
+        //if(grid->xv[i]==2.5)
+          //for(k=0;k<grid->Nk[i];k++)
+            //printf("i %d k %d uc %e q %e w %e dhdt %e\n",i,k,phys->uc[i][k],phys->qc[i][k],phys->w[i][k],(phys->h[i]-phys->h_old[i])/prop->dt);
+         
       // apply continuity via Eqn 82
       if(prop->vertcoord==1)
       {
@@ -1731,8 +1735,21 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       } else {
         // NOW vert->omega stores the omega^n+1 with nonhydrostatic pressure correction
         LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
-        ComputeOmega(grid, prop, phys,0, myproc);
         ISendRecvWData(vert->omega,grid,myproc,comm);
+        // recalculate uc and vc for the predictor velocity field
+        ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
+        // now we have uc^* and vc^*
+        // compute ul^* and vl^* at each layer top
+        ComputeUl(grid, prop, phys, myproc);
+        // compute zc gradient
+        // zf is calculate in ComputeZc function
+        ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
+        ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
+
+        // compute w from omega
+        ComputeOmega(grid, prop, phys,0, myproc);
+
+        ISendRecvWData(phys->w,grid,myproc,comm);        
       }
 
       // Set scalar and wind stress boundary values at new time step n; 
@@ -2957,7 +2974,7 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
 {
 
   int i, iptr, j, jptr, k, nf, ne, nc1, nc2;
-  REAL *ap=phys->a, *am=phys->b, thetafactor=(1-prop->theta)/prop->theta,fac1,fac2,fac3;
+  REAL *ap=phys->a, *am=phys->b, thetafactor=(1-prop->theta)/prop->theta,fac1,fac2,fac3,flux;
 
   // new implicit method
   fac1=prop->imfac1;
@@ -2992,13 +3009,15 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
       for(k=grid->ctop[i];k<grid->Nk[i];k++) {
         // compute the vertical contributions to the source term
         if(!prop->subgrid)
-          src[i][k] = grid->Ac[i]*(vert->omega[i][k]-vert->omega[i][k+1])+
+          src[i][k] = (grid->dzz[i][k]-grid->dzzold[i][k])*grid->Ac[i]/prop->dt+
+                grid->Ac[i]*(vert->omega[i][k]-vert->omega[i][k+1])+
                 fac2/fac1*grid->Ac[i]*(vert->omega_old[i][k]-vert->omega_old[i][k+1])+
                 fac3/fac1*grid->Ac[i]*(vert->omega_old2[i][k]-vert->omega_old2[i][k+1]);
         else
-          src[i][k] = subgrid->Acveff[i][k]*vert->omega[i][k]-subgrid->Acveff[i][k+1]*vert->omega[i][k+1]
-            +fac2/fac1*(subgrid->Acveffold[i][k]*vert->omega_old[i][k]-subgrid->Acveffold[i][k+1]*vert->omega_old[i][k+1])
-            +fac3/fac1*(subgrid->Acveffold2[i][k]*vert->omega_old2[i][k]-subgrid->Acveffold2[i][k+1]*vert->omega_old2[i][k+1]);
+          src[i][k] = (grid->dzz[i][k]*subgrid->Acceff[i][k]-grid->dzzold[i][k]*subgrid->Acceffold[i][k])/prop->dt+
+             subgrid->Acveff[i][k]*vert->omega[i][k]-subgrid->Acveff[i][k+1]*vert->omega[i][k+1]+
+             fac2/fac1*(subgrid->Acveffold[i][k]*vert->omega_old[i][k]-subgrid->Acveffold[i][k+1]*vert->omega_old[i][k+1])+
+             fac3/fac1*(subgrid->Acveffold2[i][k]*vert->omega_old2[i][k]-subgrid->Acveffold2[i][k+1]*vert->omega_old2[i][k+1]);
       }        
 
     /* HORIZONTAL CONTRIBUTION */
@@ -3008,16 +3027,20 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
 
       // get the edge pointer
       ne = grid->face[i*grid->maxfaces+nf];
-
+      //if(grid->xe[ne]==5 && i==0)
+      //for(k=grid->ctop[i];k<grid->Nke[ne];k++) 
+        //printf("ne %d k %d u %e dzf %e flux %e\n",ne,k,phys->u[ne][k],grid->dzf[ne][k],(phys->u[ne][k])*grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne]);
+     
       // for each of the defined edges over depth
       for(k=grid->ctop[i];k<grid->Nke[ne];k++) 
         // compute the horizontal source term via the (D_H)(u^*)
         src[i][k]+=(phys->u[ne][k]+fac2/fac1*phys->u_old[ne][k]+fac3/fac1*
           phys->u_old2[ne][k])*grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne];
     }
-
+   
+ 
     // divide final result by dt
-    for(k=grid->ctop[i];k<grid->Nk[i];k++) 
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
       src[i][k]/=prop->dt;
   }
 
@@ -5739,9 +5762,11 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
         grid->dzf[j][k]=0.01;
         
     }
-    else
-      grid->dzf[j][k]=Min(grid->dzz[nc1][k],grid->dzz[nc2][k]);
-
+    else{
+      // this only works for the stair-like z-level coordinate
+      if(prop->vertcoord==1)
+        grid->dzf[j][k]=Min(grid->dzz[nc1][k],grid->dzz[nc2][k]);
+    }
     /*
        if(grid->Nk[nc1]!=grid->Nk[nc2])
        dz_bottom = Min(grid->dzz[nc1][k],grid->dzz[nc2][k]);
