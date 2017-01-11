@@ -218,7 +218,9 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
           for(nf=0;nf<grid->nfaces[i];nf++) {
             ne = grid->face[i*grid->maxfaces+nf];
             if(k<grid->Nke[ne])
-              grid->dzz[i][k]-=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
+              grid->dzz[i][k]-=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+
+                fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
+              // the function is not right for subgrid module
           }
         }
       }
@@ -231,6 +233,8 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
     case 4:
       VariationalVertCoordinate(grid,prop,phys,myproc);
       break;
+    case 5:
+      UpdateDZ(grid,phys,prop, 0); 
   }
 }
 
@@ -260,14 +264,23 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
     for(j=0;j<grid->Ne;j++)
     {
       zfb=0;
-      for(k=grid->Nke[j]-1;k>=0;k--)
+      for(k=grid->Nke[j]-1;k>=grid->etop[j];k--)
       {
          zfb+=grid->dzf[j][k]/2;
+         // find the layer when zfb>buffer height
          if(zfb>BUFFERHEIGHT){
            vert->Nkeb[j]=k;
            vert->zfb[j]=zfb;
            break;
          }
+         // if not find at the top layer, it means the total dzf is smaller than bufferheight=dry
+         // assume the drag layer at top layer
+         if(k==0)
+         {
+           vert->Nkeb[j]=k;
+           vert->zfb[j]=zfb;
+           break;           
+         } 
          zfb+=grid->dzf[j][k]/2;
       }
     }
@@ -302,8 +315,10 @@ void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
   int i,j,k;
   // compute omegac 
   for(i=0;i<grid->Nc;i++)
-    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+    for(k=grid->ctop[i];k<grid->Nk[i];k++){
+      phys->wc[i][k]=(phys->w[i][k]+phys->w[i][k+1])/2;
       vert->omegac[i][k]=(vert->omega[i][k]+vert->omega[i][k+1])/2;
+    }
 
   // uf vf and wf
   for(j=0;j<grid->Ne;j++)
@@ -485,9 +500,8 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
     for(i=0;i<grid->Nc;i++)
       for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
       {
-        vert->omega[i][k]=phys->w[i][k]-0*vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
-        vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)-(vert->zc[i][k]+grid->dzz[i][k]/2-\
-          vert->zcold[i][k]-grid->dzzold[i][k]/2)/prop->dt;
+        vert->omega[i][k]=phys->w[i][k]-vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
+        vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)-((vert->zc[i][k]-vert->zcold[i][k])+(grid->dzz[i][k]-grid->dzzold[i][k])/2)/prop->dt;
       }
   else
   {
@@ -495,8 +509,7 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
       for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
       {
         phys->w[i][k]=vert->omega[i][k]+vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)+\
-        vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)+(vert->zc[i][k]+grid->dzz[i][k]/2-\
-          vert->zcold[i][k]-grid->dzzold[i][k]/2)/prop->dt;
+        vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)+((vert->zc[i][k]-vert->zcold[i][k])+(grid->dzz[i][k]-grid->dzzold[i][k])/2)/prop->dt;
       }
   }
 }

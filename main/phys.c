@@ -602,7 +602,7 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
 
   // Need to update the vertical grid and fix any cells in which
   // dzz is too small when h=0.
-  if(prop->vertcoord==1)
+  if(prop->vertcoord==1 || prop->vertcoord==5)
    UpdateDZ(grid,phys,prop, -1);
  
   /*
@@ -636,6 +636,8 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
   // Need to update the vertical grid after updating the free surface.
   // The 1 indicates that this is the first call to UpdateDZ
   if(prop->vertcoord!=1){
+   if(prop->vertcoord==5)
+     UpdateDZ(grid,phys,prop, 1);
    VertCoordinateBasic(grid,prop,phys,myproc);
   }
   else
@@ -1499,7 +1501,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // laxWendroff central differencing
       if(prop->laxWendroff && prop->nonlinear==2) 
         LaxWendroff(grid,phys,prop,myproc,comm);
-    
+   
       // compute the horizontal source terms (like 
       /* 
        * 1) Old nonhydrostatic pressure gradient with theta m ethod
@@ -1508,10 +1510,11 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
        * 4) Horizontal and vertical advection of horizontal momentum with AB2
        * 5) Horizontal laminar+turbulent diffusion of horizontal momentum
        */
+      
       // calculate the preparation for HorizontalSource function due to the new vertical coordinate
+      // time comsuming function!
       if(prop->vertcoord!=1)
         VertCoordinateHorizontalSource(grid, phys, prop, myproc, numprocs, comm);
-
       HorizontalSource(grid,phys,prop,myproc,numprocs,comm);
 
       // add wave part 
@@ -1528,7 +1531,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // to the neighboring processors.
       // The predicted horizontal velocity is now in phys->u
       t0=Timer();
-
       // compute U^* and h^* (Eqn 40 and Eqn 31)
       UPredictor(grid,phys,prop,myproc,numprocs,comm);
       ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
@@ -1538,7 +1540,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       t0=Timer();
       blowup = CheckDZ(grid,phys,prop,myproc,numprocs,comm);
       t_check+=Timer()-t0;
- 
+
       // apply continuity via Eqn 82
       if(prop->vertcoord==1)
       {
@@ -1689,7 +1691,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           // compute omega^*
           ComputeOmega(grid, prop, phys,1, myproc);
         }
-
+        //for(k=0;k<grid->Nk[0];k++)
+          //printf("k %d omega %e w %e q %e\n", k,vert->omega[0][k],phys->w[0][k],phys->q[0][k]);
         // Source term for the pressure-Poisson equation is in phys->stmp
         ComputeQSource(phys->stmp,grid,phys,prop,myproc,numprocs);
 
@@ -1721,12 +1724,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       }
       t_nonhydro+=Timer()-t0;
 
-      //for(i=0;i<grid->Nc;i++)
-        //if(grid->xv[i]==2.5)
-          //for(k=0;k<grid->Nk[i];k++)
-            //printf("i %d k %d uc %e q %e w %e dhdt %e\n",i,k,phys->uc[i][k],phys->qc[i][k],phys->w[i][k],(phys->h[i]-phys->h_old[i])/prop->dt);
-         
-      // apply continuity via Eqn 82
+     // apply continuity via Eqn 82
       if(prop->vertcoord==1)
       {
         // w_im is calculated
@@ -1736,20 +1734,25 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         // NOW vert->omega stores the omega^n+1 with nonhydrostatic pressure correction
         LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
         ISendRecvWData(vert->omega,grid,myproc,comm);
+
         // recalculate uc and vc for the predictor velocity field
         ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
         // now we have uc^* and vc^*
         // compute ul^* and vl^* at each layer top
         ComputeUl(grid, prop, phys, myproc);
-        // compute zc gradient
-        // zf is calculate in ComputeZc function
-        ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
-        ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
+        
+        //if(!prop->nonhydrostatic)
+        //{
+          // compute zc gradient
+          // zf is calculate in ComputeZc function
+          ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
+          ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
+       //}
 
         // compute w from omega
         ComputeOmega(grid, prop, phys,0, myproc);
+        ISendRecvWData(phys->w,grid,myproc,comm);    
 
-        ISendRecvWData(phys->w,grid,myproc,comm);        
       }
 
       // Set scalar and wind stress boundary values at new time step n; 
@@ -2821,7 +2824,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     phys->Cn_W[i][k]-=prop->dt*phys->stmp[i][k];
 
     // add the additional part for the new vertical coordinate
-    if(prop->vertcoord!=1)
+    if(prop->vertcoord!=1 && prop->nonlinear)
     {
       for(k=grid->ctop[i]+1;k<grid->Nk[i];k++){
         // subtract the addition part of horizontal advection
@@ -2953,7 +2956,6 @@ static void Corrector(REAL **qc, gridT *grid, physT *phys, propT *prop, int mypr
   // Update the pressure since qc is a pressure correction
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
     i = grid->cellp[iptr];
-
     if(grid->ctop[i]<grid->Nk[i]-1)
       for(k=grid->ctop[i];k<grid->Nk[i];k++) 
         phys->q[i][k]+=qc[i][k];
@@ -3009,12 +3011,12 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
       for(k=grid->ctop[i];k<grid->Nk[i];k++) {
         // compute the vertical contributions to the source term
         if(!prop->subgrid)
-          src[i][k] = (grid->dzz[i][k]-grid->dzzold[i][k])*grid->Ac[i]/prop->dt+
+          src[i][k] = (grid->dzz[i][k]-grid->dzzold[i][k])*grid->Ac[i]/prop->dt/fac1+
                 grid->Ac[i]*(vert->omega[i][k]-vert->omega[i][k+1])+
                 fac2/fac1*grid->Ac[i]*(vert->omega_old[i][k]-vert->omega_old[i][k+1])+
                 fac3/fac1*grid->Ac[i]*(vert->omega_old2[i][k]-vert->omega_old2[i][k+1]);
         else
-          src[i][k] = (grid->dzz[i][k]*subgrid->Acceff[i][k]-grid->dzzold[i][k]*subgrid->Acceffold[i][k])/prop->dt+
+          src[i][k] = (grid->dzz[i][k]*subgrid->Acceff[i][k]-grid->dzzold[i][k]*subgrid->Acceffold[i][k])/prop->dt/fac1+
              subgrid->Acveff[i][k]*vert->omega[i][k]-subgrid->Acveff[i][k+1]*vert->omega[i][k+1]+
              fac2/fac1*(subgrid->Acveffold[i][k]*vert->omega_old[i][k]-subgrid->Acveffold[i][k+1]*vert->omega_old[i][k+1])+
              fac3/fac1*(subgrid->Acveffold2[i][k]*vert->omega_old2[i][k]-subgrid->Acveffold2[i][k+1]*vert->omega_old2[i][k+1]);

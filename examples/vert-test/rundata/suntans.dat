@@ -3,7 +3,7 @@
 #  Input file for SUNTANS.
 #
 ########################################################################
-Nkmax			100	# Number of cells in the vertical
+Nkmax			10	# Number of cells in the vertical
 maxFaces                4       # Max Number of edges for one element
 outvwgt                 0      #
 stairstep		0	# 1 if stair-stepping, 0 if partial-stepping
@@ -20,7 +20,7 @@ scaledepth 		0 	# Scale the depth by scalefactor
 scaledepthfactor 	0 	# Depth scaling factor (to test deep grids with explicit methods)
 thetaramptime	        0  	# Timescale over which theta is ramped from 1 to theta (fs theta only)
 beta			0.0	# Expansivity of salt 0.0007
-theta			0.55	# 0: fully explicit, 1: fully implicit
+theta			1	# 0: fully explicit, 1: fully implicit
 thetaS			0.55	# For scalar advection
 thetaB			0.55	# For scalar advection
 kappa_s                 0       # Vertical mass diffusivity
@@ -45,11 +45,11 @@ culvertmodel            0       # if 1 consider culvert model, 0 otherwise
 computeSediments        0       # if 1 consider sediment model 0 otherwise
 subgrid                 0     # if 1 consider subgrid model 0 otherwise
 hiter                   0       # if 1 consider iteration method to calculate h 0 otherwise
-turbmodel		1	# Turbulence model (0 for none, 1 for MY25)
-dt 			1	# Time step
+turbmodel		0	# Turbulence model (0 for none, 1 for MY25)
+dt 			10	# Time step
 Cmax 			1  	# Maximum permissible Courant number
-nsteps 		        1   # Number of steps 1728000
-ntout   		1	# How often to output data
+nsteps 		        1000       # Number of steps 1728000
+ntout   		10	# How often to output data
 ntprog   		5 	# How often to report progress (in %)
 ntconserve 		1	# How often to output conserved data
 nonhydrostatic		1	# 0 = hydrostatic, 1 = nonhydrostatic
@@ -345,8 +345,8 @@ subgridDFile         subgridD.dat
 WetperiprofFile      wetperiprof.dat
 subpointFile         subpoint.dat
 subpointeFile        subpointe.dat
-subpointinFile         subpointin.dat
-subpointeinFile        subpointein.dat
+subpointinFile       subpointin.dat
+subpointeinFile      subpointein.dat
 subgriddFile         depthsub.dat
 subdmaxFile          subdmax.dat
 ########################################################################
@@ -354,7 +354,7 @@ subdmaxFile          subdmax.dat
 # General vertical coordinate data
 #
 ########################################################################
-vertcoord               1        #
+vertcoord               5     #
 zcFile                  vert_zc.dat
 dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat

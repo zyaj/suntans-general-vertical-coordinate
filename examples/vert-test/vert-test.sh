@@ -37,5 +37,5 @@ else
 fi
 
 echo Running suntans...
-$EXEC -s -vv --datadir=$datadir
+$EXEC -s --datadir=$datadir
 
