@@ -156,18 +156,19 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
 void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,j,k;
-  for(i=0;i<grid->Nc;i++)
-  {
-    grid->ctopold[i]=grid->ctop[i]=0;
-    if(grid->Nk[i]!=grid->Nkmax){
-      printf("There is something wrong in setting the Nkmax for each cell\n");
-      exit(1);
+  if(prop->vertcoord!=5){
+    for(i=0;i<grid->Nc;i++)
+    {
+      grid->ctopold[i]=grid->ctop[i]=0;
+      if(grid->Nk[i]!=grid->Nkmax){
+        printf("There is something wrong in setting the Nkmax for each cell\n");
+        exit(1);
+      }
     }
+
+    for(j=0;j<grid->Ne;j++)
+      grid->etopold[j]=grid->etop[j]=0;
   }
-
-  for(j=0;j<grid->Ne;j++)
-    grid->etopold[j]=grid->etop[j]=0;
-
   switch(prop->vertcoord)
   {
     case 0: // user defined

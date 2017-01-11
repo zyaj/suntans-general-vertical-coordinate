@@ -78,7 +78,7 @@ REAL ReturnDepth(REAL x, REAL y) {
   */
 REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
   REAL h;
-  h=0.05-0.1*(x/1000);
+  h=0.5-1*(x/1000);
   //printf("x %e y %e, d%e, h%e H %e\n",x,y,d,h,(h+d));
   return h;
 }
@@ -113,7 +113,7 @@ REAL ReturnTemperature(REAL x, REAL y, REAL z, REAL depth) {
   //if(y<=550 && y>=500){
   //   return 20;
   //} else {
-     return 0;
+     return 1;
   //}
 }
 

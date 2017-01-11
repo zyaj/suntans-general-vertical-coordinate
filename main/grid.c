@@ -1568,7 +1568,7 @@ static void VertGrid(gridT *maingrid, gridT **localgrid, MPI_Comm comm)
   }
 
   // if not z-level all cells have the same number of layers= Nkmax
-  if(vertcoord!=1)
+  if(vertcoord!=1 || vertcoord!=5)
   {
     for(i=0;i<(*localgrid)->Nc;i++)
       (*localgrid)->Nk[i] = (*localgrid)->Nkmax;
