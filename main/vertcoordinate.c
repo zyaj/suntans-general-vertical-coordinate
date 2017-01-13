@@ -70,6 +70,10 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->omega_im=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omega_old=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omega_old2=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  // U3=w-udzdx-udzdy
+  vert->U3=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->U3_old=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->U3_old2=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omegac=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zc=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zcold=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -91,6 +95,9 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->omega_im[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omega_old[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omega_old2[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
+    vert->U3[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
+    vert->U3_old[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
+    vert->U3_old2[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->omegac[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zc[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zcold[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
@@ -119,6 +126,9 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->omega_im[i][k]=0;
       vert->omega_old[i][k]=0;
       vert->omega_old2[i][k]=0;
+      vert->U3[i][k]=0;
+      vert->U3_old[i][k]=0;
+      vert->U3_old2[i][k]=0;
     }
     for(k=0;k<grid->Nk[i];k++)
     {
@@ -169,16 +179,21 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
     for(j=0;j<grid->Ne;j++)
       grid->etopold[j]=grid->etop[j]=0;
   }
+
   switch(prop->vertcoord)
   {
     case 0: // user defined
-      InitializeVerticalCoordinate(grid,prop,phys,myproc);      
+      InitializeVerticalCoordinate(grid,prop,phys,myproc);  
+      break;    
     case 2:
       InitializeIsopycnalCoordinate(grid,prop,phys,myproc);
+      break;
     case 3:
       InitializeSigmaCoordinate(grid, prop, phys, myproc);
+      break;
     case 4:
       InitializeVariationalCoordinate(grid, prop,phys, myproc);
+      break;
   }  
 }
 
@@ -194,7 +209,7 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
 void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k,j,nf,ne;
-  REAL fac1,fac2,fac3,Ac;
+  REAL fac1,fac2,fac3,Ac,sum,sum_old;
 
   fac1=prop->imfac1;
   fac2=prop->imfac2;
@@ -491,28 +506,37 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
 
 /*
  * Function: ComputeOmega
- * Compute omega from the definition omega=w-udzdx-vdzdy-wg
+ * Compute omega from the definition omega=w-udzdx-vdzdy-wg and U3=w-udzdx-vdzdy
  * ----------------------------------------------------
+ * index=1, w->omega index=0 omega->w index=-1 w->U3
  */
 void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
 {
   int i,k;
+  REAL alpha=1;
+  if(prop->vertcoord==5)
+    alpha=0;
   if(index==1)
     for(i=0;i<grid->Nc;i++)
       for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
       {
-        vert->omega[i][k]=phys->w[i][k]-vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
-        vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)-((vert->zc[i][k]-vert->zcold[i][k])+(grid->dzz[i][k]-grid->dzzold[i][k])/2)/prop->dt;
+        vert->omega[i][k]=phys->w[i][k]-alpha*vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
+        alpha*vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)-((vert->zc[i][k]-vert->zcold[i][k])+(grid->dzz[i][k]-grid->dzzold[i][k])/2)/prop->dt;
       }
-  else
-  {
+  else if(index==0)
     for(i=0;i<grid->Nc;i++)
       for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
       {
-        phys->w[i][k]=vert->omega[i][k]+vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)+\
-        vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)+((vert->zc[i][k]-vert->zcold[i][k])+(grid->dzz[i][k]-grid->dzzold[i][k])/2)/prop->dt;
+        phys->w[i][k]=vert->omega[i][k]+alpha*vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)+\
+        alpha*vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)+((vert->zc[i][k]-vert->zcold[i][k])+(grid->dzz[i][k]-grid->dzzold[i][k])/2)/prop->dt;
       }
-  }
+  else
+    for(i=0;i<grid->Nc;i++)
+      for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
+      {
+        vert->U3[i][k]=phys->w[i][k]-alpha*vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
+        alpha*vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid);
+      }
 }
 
 /*
@@ -706,6 +730,8 @@ void StoreVertVariables(gridT *grid, physT *phys) {
     for(k=0;k<grid->Nk[i];k++) {
       // store omega^n-1 and omega^n
       vert->omega_old2[i][k]=vert->omega_old[i][k];
+      vert->U3_old2[i][k]=vert->U3_old[i][k];
       vert->omega_old[i][k]=vert->omega[i][k];
+      vert->U3_old[i][k]=vert->U3[i][k];
     }
 }

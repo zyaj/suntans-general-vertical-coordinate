@@ -61,3 +61,12 @@ the horizontal diffusion term is the same as the original method
 1. a bug found in Wpredictor when nonlinear==0 the additional advection part should be turned off
 2. add a case vertcoord=5 which is a z-level duplicate with the new general vertical coordinate to solve the equation
 it can be applied to test the codes to compare the original z-level codes when vertcoord=1
+
+01/11/2017
+1. for the vertcoord=5 if want to be exactly like z-level: computeomega should delete udzdx and vdzdy
+2.
+
+01/12/2017
+1. add U3 for store w-udzdx-vdzdy
+2. change the way to calculate qsource, avoid use omega for qsource and use U3 instead
+3. update the manual (not finished!)

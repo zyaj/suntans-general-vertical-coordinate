@@ -49,6 +49,7 @@ main(int argc, char *argv[])
     AllocatePhysicalVariables(grid,&phys,prop);
     AllocateTransferArrays(&grid,myproc,numprocs,comm);
     OpenFiles(prop,myproc);
+
     if(RESTART)
       ReadPhysicalVariables(grid,phys,prop,myproc,comm);
     else

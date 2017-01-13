@@ -53,6 +53,21 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
+  int i,k;
+  REAL ratio,sum,sum1;
+  sum=(grid->Nkmax+1)/2*grid->Nkmax;
+  for(i=0;i<grid->Nc;i++)
+  {
+    sum1=0;
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+    {
+      ratio=(k+1)/sum-(2*k-11)/sum*(grid->xv[i]-2.5)/995;
+      grid->dzz[i][k]=vert->dsigma[k]*(grid->dv[i]+phys->h[i]);
+      grid->dzzold[i][k]=grid->dzz[i][k];
+      sum1+=grid->dzz[i][k];
+    }
+    printf("sum1-h %e\n",sum1-(grid->dv[i]+phys->h[i]));
+  }
 }
 
 /*
@@ -74,7 +89,6 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k;
-  printf("nk %d\n",grid->Nkmax );
   for(k=0;k<grid->Nkmax;k++){
 
   	vert->dsigma[k]=1.0/grid->Nkmax;

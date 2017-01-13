@@ -20,14 +20,14 @@ scaledepth 		0 	# Scale the depth by scalefactor
 scaledepthfactor 	0 	# Depth scaling factor (to test deep grids with explicit methods)
 thetaramptime	        0  	# Timescale over which theta is ramped from 1 to theta (fs theta only)
 beta			0.0	# Expansivity of salt 0.0007
-theta			1	# 0: fully explicit, 1: fully implicit
+theta			0.55	# 0: fully explicit, 1: fully implicit
 thetaS			0.55	# For scalar advection
 thetaB			0.55	# For scalar advection
 kappa_s                 0       # Vertical mass diffusivity
 kappa_sH                0       # Horizontal mass diffusivity
 gamma 			1e-3	# Coefficient of expansivity of temperature.
-kappa_T                 1e-4    # Vertical thermal diffusivity
-kappa_TH                1e-4    # Horizontal thermal diffusivity
+kappa_T                 0    # Vertical thermal diffusivity
+kappa_TH                0    # Horizontal thermal diffusivity
 nu 			1e-6  	# Laminar viscosity of water (m^2 s^-1)
 nu_H 			0	# Horizontal laminar viscosity of water (m^2 s^-1)
 tau_T			0 	# Wind shear stress
@@ -45,10 +45,10 @@ culvertmodel            0       # if 1 consider culvert model, 0 otherwise
 computeSediments        0       # if 1 consider sediment model 0 otherwise
 subgrid                 0     # if 1 consider subgrid model 0 otherwise
 hiter                   0       # if 1 consider iteration method to calculate h 0 otherwise
-turbmodel		1	# Turbulence model (0 for none, 1 for MY25)
+turbmodel		0	# Turbulence model (0 for none, 1 for MY25)
 dt 			1	# Time step
 Cmax 			1  	# Maximum permissible Courant number
-nsteps 		        10000       # Number of steps 1728000
+nsteps 		        10000      # Number of steps 1728000
 ntout   		100	# How often to output data
 ntprog   		5 	# How often to report progress (in %)
 ntconserve 		1	# How often to output conserved data
@@ -67,7 +67,7 @@ flux 			0	# flux
 timescale		0	# timescale for open boundary condition
 volcheck		0	# Check for volume conservation
 masscheck		0	# Check for mass conservation
-nonlinear		1	# No momentum advection: 0, first-order upwind: 1, Central-differencing: 2
+nonlinear		0	# No momentum advection: 0, first-order upwind: 1, Central-differencing: 2
 newcells		0	# 1 if adjust momentum in surface cells as the volume changes, 0 otherwise
 wetdry			1       # 1 if wetting and drying, 0 otherwise
 Coriolis_f              0	# Coriolis frequency f=2*Omega*sin(phi)
@@ -354,7 +354,7 @@ subdmaxFile          subdmax.dat
 # General vertical coordinate data
 #
 ########################################################################
-vertcoord               3     #
+vertcoord               3  #
 zcFile                  vert_zc.dat
 dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat

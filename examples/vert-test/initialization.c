@@ -64,7 +64,7 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
  */
 REAL ReturnDepth(REAL x, REAL y) {
   REAL d;
-  d=3;
+  d=15;
   return d;
 }
 
@@ -78,7 +78,7 @@ REAL ReturnDepth(REAL x, REAL y) {
   */
 REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
   REAL h;
-  h=0.5-1*(x/1000);
+  h=2.5-5*(x/1000);
   //printf("x %e y %e, d%e, h%e H %e\n",x,y,d,h,(h+d));
   return h;
 }
@@ -108,13 +108,12 @@ REAL ReturnSalinity(REAL x, REAL y, REAL z) {
  *
  */
 REAL ReturnTemperature(REAL x, REAL y, REAL z, REAL depth) {
- 
-  //return 20;
-  //if(y<=550 && y>=500){
-  //   return 20;
-  //} else {
-     return 1;
-  //}
+  REAL h;
+  h=2.5-5*(x/1000); 
+  if(fabs(z-(h-2.25))<1e-3)  
+    return 1;
+  else
+    return 0;
 }
 
 /*

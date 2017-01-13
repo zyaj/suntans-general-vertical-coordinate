@@ -25,6 +25,7 @@ REAL **omega_old; // omega^(n) [Nc][Nk+1]
 REAL **omega_old2; // omega^(n-1) [Nc][Nk+1]
 REAL **omega_star; // the vertical contravariant flux [Nc][Nk+1] for hydrostatic calculation and prepare for scalar transport 
 REAL **omegac; // the cell-centered vertical contravariant flux [Nc][Nk]
+REAL **U3,**U3_old,**U3_old2; // w-udzdx-vdzdy [Nc][Nk+1] 
 REAL *n1;  // the x component of the outpointing vector from cell center to its face center [Nc*maxfaces*Nc]
 REAL *n2; // the y component of the outpointing vector from cell center to its face center [Nc*maxfaces*Nc]
 REAL **zc,**zcold; // the cell center vertical location in the Cartesian coordinate [Nc][Nk]
