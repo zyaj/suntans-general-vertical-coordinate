@@ -206,7 +206,7 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
  * 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
  * need to modify grid.c to make sure ctop=0 and Nk=Nkmax for all cells 
  */
-void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
+void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int myproc)
 {
   int i,k,j,nf,ne;
   REAL fac1,fac2,fac3,Ac,sum,sum_old;
@@ -216,10 +216,11 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
   fac3=prop->imfac3;
 
   // ctop and etop is always 0 and Nke and Nk is always Nkmax
-  for(i=0;i<grid->Nc;i++) {
-    for(k=grid->ctop[i];k<grid->Nk[i];k++)
-      grid->dzzold[i][k]=grid->dzz[i][k];
-  }
+  if(!index)
+    for(i=0;i<grid->Nc;i++) {
+      for(k=grid->ctop[i];k<grid->Nk[i];k++)
+        grid->dzzold[i][k]=grid->dzz[i][k];
+    }
 
   switch(prop->vertcoord)
   {
@@ -233,9 +234,10 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
         for(k=grid->ctop[i];k<grid->Nk[i];k++){
           for(nf=0;nf<grid->nfaces[i];nf++) {
             ne = grid->face[i*grid->maxfaces+nf];
-            if(k<grid->Nke[ne])
+            if(k<grid->Nke[ne]){
               grid->dzz[i][k]-=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+
                 fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
+            }
               // the function is not right for subgrid module
           }
         }
@@ -279,26 +281,34 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
     // find 
     for(j=0;j<grid->Ne;j++)
     {
-      zfb=0;
-      for(k=grid->Nke[j]-1;k>=grid->etop[j];k--)
-      {
-         zfb+=grid->dzf[j][k]/2;
-         // find the layer when zfb>buffer height
-         if(zfb>BUFFERHEIGHT){
-           vert->Nkeb[j]=k;
-           vert->zfb[j]=zfb;
-           break;
-         }
-         // if not find at the top layer, it means the total dzf is smaller than bufferheight=dry
-         // assume the drag layer at top layer
-         if(k==0)
-         {
-           vert->Nkeb[j]=k;
-           vert->zfb[j]=zfb;
-           break;           
-         } 
-         zfb+=grid->dzf[j][k]/2;
-      }
+      // if constant drag coefficient 
+      // use the bottom layer as the drag layer
+      //if(prop->z0B!=0)
+      //{
+        zfb=0;
+        for(k=grid->Nke[j]-1;k>=grid->etop[j];k--)
+        {
+           zfb+=grid->dzf[j][k]/2;
+           // find the layer when zfb>buffer height
+           if(zfb>BUFFERHEIGHT){
+             vert->Nkeb[j]=k;
+             vert->zfb[j]=zfb;
+             break;
+           }
+           // if not find at the top layer, it means the total dzf is smaller than bufferheight=dry
+           // assume the drag layer at top layer
+           if(k==0)
+           {
+             vert->Nkeb[j]=k;
+             vert->zfb[j]=zfb;
+             break;           
+           } 
+           zfb+=grid->dzf[j][k]/2;
+        }
+      //} else {
+        //vert->Nkeb[j]=grid->Nke[j]-1;
+        //vert->zfb[j]=grid->dzf[j][grid->Nke[j]-1]/2;
+      //}
     }
  }
 
@@ -428,8 +438,11 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
       omega[i][k]/=fac1;
     }
     //compute omega_im for updatescalar function
-    for(k=grid->ctop[i];k<=grid->Nk[i];k++)
+    for(k=grid->ctop[i];k<=grid->Nk[i];k++){
       vert->omega_im[i][k]=fac1*omega[i][k]+fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k];
+      //if(i==0)
+        //printf("n %d k %d omega %e flux %e dzzdt %e fac1 %e fac2 %e fac3 %e\n",prop->n,k,vert->omega_im[i][k],flux,(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt,fac1,fac2,fac3);
+    }
   }
 }
 
@@ -469,14 +482,15 @@ void ComputeVerticalVelocity(REAL **omega, REAL **zc, gridT *grid, propT *prop, 
  * also compute the vertical location of each layer center at edge face
  * ----------------------------------------------------
  */
-void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc)
+void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc)
 {
   int i,j,k,nc1,nc2;
   REAL z,def1,def2,Dj;
   for(i=0;i<grid->Nc;i++)
   {
-    for(k=0;k<grid->Nk[i];k++)
-      vert->zcold[i][k]=vert->zc[i][k];
+    if(!index)
+      for(k=0;k<grid->Nk[i];k++)
+        vert->zcold[i][k]=vert->zc[i][k];
     z=-grid->dv[i];
     vert->zc[i][grid->Nk[i]-1]=z+grid->dzz[i][grid->Nk[i]-1]/2;
     for(k=grid->Nk[i]-2;k>=grid->ctop[i];k--){
@@ -704,7 +718,7 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
   InitializeLayerThickness(grid, prop, phys,myproc);
 
   // compute zc
-  ComputeZc(grid,prop,phys,myproc);
+  ComputeZc(grid,prop,phys,0,myproc);
 
   // compute normal vector
   ComputeNormalVector(grid,phys,myproc);
@@ -735,3 +749,94 @@ void StoreVertVariables(gridT *grid, physT *phys) {
       vert->U3_old[i][k]=vert->U3[i][k];
     }
 }
+
+/*
+ * Function: UpdateCellCenteredFreeSurface
+ * Usage: UpdateCellCenteredFreeSurface(grid,prop,phys,myproc);
+ * ---------------------------------
+ * update the free surface height after the nonhydrostatic pressure is solved
+ *
+ */
+void UpdateCellcenteredFreeSurface(gridT *grid, propT *prop, physT *phys, int myproc)
+{
+   int i,iptr,k,nf,ne;
+   REAL sum,normal,tmp;
+   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
+    i = grid->cellp[iptr];
+    sum = 0;
+    for(nf=0;nf<grid->nfaces[i];nf++) {
+      ne = grid->face[i*grid->maxfaces+nf];
+      normal = grid->normal[i*grid->maxfaces+nf];
+      for(k=grid->etop[ne];k<grid->Nke[ne];k++) 
+      {  
+        sum+=(prop->imfac1*phys->u[ne][k]+prop->imfac2*phys->u_old[ne][k]+prop->imfac3*phys->u_old2[ne][k])*
+          grid->df[ne]*normal*grid->dzf[ne][k];
+      }
+    }
+    tmp=phys->h_old[i]-sum*prop->dt/grid->Ac[i];
+    //if(fabs(tmp-phys->h[i])>1e-5){
+      //printf("n %d i %d h %e tmp %e diff %e\n",prop->n,i,phys->h[i],tmp,phys->h[i]-tmp);
+      //exit(0);
+    //}
+    phys->h[i]=tmp;
+  }
+}
+
+/*
+ * Function: UpdateFluxHeight
+ * Usage: UpdateFluxHeight(grid,prop,phys,myproc);
+ * ---------------------------------
+ * Update the flux height use the upwind the scheme with u*, u^n-1, u^n-2
+ * The reason is to ensure a positive layer height for the isopycnal coordinate
+ * The flux height set by the SetFluxHeight is calculated by u^n-1 which need to be verified by
+ * u^im which is used to calculate the flux into/out of a grid cell.
+ * The new flux height will be used to further modified free surface height/ layer thickness
+ * only work when vertcoord==2
+ */
+void VerifyFluxHeight(gridT *grid, propT *prop, physT *phys, int myproc)
+{  
+  int i, j, k, nc1, nc2;
+  REAL dz_bottom, dzsmall=grid->dzsmall,h_uw,utmp,tmp;
+
+  for(j=0;j<grid->Ne;j++) 
+  {
+    grid->hf[j]=0;
+    //for(k=0; k<grid->Nkc[j];k++)
+      //grid->dzf[j][k]=0;
+  }
+
+  for(j=0;j<grid->Ne;j++) {
+    nc1 = grid->grad[2*j];
+    nc2 = grid->grad[2*j+1];
+    if(nc1==-1) nc1=nc2;
+    if(nc2==-1) nc2=nc1;
+
+    for(k=0;k<grid->etop[j];k++)
+      grid->dzf[j][k]=0;
+ 
+    for(k=grid->etop[j];k<grid->Nke[j];k++){
+      utmp=prop->imfac1*phys->u[j][k]+prop->imfac2*phys->u_old[j][k]+prop->imfac3*phys->u_old2[j][k];
+      tmp=UpWind(utmp,grid->dzz[nc1][k],grid->dzz[nc2][k]);
+      //if(tmp!=grid->dzf[j][k])
+        //printf("n %d nc1 %d nc2 %d j %d k %d u %e %e %e utmp %e dzf %e tmp %e\n",
+        //prop->n,nc1,nc2,j,k,phys->u[j][k],phys->u_old[j][k],phys->u_old2[j][k],
+        //utmp,grid->dzf[j][k],tmp);
+      grid->dzf[j][k]=tmp;
+    }
+
+    /* This works with Wet/dry but not with cylinder case...*/
+    if(grid->etop[j]==grid->Nke[j]-1) {
+      // added part
+     if(grid->mark[j]==2 && grid->dzf[j][k]<=0.01)
+        grid->dzf[j][k]=0.01;
+    }
+
+    for(k=grid->etop[j];k<grid->Nke[j];k++) 
+      if(grid->dzf[j][k]<=DRYCELLHEIGHT)
+        grid->dzf[j][k]=0;
+      
+    for(k=grid->etop[j];k<grid->Nke[j];k++)
+      grid->hf[j]+=grid->dzf[j][k];
+  }
+}
+

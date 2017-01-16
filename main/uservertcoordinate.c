@@ -55,18 +55,11 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
 {
   int i,k;
   REAL ratio,sum,sum1;
-
-  sum=(grid->Nkmax+1.0)/2*grid->Nkmax;
+  ratio=1.0/grid->Nkmax;
   for(i=0;i<grid->Nc;i++)
   {
-    for(k=grid->ctop[i];k<5;k++)
-      grid->dzz[i][k]=1.5;
-    for(k=5;k<grid->Nk[i];k++)
-    {
-      ratio=0.2;
-      //(k+1.0)/sum-(2*k-9.0)/sum*(grid->xv[i]-2.5)/995;
-      grid->dzz[i][k]=ratio*(grid->dv[i]+phys->h[i]-7.5);
-    }
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+      grid->dzz[i][k]=ratio*(grid->dv[i]+phys->h[i]);
     for(k=grid->ctop[i];k<grid->Nk[i];k++){
       grid->dzzold[i][k]=grid->dzz[i][k];
     }
@@ -92,8 +85,13 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k;
-  for(k=0;k<grid->Nkmax;k++)
+  for(k=0;k<grid->Nkmax-2;k++){
+
   	vert->dsigma[k]=1.0/grid->Nkmax;
+  }
+  vert->dsigma[grid->Nkmax-1]=1e-12;
+  vert->dsigma[grid->Nkmax-2]=2.0/grid->Nkmax-1e-12;
+
   for(i=0;i<grid->Nc;i++)
   {
   	for(k=grid->ctop[i];k<grid->Nk[i];k++)

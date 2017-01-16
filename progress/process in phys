@@ -311,3 +311,6 @@ The main reason is the continuity equation is applied at n+im not n+1 step
 01/08/2016
 for interptotoplayerface assume Nk>=2 when vertcoord!=1 if Nk=1 use z-level with subgrid directly
 find bug in calculation of dzdx
+
+01/16/2017
+1. modify the drag forcing term in upredictor to ensure a large body drag under the effective bottom layer.

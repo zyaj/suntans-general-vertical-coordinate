@@ -31,13 +31,13 @@ all:	data
 test:	data
 	sh $(EXEC).sh $(NUMPROCS)
 
-data:	$(SUN)
+data: $(SUN)
 
 .c.o:	
 	$(LD) -c $(INCLUDES) $(DEFS) $*.c
 
 $(SUN):	initialization.o boundaries.o state.o
-	cp initialization.o boundaries.o state.o $(SUNTANSHOME)
+	cp initialization.o boundaries.o state.o uservertcoordinate.c $(SUNTANSHOME)
 	make -C $(SUNTANSHOME)
 
 clean:

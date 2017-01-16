@@ -1530,12 +1530,13 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // to the neighboring processors.
       // The predicted horizontal velocity is now in phys->u
       t0=Timer();
+
       // compute U^* and h^* (Eqn 40 and Eqn 31)
       UPredictor(grid,phys,prop,myproc,numprocs,comm);
       ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
       ISendRecvCellData2D(phys->h,grid,myproc,comm);
       t_predictor+=Timer()-t0;
-
+      
       t0=Timer();
       blowup = CheckDZ(grid,phys,prop,myproc,numprocs,comm);
       t_check+=Timer()-t0;
@@ -1554,8 +1555,9 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
         ISendRecvWData(vert->omega,grid,myproc,comm);
       }
+
+
       t0=Timer();
-      
       // calculate flux in/out to each cell to ensure bounded scalar concentration under subgrid
       if(prop->subgrid)
         SubgridFluxCheck(grid, phys, prop,myproc);
@@ -1606,6 +1608,19 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
 
         t_transport+=Timer()-t0;
       }
+
+      /*for(i=0;i<grid->Nc;i++)
+      {
+        for(k=0;k<grid->Nk[i];k++)
+        {
+           if(fabs(vert->omega_im[i][k])>1e-10)
+                printf("n %d i %d k %d omega %e\n", prop->n,i,k,vert->omega_im[i][k]);
+           if(i==170){
+                printf("n %d i %d k %d T %e\n", prop->n,i,k,phys->T[i][k]-1);
+             //exit(0);
+           } 
+        }
+      }*/
 
       // Update the air-sea fluxes --> these are used for the previous time step source term and for the salt flux implicit term (salt tracer solver therefore needs to go next)
       if(prop->metmodel>=2){
@@ -1690,8 +1705,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           ComputeOmega(grid, prop, phys,-1, myproc);
         }
 
-        //for(k=0;k<grid->Nk[0];k++)
-          //printf("k %d omega %e w %e q %e\n", k,vert->omega[0][k],phys->w[0][k],phys->q[0][k]);
         // Source term for the pressure-Poisson equation is in phys->stmp
         ComputeQSource(phys->stmp,grid,phys,prop,myproc,numprocs);
 
@@ -1737,7 +1750,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         // no need to solve from omega
         // w is recalculated by omega only for hydrostatic case
         if(!prop->nonhydrostatic)
-        {
+        {  
           // recalculate uc and vc for the predictor velocity field
           ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
           // now we have uc^* and vc^*
@@ -1749,15 +1762,14 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
           // compute w from omega
           ComputeOmega(grid, prop, phys,0, myproc);
-       }
-       ISendRecvWData(phys->w,grid,myproc,comm);
+        }
+        ISendRecvWData(phys->w,grid,myproc,comm);
 
        // update U3 with the new w
        ComputeOmega(grid, prop, phys,-1, myproc);
        ISendRecvWData(vert->U3,grid,myproc,comm);
-     
      }
- 
+
       // Set scalar and wind stress boundary values at new time step n; 
       // (n-1) is old time step.
       // BoundaryVelocities and OpenBoundaryFluxes were called in UPredictor to set the
@@ -3619,7 +3631,7 @@ static void UPredictor(gridT *grid, physT *phys,
         }
         else{ 
           // standard drag law
-          if(prop->vertcoord!=1)
+          if(prop->vertcoord==1)
             if(!prop->subgrid)
               b[grid->Nke[j]-1]=1.0+theta*dt*(a[grid->Nke[j]-1]+
                   2.0*phys->CdB[j]*fabs(phys->u[j][grid->Nke[j]-1])/
@@ -3636,9 +3648,12 @@ static void UPredictor(gridT *grid, physT *phys,
               (grid->dzz[nc1][Nkeb]+
               grid->dzz[nc2][Nkeb]));
             // for the layer below the effective layer (zc>bufferheight) give 100 drag coefficient
-            for(k=Nkeb+1;k<grid->Nke[j];k++)
-              b[k]=1.0+theta*dt*2.0*100*fabs(phys->u[j][Nkeb])/
-                (grid->dzz[nc1][Nkeb]+grid->dzz[nc2][Nkeb]);
+            for(k=Nkeb+1;k<grid->Nke[j];k++){
+              b[k]=1.0+theta*dt*2.0*100*fabs(phys->u[j][k])/
+                (grid->dzz[nc1][k]+grid->dzz[nc2][k]);
+              a[k]=0;
+              c[k]=0;
+            }
           }
         }
         if(prop->vertcoord==1)
@@ -3659,13 +3674,7 @@ static void UPredictor(gridT *grid, physT *phys,
             c[k]=-theta*dt*b[k];
             b[k]=1.0+theta*dt*(a[k]+b[k]);
             a[k]=-theta*dt*a[k];
-          }    
-          // under the bottom cell
-          for(k=Nkeb+1;k<grid->Nke[j];k++) {
-            c[k]=0.0;
-            b[k]=1.0+theta*dt*b[k];
-            a[k]=0.0;
-          }        
+          }            
         }
       } else { // for a single vertical layer
         b[grid->etop[j]] = 1.0;
@@ -3756,16 +3765,25 @@ static void UPredictor(gridT *grid, physT *phys,
       }
 
       for(k=grid->etop[j];k<grid->Nke[j];k++) {
+
         if(grid->dzz[nc1][k]==0 && grid->dzz[nc2][k]==0) {
           printf("Exiting because j %d dzz[%d][%d]=%f or dzz[%d][%d]=%f dv1 %e dv2 %e nk1 %d nk2 %d nke %d\n",j,
               nc1,k,grid->dzz[nc1][k],nc2,k,grid->dzz[nc2][k],grid->dv[nc1],grid->dv[nc2],grid->Nk[nc1],grid->Nk[nc2],grid->Nke[j]);
           exit(0);
         }
+
         if(a[k]!=a[k]) printf("a[%d] problems, dzz[%d][%d]=%f\n",k,j,k,grid->dzz[j][k]);
+        
         if(b[k]!=b[k] || b[k]==0)
-          printf("proc %d n %d ne %d b[%d] problems, b=%f dzf %e nke %d etop %d Nk %d %d dv %e %e hmin %e %e Cd %e\n",myproc,prop->n,j, k,b[k],
-            grid->dzf[j][k],grid->Nke[j],grid->etop[j],grid->Nk[grid->grad[2*j]],grid->Nk[grid->grad[2*j+1]],grid->dv[grid->grad[2*j]],grid->dv[grid->grad[2*j+1]],
-            subgrid->hmin[grid->grad[2*j]],subgrid->hmin[grid->grad[2*j+1]],phys->CdB[j]);
+          if(prop->subgrid)
+            printf("proc %d n %d ne %d b[%d] problems, b=%f dzf %e nke %d etop %d Nk %d %d dv %e %e hmin %e %e Cd %e\n",myproc,prop->n,j, k,b[k],
+              grid->dzf[j][k],grid->Nke[j],grid->etop[j],grid->Nk[grid->grad[2*j]],grid->Nk[grid->grad[2*j+1]],grid->dv[grid->grad[2*j]],grid->dv[grid->grad[2*j+1]],
+              subgrid->hmin[grid->grad[2*j]],subgrid->hmin[grid->grad[2*j+1]],phys->CdB[j]);
+          else
+            printf("proc %d n %d ne %d b[%d] problems, b=%f dzf %e nke %d etop %d Nk %d %d dv %e %e Cd %e\n",myproc,prop->n,j, k,b[k],
+              grid->dzf[j][k],grid->Nke[j],grid->etop[j],grid->Nk[grid->grad[2*j]],grid->Nk[grid->grad[2*j+1]],grid->dv[grid->grad[2*j]],grid->dv[grid->grad[2*j+1]]
+              ,phys->CdB[j]);                
+
         if(c[k]!=c[k]) printf("c[%d] problems\n",k);
       }
 
@@ -4265,21 +4283,6 @@ static void UPredictor(gridT *grid, physT *phys,
     UpdateSubgridHeff(grid, phys, prop, myproc);
   }
 
-  // Now update the vertical grid spacing with the new free surface.
-  // can comment this out to linearize the free surface 
-  if(prop->vertcoord==1)
-    UpdateDZ(grid,phys,prop, 0); 
-  else {
-    // use new method to update layerthickness
-    UpdateLayerThickness(grid, prop, phys, myproc);
-    // compute the new zc, the old value is stored in zc_old
-    ComputeZc(grid,prop,phys,myproc);
-  }
-
-  // update vertical ac for scalar transport
-  if(prop->subgrid)
-    UpdateSubgridVerticalAceff(grid, phys, prop, 0, myproc);
-
   // Use the new free surface to add the implicit part of the free-surface
   // pressure gradient to the horizontal momentum.
   //
@@ -4328,6 +4331,27 @@ static void UPredictor(gridT *grid, physT *phys,
       }
     } 
   }
+
+  if(prop->vertcoord!=1 || prop->vertcoord!=5)
+  {
+    VerifyFluxHeight(grid,prop,phys,myproc);
+    UpdateCellcenteredFreeSurface(grid,prop,phys,myproc);
+  }
+
+  // Now update the vertical grid spacing with the new free surface.
+  // can comment this out to linearize the free surface 
+  if(prop->vertcoord==1)
+    UpdateDZ(grid,phys,prop, 0); 
+  else {
+    // use new method to update layerthickness
+    UpdateLayerThickness(grid, prop, phys, 0,myproc);
+   // compute the new zc, the old value is stored in zc_old
+    ComputeZc(grid,prop,phys,0,myproc);
+  }
+
+  // update vertical ac for scalar transport
+  if(prop->subgrid)
+    UpdateSubgridVerticalAceff(grid, phys, prop, 0, myproc);
 }
 
 /*
@@ -5691,7 +5715,7 @@ void SetDensity(gridT *grid, physT *phys, propT *prop) {
 void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
   //static void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
   int i, j, k, nc1, nc2;
-  REAL dz_bottom, dzsmall=grid->dzsmall,h_uw;
+  REAL dz_bottom, dzsmall=grid->dzsmall,h_uw,utmp;
 
   //  // assuming upwinding
   //  for(j=0;j<grid->Ne;j++) {

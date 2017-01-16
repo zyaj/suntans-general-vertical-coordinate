@@ -18,10 +18,13 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
   REAL z=0, dz0, r = GetValue(DATAFILE,"rstretch",&status);
 
   if(dz!=NULL) {
-    if(r==1) 
-      for(k=0;k<Nkmax;k++)
-  dz[k]=depth/Nkmax;
-    else if(r>1 && r<=1.1) {    
+    if(r==1) {
+      for(k=0;k<Nkmax-2;k++){
+       dz[k]=depth/Nkmax;
+      }
+      dz[Nkmax-2]=2*depth/Nkmax-1e-10;
+      dz[Nkmax-1]=1e-10;
+    }else if(r>1 && r<=1.1) {    
       dz[0] = depth*(r-1)/(pow(r,Nkmax)-1);
       if(VERBOSE>2) printf("Minimum vertical grid spacing is %.2f\n",dz[0]);
       for(k=1;k<Nkmax;k++) 
@@ -109,11 +112,7 @@ REAL ReturnSalinity(REAL x, REAL y, REAL z) {
  */
 REAL ReturnTemperature(REAL x, REAL y, REAL z, REAL depth) {
   REAL h;
-  h=2.5-5*(x/1000); 
-  if(fabs(z-(h-2.25))<1e-3)  
-    return 1;
-  else
-    return 0;
+  return 1;
 }
 
 /*

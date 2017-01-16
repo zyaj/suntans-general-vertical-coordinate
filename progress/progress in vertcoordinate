@@ -70,3 +70,7 @@ it can be applied to test the codes to compare the original z-level codes when v
 1. add U3 for store w-udzdx-vdzdy
 2. change the way to calculate qsource, avoid use omega for qsource and use U3 instead
 3. update the manual (not finished!)
+
+01/16/2017
+1. still needs problem for the wetting and drying for isopycnal model
+for the drying of interior layer

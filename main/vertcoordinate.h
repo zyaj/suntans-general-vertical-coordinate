@@ -43,13 +43,13 @@ FILE *zcFID, *dzzFID, *omegaFID;
 vertT *vert;
 
 void AllocateVertCoordinate(gridT *grid, propT *prop, int myproc);
-void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
+void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int index, int myproc);
 void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeUl(gridT *grid, propT *prop, physT *phys, int myproc);
 void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc);
-void ComputeZc(gridT *grid, propT *prop, physT *phys, int myproc);
+void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc);
 void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL **scalar, gridT *grid, propT *prop, physT *phys, int myproc);
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
@@ -60,4 +60,6 @@ void OpenVertCoordinateFiles(gridT *grid,int mergeArrays, int myproc);
 void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 void StoreVertVariables(gridT *grid, physT *phys);
 void FindBottomLayer(gridT *grid, propT *prop, physT *phys, int myproc);
+void UpdateCellcenteredFreeSurface(gridT *grid, propT *prop, physT *phys, int myproc);
+void VerifyFluxHeight(gridT *grid, propT *prop, physT *phys, int myproc);
 #endif
