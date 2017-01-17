@@ -40,6 +40,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->zf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->Nkeb=(int *)SunMalloc(grid->Ne*sizeof(int),"AllocateVertCoordinate");
   vert->zfb=(REAL *)SunMalloc(grid->Ne*sizeof(REAL),"AllocateVertCoordinate");
+  vert->modifydzf = MPI_GetValue(DATAFILE,"modifydzf","AllocateVertCoordinate",myproc);
 
   for(j=0;j<grid->Ne;j++)
   {

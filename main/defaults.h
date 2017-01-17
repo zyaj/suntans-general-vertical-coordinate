@@ -262,3 +262,10 @@ const int udrag_DEFAULT = 0;
 */
 const int vertcoord_DEFAULT = 1;
 
+/* modifydzf
+  default 0 whether use u^im to modify dzf 
+  now only works for the general vertical coordinate
+*/
+const int modifydzf_DEFAULT = 0;
+
+

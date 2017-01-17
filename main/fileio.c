@@ -481,6 +481,10 @@ double GetDefaultValue(char *str, int *status) {
     
     return vertcoord_DEFAULT;
  
+ } else if(!strcmp(str,"modifydzf")){
+    
+    return modifydzf_DEFAULT;
+ 
  } else {
     *status=0;
     return 0;

@@ -4333,10 +4333,11 @@ static void UPredictor(gridT *grid, physT *phys,
   }
 
   if(prop->vertcoord!=1 || prop->vertcoord!=5)
-  {
-    VerifyFluxHeight(grid,prop,phys,myproc);
-    UpdateCellcenteredFreeSurface(grid,prop,phys,myproc);
-  }
+    if(vert->modifydzf)
+    {
+      VerifyFluxHeight(grid,prop,phys,myproc);
+      UpdateCellcenteredFreeSurface(grid,prop,phys,myproc);
+    }
 
   // Now update the vertical grid spacing with the new free surface.
   // can comment this out to linearize the free surface 

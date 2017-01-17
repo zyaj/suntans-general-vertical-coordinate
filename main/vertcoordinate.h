@@ -37,7 +37,7 @@ int *Nkeb; // store the layer index for each edge when ze is higher than buffer 
 REAL *zfb; // store the sum of dzf from bottom layer to Nkeb [Ne] 
 //int vertcoord; // the switch for different choice of vertical coordinates 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
 FILE *zcFID, *dzzFID, *omegaFID;
-
+int modifydzf;
 } vertT;
 
 vertT *vert;
