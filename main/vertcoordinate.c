@@ -240,6 +240,10 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
                 fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
             }
               // the function is not right for subgrid module
+            //if(i==2 && k==4)
+              //printf("n %d ne %d utmp %e C %e dzf %e dzzold %e\n",prop->n,ne,(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+
+                //fac3*phys->u_old2[ne][k])*grid->normal[i*grid->maxfaces+nf],(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+
+                //fac3*phys->u_old2[ne][k])*prop->dt/grid->dg[ne],grid->dzf[ne][k],grid->dzzold[i][k]);
           }
         }
       }
@@ -551,6 +555,10 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
       {
         vert->U3[i][k]=phys->w[i][k]-alpha*vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
         alpha*vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid);
+        //if(i==2)
+          //printf("n %d k %d w %e udzdx %e u %e dzdx %e r %e ztop %e %e %e h %e %e %e\n",prop->n,k,phys->w[i][k], vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid),vert->ul[i][k],
+            //InterpToLayerTopFace(i,k,vert->dzdx,grid),phys->w[i][k]/vert->ul[i][k]/InterpToLayerTopFace(i,k,vert->dzdx,grid),vert->zc[1][k]+grid->dzz[1][k]/2,vert->zc[2][k]+grid->dzz[2][k]/2,vert->zc[3][k]+grid->dzz[3][k]/2,
+            //phys->h[1],phys->h[2],phys->h[3]);
       }
 }
 

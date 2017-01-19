@@ -54,10 +54,15 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k;
-  REAL x,y,a=1,L=1000;
-  for(i=0;i<grid->Nc;i++){
-    grid->dzz[i][0]=0.5*grid->dv[i]-a*cos(3.14159265358979323846*grid->xv[i]/L);
-    grid->dzz[i][1]=0.5*grid->dv[i]+a*cos(3.14159265358979323846*grid->xv[i]/L);
+  REAL ratio,sum,sum1;
+  ratio=1.0/grid->Nkmax;
+  for(i=0;i<grid->Nc;i++)
+  {
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+      grid->dzz[i][k]=ratio*(grid->dv[i]+phys->h[i]);
+    for(k=grid->ctop[i];k<grid->Nk[i];k++){
+      grid->dzzold[i][k]=grid->dzz[i][k];
+    }
   }
 }
 

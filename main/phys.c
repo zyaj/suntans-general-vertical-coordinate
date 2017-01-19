@@ -4348,8 +4348,14 @@ static void UPredictor(gridT *grid, physT *phys,
     UpdateLayerThickness(grid, prop, phys, 0,myproc);
    // compute the new zc, the old value is stored in zc_old
     ComputeZc(grid,prop,phys,0,myproc);
+    for(j=0;j<grid->Ne;j++)
+      for(k=0;k<grid->Nke[j];k++)
+        if(grid->dzf[j][k]==0)
+                phys->u[j][k]=0;
   }
 
+      //for(k=0;k<10;k++)
+        //printf("n %d k %d u %e dzf %e \n",prop->n,k,phys->u[8][k],grid->dzf[8][k]);
   // update vertical ac for scalar transport
   if(prop->subgrid)
     UpdateSubgridVerticalAceff(grid, phys, prop, 0, myproc);

@@ -74,3 +74,9 @@ it can be applied to test the codes to compare the original z-level codes when v
 01/16/2017
 1. still needs problem for the wetting and drying for isopycnal model
 for the drying of interior layer
+
+01/18/2017
+the isopycnal layer needs addition treatment for wetting and drying :
+1. need to use u^im to calculate upwind dzf to ensure no drying when Courant No<1
+2. need to ensure dzdx is small enough for the mild slop approximation
+3. even with modify dzf, the large dzdx will still blow up the model!
