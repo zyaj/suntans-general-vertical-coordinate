@@ -28,10 +28,7 @@ if [ -z "$TRIANGLEHOME" ] ; then
     exit 1
 fi
 
-#dirs="L1000Nx128dt0.5z L1000Nx128dt0.25z L1000Nx128dt0.125z L1000Nx128dt0.0625z L1000Nx128dt0.03125z"
-#dirs="L1000Nx128dt0.05 L1000Nx128dt0.025 L1000Nx128dt0.0125 L1000Nx128dt0.00625 L1000Nx128dt0.003125"
-#dirs="L100Nx4dt0.01 L100Nx8dt0.01 L100Nx16dt0.01 L100Nx32dt0.01 L100Nx64dt0.01 L100Nx128dt0.01"
-dirs="L100Nx512dt0.01Nk4 L100Nx512dt0.01Nk8 L100Nx512dt0.01Nk16 L100Nx512dt0.01Nk32 L100Nx512dt0.01Nk64"
+dirs="L100Nx512dt0.01Nk4"
 
 
 for dir in `echo $dirs` ; do
@@ -39,15 +36,11 @@ for dir in `echo $dirs` ; do
 
 if [ ! -d $dir ] ; then
     cp -r $maindatadir/$dir $dir
-    #cp $maindatadir/suntans.dat-$dir $dir/suntans.dat
-    #cp $maindatadir/dataxy.dat $dir/.
     echo Creating grid...
     $EXEC -g --datadir=$dir
 else
     rm -rf $dir
-    cp -r $maindatadir/$dir $dir
-    #cp $maindatadir/suntans.dat-$dir $dir/suntans.dat
-    #cp $maindatadir/dataxy.dat $dir/.
+    cp -r $maindatadir/$dir $dir.
     echo Creating grid...
     $EXEC -g --datadir=$dir    
 fi

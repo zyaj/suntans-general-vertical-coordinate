@@ -54,7 +54,7 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k,Nkmax=grid->Nkmax;
-  REAL x,y,a=1,L=1000,Htop,Hbot;
+  REAL x,y,a=1,L=100,Htop,Hbot;
 
   for(i=0;i<grid->Nc;i++){
     Htop=0.5*grid->dv[i]-a*cos(3.14159265358979323846*grid->xv[i]/L);

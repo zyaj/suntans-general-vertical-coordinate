@@ -188,7 +188,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   for(i=0;i<Nc;i++)
     (*phys)->user_def_nc[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
   for(j=0;j<Ne;j++)
-    (*phys)->user_def_nc[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->user_def_ne[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
 
 
   // cell-centered physical variables in plan (no vertical direction)
@@ -1286,6 +1286,7 @@ REAL DepthFromDZ(gridT *grid, physT *phys, int i, int kind) {
  */
 void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm)
 {
+
   int i, k,kk,j, n, blowup=0,ne,id,nc1,nc2;
   REAL t0,sum1,v_average,flux;
   metinT *metin;
@@ -1536,7 +1537,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
       ISendRecvCellData2D(phys->h,grid,myproc,comm);
       t_predictor+=Timer()-t0;
-      
       t0=Timer();
       blowup = CheckDZ(grid,phys,prop,myproc,numprocs,comm);
       t_check+=Timer()-t0;
@@ -1985,11 +1985,11 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
       // note that EE is used for the first time step
       phys->utmp[j][k]=fab2*phys->Cn_U[j][k]+fab3*phys->Cn_U2[j][k]+phys->u[j][k]
         -prop->dt/grid->dg[j]*(phys->q[nc1][k]-phys->q[nc2][k]);
-  
       phys->Cn_U2[j][k]=phys->Cn_U[j][k];
       phys->Cn_U[j][k]=0;
     }
   }
+
 
   // Add on explicit term to boundary edges (type 4 BCs)
   for(jptr=grid->edgedist[4];jptr<grid->edgedist[5];jptr++) {
@@ -2539,8 +2539,9 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
   for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
     j = grid->edgep[jptr]; 
 
-    for(k=grid->etop[j];k<grid->Nke[j];k++)
+    for(k=grid->etop[j];k<grid->Nke[j];k++){
       phys->utmp[j][k]+=fab1*phys->Cn_U[j][k];
+    }
   }
   
 //  // check to make sure we don't have a blow-up
@@ -3265,12 +3266,11 @@ static void UPredictor(gridT *grid, physT *phys,
   fac1=prop->imfac1;
   fac2=prop->imfac2;
   fac3=prop->imfac3;
-  
   if(prop->n==1) {
     for(j=0;j<grid->Ne;j++)
-      for(k=0;k<grid->Nke[j];k++)
+      for(k=0;k<grid->Nke[j];k++){
         phys->u_old2[j][k]=phys->u[j][k];
-
+      }
     for(i=0;i<grid->Nc;i++) 
       for(k=0;k<grid->Nk[i]+1;k++) 
       {
@@ -3316,11 +3316,12 @@ static void UPredictor(gridT *grid, physT *phys,
 
     // Add the explicit part of the free-surface to create U**.
     // 5th term of Eqn 31
-    for(k=grid->etop[j];k<grid->Nke[j];k++)
+    for(k=grid->etop[j];k<grid->Nke[j];k++){
       phys->utmp[j][k]-=
         prop->grav*dt*(fac2*(phys->h[nc1]-phys->h[nc2])+fac3*(phys->h_old[nc1]-phys->h_old[nc2]))/grid->dg[j];
+    }
   }
-  
+
   // Drag term must be fully implicit
   theta0=theta;
   theta=1;
@@ -4223,6 +4224,17 @@ static void UPredictor(gridT *grid, physT *phys,
       phys->u[j][grid->etop[j]]=0;
   }
 
+   for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
+    j = grid->edgep[jptr];
+
+    nc1 = grid->grad[2*j];
+    nc2 = grid->grad[2*j+1];
+
+    // Add the explicit part of the free-surface to create U**.
+    // 5th term of Eqn 31
+
+  }
+
   // added culvert part
   if(prop->culvertmodel){
     StoreCulvertPressure(phys->h, grid->Nc, 1, myproc);
@@ -4332,7 +4344,7 @@ static void UPredictor(gridT *grid, physT *phys,
     } 
   }
 
-  if(prop->vertcoord!=1 || prop->vertcoord!=5)
+  if(prop->vertcoord!=1 && prop->vertcoord!=5)
     if(vert->modifydzf)
     {
       VerifyFluxHeight(grid,prop,phys,myproc);
@@ -4359,6 +4371,7 @@ static void UPredictor(gridT *grid, physT *phys,
   // update vertical ac for scalar transport
   if(prop->subgrid)
     UpdateSubgridVerticalAceff(grid, phys, prop, 0, myproc);
+
 }
 
 /*
@@ -5543,7 +5556,7 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
       (*prop)->nstepsperncfile=(int)MPI_GetValue(DATAFILE,"nstepsperncfile","ReadProperties",myproc);
       (*prop)->ncfilectr=(int)MPI_GetValue(DATAFILE,"ncfilectr","ReadProperties",myproc);
   }
-
+  
   if((*prop)->nonlinear==2) {
     (*prop)->laxWendroff = MPI_GetValue(DATAFILE,"laxWendroff","ReadProperties",myproc);
     if((*prop)->laxWendroff!=0)
@@ -5580,8 +5593,8 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
   if((int)MPI_GetValue(DATAFILE,"kinterp","ReadProperties",myproc))
   {  
     (*prop)->interp=PEROT;
-    if(myproc==0)
-    printf("kinterp is used, so interp is set as perot automatically\n");
+    //if(myproc==0)
+      //printf("kinterp is used, so interp is set as perot automatically\n");
   }
   
   if((*prop)->interp==QUAD && grid->maxfaces>DEFAULT_NFACES) {
