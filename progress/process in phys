@@ -314,3 +314,11 @@ find bug in calculation of dzdx
 
 01/16/2017
 1. modify the drag forcing term in upredictor to ensure a large body drag under the effective bottom layer.
+
+01/22/2017
+1. a bug found in horizontalsource when nonlinear=1 vertcoord!=1 line 2092
+this bug will affect the multicore performance
+2. after the UpdateLayerthickness function when vertcoord!=1
+a Isendrecv function is used for grid->dzz, required to multicore
+3. the consistency between multicore and single core results has been tested.
+4. a bug found in wpredictor function line 2860

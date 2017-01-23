@@ -1336,6 +1336,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   // find the bottom layer number which zfb>Bufferheight only works for new vertical coordinate
   if(prop->vertcoord!=1)
     FindBottomLayer(grid,prop,phys,myproc);
+
   // get the boundary velocities (boundaries.c)
   BoundaryVelocities(grid,phys,prop,myproc, comm); 
   // get the openboundary flux (boundaries.c)
@@ -2076,6 +2077,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
   // one is from the relative vorticity which is combined in f_sum with coriolis
   // the other part is from the gradient of (u^2+v^2)/2
   // the vertical momentum advection will be automatically implemented implicitly. 
+  
   if(prop->nonlinear && prop->vertcoord!=1)
   {
      for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
@@ -2087,7 +2089,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
         {  
           ke1=phys->uc[nc1][k]*phys->uc[nc1][k]+phys->vc[nc1][k]*phys->vc[nc1][k];
           ke2=phys->uc[nc2][k]*phys->uc[nc2][k]+phys->vc[nc2][k]*phys->vc[nc2][k];
-          phys->Cn_U[i][k]-=prop->dt*(ke1-ke2)/grid->dg[j]/2;
+          phys->Cn_U[j][k]-=prop->dt*(ke1-ke2)/grid->dg[j]/2;
         }  
      }
   }
@@ -2852,10 +2854,11 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
         phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(grid->dzz[i][k-1]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k]+
                 grid->dzz[i][k]*(phys->w[i][k-1]-phys->w[i][k])/grid->dzz[i][k-1])/
                 (grid->dzz[i][k-1]+grid->dzz[i][k]);
+        //phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k-1]-phys->w[i][k+1])/(grid->dzz[i][k]+grid->dzz[i][k-1]);
       }
 
       k=grid->ctop[i];
-      phys->Cn_W[i][k]-=prop->dt*phys->w[i][k]*
+      phys->Cn_W[i][k]+=prop->dt*phys->w[i][k]*
           (InterpToLayerTopFace(i,k,vert->dudx,grid)+
                 InterpToLayerTopFace(i,k,vert->dvdy,grid));
       // top omega*dwdz
@@ -4349,6 +4352,7 @@ static void UPredictor(gridT *grid, physT *phys,
     {
       VerifyFluxHeight(grid,prop,phys,myproc);
       UpdateCellcenteredFreeSurface(grid,prop,phys,myproc);
+      ISendRecvCellData2D(phys->h,grid,myproc,comm);  
     }
 
   // Now update the vertical grid spacing with the new free surface.
@@ -4358,16 +4362,10 @@ static void UPredictor(gridT *grid, physT *phys,
   else {
     // use new method to update layerthickness
     UpdateLayerThickness(grid, prop, phys, 0,myproc);
-   // compute the new zc, the old value is stored in zc_old
+    ISendRecvCellData3D(grid->dzz,grid,myproc,comm);
+    // compute the new zc, the old value is stored in zc_old
     ComputeZc(grid,prop,phys,0,myproc);
-    for(j=0;j<grid->Ne;j++)
-      for(k=0;k<grid->Nke[j];k++)
-        if(grid->dzf[j][k]==0)
-                phys->u[j][k]=0;
   }
-
-      //for(k=0;k<10;k++)
-        //printf("n %d k %d u %e dzf %e \n",prop->n,k,phys->u[8][k],grid->dzf[8][k]);
   // update vertical ac for scalar transport
   if(prop->subgrid)
     UpdateSubgridVerticalAceff(grid, phys, prop, 0, myproc);

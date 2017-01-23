@@ -53,16 +53,28 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-  int i,k,Nkmax=grid->Nkmax;
-  REAL x,y,a=1,L=100,Htop,Hbot;
+  int i,k,Nkmax=grid->Nkmax,Nk_noiso=10;
+  REAL alpha_s=0.99,delta=5,H=160,a=1,L=100,pi=3.14159265358979323846, rho_diff=0.06, drho,rho;
+  REAL zbot,ztop, DH;
+  drho=rho_diff/(grid->Nkmax-Nk_noiso),ztop,zbot;
 
-  for(i=0;i<grid->Nc;i++){
-    Htop=0.5*grid->dv[i]-a*cos(3.14159265358979323846*grid->xv[i]/L);
-    Hbot=0.5*grid->dv[i]+a*cos(3.14159265358979323846*grid->xv[i]/L);
-    for(k=0;k<Nkmax/2;k++)
-      grid->dzz[i][k]=Htop/Nkmax*2;
-    for(k=Nkmax/2;k<Nkmax;k++)
-      grid->dzz[i][k]=Hbot/Nkmax*2;    
+  for(i=0;i<grid->Nc;i++)
+  {
+    DH=(0-(delta/2-H/2+a*cos(pi/L*grid->xv[i])))/Nk_noiso*2;
+    for(k=0;k<Nk_noiso/2;k++)
+      grid->dzz[i][k]=DH;
+    ztop=(delta/2-H/2+a*cos(pi/L*grid->xv[i]));
+    for(k=Nk_noiso/2;k<grid->Nk[i]-Nk_noiso/2-1;k++)
+    {
+       rho=-rho_diff/2+drho*(k-Nk_noiso/2+1);
+       zbot=delta/2/atanh(alpha_s)*atanh(-2/rho_diff*rho)-H/2+a*cos(pi/L*grid->xv[i]);
+       grid->dzz[i][k]=ztop-zbot;
+       ztop=zbot;
+    }
+    grid->dzz[i][grid->Nk[i]-Nk_noiso/2-1]=ztop-(-delta/2-H/2+a*cos(pi/L*grid->xv[i]));
+    DH=(-delta/2+H/2+a*cos(pi/L*grid->xv[i]))/Nk_noiso*2;
+    for(k=grid->Nk[i]-Nk_noiso/2;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=DH;
   }
 }
 

@@ -65,7 +65,7 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
  */
 REAL ReturnDepth(REAL x, REAL y) {
   REAL d;
-  d=100;
+  d=160;
   return d;
 }
 
@@ -92,12 +92,15 @@ REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
  *
  */
 REAL ReturnSalinity(REAL x, REAL y, REAL z) {
- REAL H=100, L=100, a=1, D=100, Hbot;
- Hbot=0.5*D+a*cos(3.14159265358979323846*x/L);
- if(z<(-100+Hbot))
-   return 1;
- else
-   return 0;
+ REAL alpha_s=0.99,delta=5,a=1,L=100, H=160,s;
+ REAL rho_diff=0.06,beta=1e-3,pi=3.14159265358979323846;
+ if(z>(delta/2-H/2+a*cos(pi/L*x)))
+   return -rho_diff/2/beta;
+ if(z<(-delta/2-H/2+a*cos(pi/L*x)))
+   return rho_diff/2/beta;
+
+ s=-rho_diff/2/beta*tanh(2*atanh(alpha_s)/delta*(z+H/2-a*cos(pi*x/L)));
+ return s;
 }
 
 /*
