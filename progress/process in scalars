@@ -13,3 +13,7 @@
 5. should decide which way is used for vertical momentum advection
 (w\phi)^im=w^im\phi^im or still (w\phi)^im which needs to modify more for the input
 6. all source term is set to dzz not dzzold at all as approximation
+
+2017/02/01 
+1. fix a bug for the flux direction when tvd scheme is used 
+should use u_im not u_old (line 410)

@@ -148,7 +148,6 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
     {
       GetApAm(ap,am,phys->wp,phys->wm,phys->Cp,phys->Cm,phys->rp,phys->rm,
         w_im,grid->dzz,scal,i,grid->Nk[i],ktop,prop->dt,prop->TVD);
-
       for(k=0;k<grid->Nk[i]+1;k++) 
       {
         //add subgrid part
@@ -399,7 +398,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
       if(!(prop->TVD && prop->horiTVD)) {
         for(k=0;k<grid->Nke[ne];k++) {
           
-          temp[k]=UpWind((fac2*phys->u_old[ne][k]+fac1*phys->u[ne][k]),phys->stmp[nc1][k],sp[k]);
+          temp[k]=UpWind((fac2*phys->u_old[ne][k]+fac1*phys->u[ne][k]+fac3*phys->u_old2[ne][k]),phys->stmp[nc1][k],sp[k]);
           // new edit
           if(k<grid->ctopold[nc1])
             temp[k]=sp[k];
@@ -407,11 +406,12 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
             temp[k]=phys->stmp[nc1][k];
         }
       } else {
-        for(k=0;k<grid->Nke[ne];k++) 
-          if(phys->u_old[ne][k]>0)
+        for(k=0;k<grid->Nke[ne];k++) {
+          if((fac2*phys->u_old[ne][k]+fac1*phys->u[ne][k]+fac3*phys->u_old2[ne][k])>0)
             temp[k]=phys->SfHp[ne][k];
           else
-            temp[k]=phys->SfHm[ne][k];	    
+            temp[k]=phys->SfHm[ne][k];
+        }
       }
       // this part don't need to be changed
       for(k=0;k<grid->Nke[ne];k++)

@@ -14,7 +14,7 @@
  *
  */
 int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
-  int k, status;
+  int k, status,Nk_noiso=10;
   REAL z=0, dz0, r = GetValue(DATAFILE,"rstretch",&status);
 
   if(dz!=NULL) {
@@ -22,6 +22,7 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
       for(k=0;k<Nkmax;k++){
        dz[k]=depth/Nkmax;
       }
+
     }else if(r>1 && r<=1.1) {    
       dz[0] = depth*(r-1)/(pow(r,Nkmax)-1);
       if(VERBOSE>2) printf("Minimum vertical grid spacing is %.2f\n",dz[0]);
@@ -65,7 +66,7 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
  */
 REAL ReturnDepth(REAL x, REAL y) {
   REAL d;
-  d=160;
+  d=16;
   return d;
 }
 
@@ -92,14 +93,13 @@ REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
  *
  */
 REAL ReturnSalinity(REAL x, REAL y, REAL z) {
- REAL alpha_s=0.99,delta=5,a=1,L=100, H=160,s;
- REAL rho_diff=0.06,beta=1e-3,pi=3.14159265358979323846;
+ REAL alpha_s=0.99,delta=1,a=0.1,L=10, H=16,s;
+ REAL rho_diff=0.01,beta=1e-3,pi=3.14159265358979323846;
  if(z>(delta/2-H/2+a*cos(pi/L*x)))
-   return -rho_diff/2/beta;
+   return 0;
  if(z<(-delta/2-H/2+a*cos(pi/L*x)))
-   return rho_diff/2/beta;
-
- s=-rho_diff/2/beta*tanh(2*atanh(alpha_s)/delta*(z+H/2-a*cos(pi*x/L)));
+   return rho_diff/beta;
+ s=rho_diff/2/beta*(1-tanh(2*atanh(alpha_s)/delta*(z+H/2-a*cos(pi*x/L))));
  return s;
 }
 

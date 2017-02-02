@@ -54,16 +54,10 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k,Nkmax=grid->Nkmax;
-  REAL x,y,a=1,L=100,Htop,Hbot;
-
-  for(i=0;i<grid->Nc;i++){
-    Htop=0.5*grid->dv[i]-a*cos(3.14159265358979323846*grid->xv[i]/L);
-    Hbot=0.5*grid->dv[i]+a*cos(3.14159265358979323846*grid->xv[i]/L);
-    for(k=0;k<Nkmax/2;k++)
-      grid->dzz[i][k]=Htop/Nkmax*2;
-    for(k=Nkmax/2;k<Nkmax;k++)
-      grid->dzz[i][k]=Hbot/Nkmax*2;    
-  }
+  REAL ratio=1.0/Nkmax;
+  for(i=0;i<grid->Nc;i++)
+    for(k=0;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=ratio*(phys->h[i]+grid->dv[i]);
 }
 
 /*
@@ -85,12 +79,10 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k;
-  for(k=0;k<grid->Nkmax-2;k++){
+  for(k=0;k<grid->Nkmax;k++){
 
   	vert->dsigma[k]=1.0/grid->Nkmax;
   }
-  vert->dsigma[grid->Nkmax-1]=1e-12;
-  vert->dsigma[grid->Nkmax-2]=2.0/grid->Nkmax-1e-12;
 
   for(i=0;i<grid->Nc;i++)
   {

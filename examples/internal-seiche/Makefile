@@ -44,4 +44,4 @@ clean:
 	rm -f *.o
 
 clobber: clean
-	rm -rf *~ \#*\# PI* $(EXEC) gmon.out data rundata/*~ L1000* make-* L100*
+	rm -rf *~ \#*\# PI* $(EXEC) gmon.out data rundata/*~ L*

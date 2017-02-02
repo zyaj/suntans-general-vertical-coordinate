@@ -580,16 +580,17 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
    // 2. compute dvdx and dudy
    ComputeCellAveragedHorizontalGradient(vert->dvdx, 0, vert->vf, grid, prop, phys, myproc);
    ComputeCellAveragedHorizontalGradient(vert->dudy, 1, vert->uf, grid, prop, phys, myproc);
-   
+
    // 3. compute f_r
    for(i=0;i<grid->Nc;i++)
     for(k=0;k<grid->Nk[i];k++)
       vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
   
    if(prop->nonhydrostatic){
+     ComputeCellAveragedHorizontalGradient(vert->dwdy, 1, vert->wf, grid, prop, phys, myproc);
+     ComputeCellAveragedHorizontalGradient(vert->dwdx, 0, vert->wf, grid, prop, phys, myproc);
      ComputeCellAveragedHorizontalGradient(vert->dvdy, 1, vert->vf, grid, prop, phys, myproc);
      ComputeCellAveragedHorizontalGradient(vert->dudx, 0, vert->uf, grid, prop, phys, myproc);
-
    }
 }
 /*

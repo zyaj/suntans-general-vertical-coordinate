@@ -322,3 +322,8 @@ this bug will affect the multicore performance
 a Isendrecv function is used for grid->dzz, required to multicore
 3. the consistency between multicore and single core results has been tested.
 4. a bug found in wpredictor function line 2860
+
+01/23/2017
+1. found a bug in the calculation of baroclinic pressure term line 2041-2074
+2. In wpredictor function change the calculation of udwdx vdwdy to the nonconservative method 
+the old method is to use duwdx-wdudx. Now calculate udwdx directly
