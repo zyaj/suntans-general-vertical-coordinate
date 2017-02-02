@@ -2028,9 +2028,10 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     nc1 = grid->grad[2*j];
     nc2 = grid->grad[2*j+1];
     for(k=grid->etop[j];k<grid->Nke[j];k++) {
+      f_sum=prop->Coriolis_f;
       // if not z-level add relative voricity due to momentum advection
       if(prop->vertcoord!=1 && prop->nonlinear)  
-        f_sum=prop->Coriolis_f+InterpToFace(j,k,vert->f_r,phys->u,grid);
+        f_sum+=InterpToFace(j,k,vert->f_r,phys->u,grid);
       phys->Cn_U[j][k]+=prop->dt*f_sum*(
           InterpToFace(j,k,phys->vc,phys->u,grid)*grid->n1[j]-
           InterpToFace(j,k,phys->uc,phys->u,grid)*grid->n2[j]);
