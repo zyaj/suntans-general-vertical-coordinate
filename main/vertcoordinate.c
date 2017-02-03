@@ -195,7 +195,12 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
     case 4:
       InitializeVariationalCoordinate(grid, prop,phys, myproc);
       break;
-  }  
+  } 
+
+  // set the old value as the initial condition
+  for(i=0;i<grid->Nc;i++)
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+      grid->dzzold[i][k]=grid->dzz[i][k];
 }
 
 
@@ -528,6 +533,8 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc)
  * Compute omega from the definition omega=w-udzdx-vdzdy-wg and U3=w-udzdx-vdzdy
  * ----------------------------------------------------
  * index=1, w->omega index=0 omega->w index=-1 w->U3
+ * index=1 is never used in phys.c
+ * omega is always calculated from continuity
  */
 void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
 {

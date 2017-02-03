@@ -20,6 +20,7 @@ REAL **zf; // the current vertical location z of each edge layer center [Nj][Nke
 REAL **omegaf; // the vertical contravariant flux at the face [Ne][Nke]
 REAL **ul,**vl; // the u v at the top and bottom face of each layer at each edge [Nc][Nk+1]
 REAL **omega; // the vertical contravariant flux [Nc][Nk+1]
+//REAL **boundary_omega; // the boundary value of omega, used for momentum advection in Wpredictor [grid->edgedist[5]-grid->edgedist[2]][Nk+1]
 REAL **omega_im; // omega_im=fac1*omega+fac2*omega^n+fac3*omega^n-1 [Nc][Nk+1]
 REAL **omega_old; // omega^(n) [Nc][Nk+1]
 REAL **omega_old2; // omega^(n-1) [Nc][Nk+1]

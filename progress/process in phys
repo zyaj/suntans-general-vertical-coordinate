@@ -327,3 +327,15 @@ a Isendrecv function is used for grid->dzz, required to multicore
 1. found a bug in the calculation of baroclinic pressure term line 2041-2074
 2. In wpredictor function change the calculation of udwdx vdwdy to the nonconservative method 
 the old method is to use duwdx-wdudx. Now calculate udwdx directly
+
+02/02/2017
+1. modify the scheme of momentum advection with the conservative form
+conservative form + u/JdJ/dt
+u/JdJ/dt=udu_(g,3)/dz
+So the conservative part can use the same scheme as the original suntans by replacing w with omega, and the additional term is represented in explicit source term in horizontalsource function
+2. a possible inconsistency between the calculation w from omega
+if no slope in grid vertcoord==5
+omega_top=(-dh/dt+Horizontalflux-(1-theta)*omega_top_old)/theta
+w_top=omega_top+dhdt=(1-1/theta)dhdt+Horizontalflux/theta-(1-theta)/theta*omega_top_old
+for z level
+w_top=Horizontalflux/theta-(1-theta)/theta*omega_top_old

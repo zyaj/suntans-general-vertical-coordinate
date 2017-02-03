@@ -80,3 +80,6 @@ the isopycnal layer needs addition treatment for wetting and drying :
 1. need to use u^im to calculate upwind dzf to ensure no drying when Courant No<1
 2. need to ensure dzdx is small enough for the mild slop approximation
 3. even with modify dzf, the large dzdx will still blow up the model!
+
+02/02/2017
+1. add lines to setup dzzold^0=dzz^initial in the initializelayerthickness function
