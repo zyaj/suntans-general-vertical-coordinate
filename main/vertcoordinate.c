@@ -87,6 +87,9 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->dwdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->M=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dzztmp=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->Msum=(REAL *)SunMalloc(grid->Nc*sizeof(REAL),"AllocateVertCoordinate");
 
   for(i=0;i<grid->Nc;i++)
   {
@@ -111,6 +114,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->dwdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->M[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dzztmp[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     
     // initialize normal vector
     for(k=0;k<grid->maxfaces;k++)
@@ -145,7 +150,10 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->dwdy[i][k]=0;
       vert->dzdx[i][k]=0;      
       vert->dzdy[i][k]=0;
+      vert->M[i][k]=0;
+      vert->dzztmp[i][k]=0;
     }
+    vert->Msum[i]=0;
   }
 
   // temporary array for output 
@@ -224,8 +232,10 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
   // ctop and etop is always 0 and Nke and Nk is always Nkmax
   if(!index)
     for(i=0;i<grid->Nc;i++) {
-      for(k=grid->ctop[i];k<grid->Nk[i];k++)
+      for(k=grid->ctop[i];k<grid->Nk[i];k++){
         grid->dzzold[i][k]=grid->dzz[i][k];
+        vert->zcold[i][k]=vert->zc[i][k];
+      }
     }
 
   switch(prop->vertcoord)
@@ -245,10 +255,6 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
                 fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
             }
               // the function is not right for subgrid module
-            //if(i==2 && k==4)
-              //printf("n %d ne %d utmp %e C %e dzf %e dzzold %e\n",prop->n,ne,(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+
-                //fac3*phys->u_old2[ne][k])*grid->normal[i*grid->maxfaces+nf],(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+
-                //fac3*phys->u_old2[ne][k])*prop->dt/grid->dg[ne],grid->dzf[ne][k],grid->dzzold[i][k]);
           }
         }
       }
@@ -275,6 +281,37 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
  */
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
+   int i,k,nf,Neigh;
+   REAL thetaT=0.15,thetaS=0.25,sum;
+   MonitorFunctionForVariationalMethod(grid, prop, phys, myproc);
+   
+   // use the monitor function first
+   for(i=0;i<grid->Nc;i++)
+   {
+     sum=0;
+     Neigh=0;
+     for(nf=0;nf<grid->nfaces[i];nf++)
+       if(grid->neigh[i*grid->maxfaces+nf]!=-1)
+        Neigh++;
+     for(k=0;k<grid->Nk[i];k++){
+        vert->dzztmp[i][k]=0;
+        // use the monitor function
+        grid->dzz[i][k]=(phys->h[i]+grid->dv[i])/vert->Msum[i]*vert->M[i][k];
+        // time averaging with the old step to slow down the time varying
+        grid->dzz[i][k]=thetaT*grid->dzz[i][k]+(1-thetaT)*grid->dzzold[i][k];
+        grid->dzz[i][k]=(phys->h[i]+grid->dv[i])/((1-thetaT)*phys->h_old[i]+thetaT*phys->h[i]+grid->dv[i])*grid->dzz[i][k];
+        // horizontal averaging
+        for(nf=0;nf<grid->nfaces[i];nf++){
+          if(grid->neigh[i*grid->maxfaces+nf]!=-1)
+            vert->dzztmp[i][k]+=grid->dzz[grid->neigh[i*grid->maxfaces+nf]][k]*thetaS/Neigh;
+        }
+        grid->dzz[i][k]=grid->dzz[i][k]*(1-thetaS)+vert->dzztmp[i][k];
+        sum+=grid->dzz[i][k];
+     }
+     for(k=0;k<grid->Nk[i];k++)
+       grid->dzz[i][k]=(phys->h[i]+grid->dv[i])/sum*grid->dzz[i][k];
+
+   }
 
 }
 

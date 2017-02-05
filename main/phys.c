@@ -1732,6 +1732,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         ISendRecvWData(phys->w,grid,myproc,comm);
       } else {
         // NOW vert->omega stores the omega^n+1 with nonhydrostatic pressure correction
+        // no need to update omega again since the omega is already consistent with the freesurface
         //LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
         //ISendRecvWData(vert->omega,grid,myproc,comm);
 
@@ -4491,7 +4492,7 @@ static void UPredictor(gridT *grid, physT *phys,
     UpdateLayerThickness(grid, prop, phys, 0,myproc);
     ISendRecvCellData3D(grid->dzz,grid,myproc,comm);
     // compute the new zc, the old value is stored in zc_old
-    ComputeZc(grid,prop,phys,0,myproc);
+    ComputeZc(grid,prop,phys,1,myproc);
   }
   // update vertical ac for scalar transport
   if(prop->subgrid)

@@ -53,8 +53,8 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-  int i,k,Nkmax=grid->Nkmax,Nk_noiso=6;
-  REAL alpha_s=0.99,delta=4,H=16,a=0.1,L=10,pi=3.14159265358979323846, rho_diff=0.01, drho,rho;
+  int i,k,Nkmax=grid->Nkmax,Nk_noiso=20;
+  REAL alpha_s=0.99,delta=1,H=16,a=0.1,L=10,pi=3.14159265358979323846, rho_diff=0.01, drho,rho;
   REAL zbot,ztop, DH;
   drho=rho_diff/(grid->Nkmax-Nk_noiso),ztop,zbot;
 

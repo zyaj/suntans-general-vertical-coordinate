@@ -83,3 +83,7 @@ the isopycnal layer needs addition treatment for wetting and drying :
 
 02/02/2017
 1. add lines to setup dzzold^0=dzz^initial in the initializelayerthickness function
+
+02/04/2017
+1. add the monitor function to calculate variation approach in uservercoordinate.c
+2. add vert->M to store the monitor value for variational approach

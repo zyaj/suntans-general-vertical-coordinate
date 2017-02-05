@@ -28,7 +28,7 @@ if [ -z "$TRIANGLEHOME" ] ; then
     exit 1
 fi
 
-dirs="L10Nx64 L10Nx64hydro"
+dirs="L10Nx64" # L10Nx64hydro"
 
 
 for dir in `echo $dirs` ; do
@@ -46,7 +46,7 @@ else
 fi
 
 echo Running suntans...
-$EXEC -s --datadir=$dir >& make-$dir.out
+$EXEC -s --datadir=$dir #>& make-$dir.out
 
 done
 
