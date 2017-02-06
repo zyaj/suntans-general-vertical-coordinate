@@ -308,8 +308,11 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
         grid->dzz[i][k]=grid->dzz[i][k]*(1-thetaS)+vert->dzztmp[i][k];
         sum+=grid->dzz[i][k];
      }
-     for(k=0;k<grid->Nk[i];k++)
+     for(k=0;k<grid->Nk[i];k++){
        grid->dzz[i][k]=(phys->h[i]+grid->dv[i])/sum*grid->dzz[i][k];
+
+     }
+   
 
    }
 

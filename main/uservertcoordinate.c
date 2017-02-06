@@ -114,7 +114,7 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
 void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
 {
    int i,k;
-   REAL alphaM=320,minM=1e-3,max;
+   REAL alphaM=160,minM=1e-3,max;
 
    for(i=0;i<grid->Nc;i++)
    {
@@ -130,15 +130,16 @@ void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, 
      k=grid->ctop[i];
      vert->M[i][k]=1000*(phys->rho[i][k]-phys->rho[i][k+1])/(0.5*grid->dzz[i][k]+0.5*grid->dzz[i][k+1]);
      if(fabs(vert->M[i][k])>max)
-       max=fabs(vert->M[i][k]);    
+       max=fabs(vert->M[i][k]);   
      // bottom boundary
      k=grid->Nk[i]-1;
      vert->M[i][k]=1000*(phys->rho[i][k-1]-phys->rho[i][k])/(0.5*grid->dzz[i][k-1]+0.5*grid->dzz[i][k]);
      if(fabs(vert->M[i][k])>max)
        max=fabs(vert->M[i][k]);   
-     if(max==0)
+     if(max<1)
        max=1;
-     for(k=grid->ctop[i];k<grid->Nk[i];k++){
+     
+     for(k=grid->ctop[i];k<grid->Nk[i];k++){ 
        vert->M[i][k]=1/sqrt(1+alphaM*vert->M[i][k]/max*vert->M[i][k]/max);
        if(vert->M[i][k]<minM)
          vert->M[i][k]=minM;     
