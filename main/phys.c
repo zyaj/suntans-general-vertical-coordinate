@@ -1440,10 +1440,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   }
   // get the windstress (boundaries.c) - this needs to go after met data allocation -MR
   WindStress(grid,phys,prop,met,myproc);
-  
-  // output the initial value of vertical coordinate
-  if(prop->vertcoord!=1)
-    OutputVertCoordinate(grid,prop,myproc,numprocs,comm);
+
   // main time loop
   for(n=prop->nstart+1;n<=prop->nsteps+prop->nstart;n++) {
 
@@ -1517,7 +1514,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       if(prop->vertcoord!=1)
         VertCoordinateHorizontalSource(grid, phys, prop, myproc, numprocs, comm);
       HorizontalSource(grid,phys,prop,myproc,numprocs,comm);
-
+  
       // add wave part 
       if(prop->wavemodel)
         UpdateWave(grid, phys, prop, comm, blowup, myproc, numprocs);	
@@ -1557,7 +1554,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
         ISendRecvWData(vert->omega,grid,myproc,comm);
       }
-
 
       t0=Timer();
       // calculate flux in/out to each cell to ensure bounded scalar concentration under subgrid
@@ -1670,18 +1666,17 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // update subgrid->Acceff and subgrid->Acveff for non hydrostatic
       if(prop->subgrid)
         UpdateSubgridVerticalAceff(grid, phys, prop, 1, myproc);
-       
+     
       // Compute vertical momentum and the nonhydrostatic pressure
       if(prop->nonhydrostatic && !blowup) {
 
         // Predicted vertical velocity field is in phys->w
         WPredictor(grid,phys,prop,myproc,numprocs,comm);
-
-        // Wpredictor calculate w^*
+         // Wpredictor calculate w^*
         // now calculate omega^* for the new generalized vertical coordinate
         if(prop->vertcoord!=1){
           // recalculate uc and vc for the predictor velocity field
-          ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
+          ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,0);
           // now we have uc^* and vc^*
           // compute ul^* and vl^* at each layer top
           ComputeUl(grid, prop, phys, myproc);
@@ -1742,7 +1737,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         if(!prop->nonhydrostatic)
         {  
           // recalculate uc and vc for the predictor velocity field
-          ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
+          ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,0);
           // now we have uc^* and vc^*
           // compute ul^* and vl^* at each layer top
           ComputeUl(grid, prop, phys, myproc);
@@ -1781,9 +1776,9 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       UserDefinedFunction(grid,phys,prop,myproc);
 
       // u now contains velocity on all edges at the new time step
-      ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
+      ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,0);
       //printf("Done (%d).\n",myproc);
-      
+
       // now send interprocessor data
       ISendRecvCellData3D(phys->uc,grid,myproc,comm);
       ISendRecvCellData3D(phys->vc,grid,myproc,comm);
@@ -2114,6 +2109,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
         for(k=grid->etop[j];k<grid->Nke[j];k++) 
           phys->Cn_U[j][k]-=phys->u[j][k]*
           (1-(grid->dzzold[nc1][k]+grid->dzzold[nc2][k])/(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
+          // finite difference maybe needs modification for subgrid 
      }
   }  
 
@@ -2734,7 +2730,6 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
   if(prop->n==1) {
     fab1=1;
     fab2=fab3=0;
-
     for(i=0;i<grid->Nc;i++)
       for(k=0;k<grid->Nk[i];k++)
 	phys->Cn_W[i][k]=phys->Cn_W2[i][k]=0;
@@ -3624,11 +3619,17 @@ static void UPredictor(gridT *grid, physT *phys,
                   subgrid->dzboteff[j])*phys->u[j][grid->Nke[j]-1]);
            else
            {
-              // apply drag forcing at the layer where zfb>buffer height
-              phys->utmp[j][Nkeb]+=dt*(1-theta)*(
+              if(!prop->subgrid)
+                // apply drag forcing at the layer where zfb>buffer height
+                phys->utmp[j][Nkeb]+=dt*(1-theta)*(
                   a[Nkeb]*phys->u[j][Nkeb-1] -
                   (a[Nkeb]+2.0*phys->CdB[j]*fabs(phys->u[j][Nkeb])/
                    (grid->dzz[nc1][Nkeb]+grid->dzz[nc2][Nkeb]))*phys->u[j][Nkeb]);
+              else
+                phys->utmp[j][Nkeb]+=dt*(1-theta)*(
+                  a[Nkeb]*phys->u[j][Nkeb-1] -
+                  (a[Nkeb]+phys->CdB[j]*fabs(phys->u[j][Nkeb])/
+                   subgrid->dzboteff[j])*phys->u[j][Nkeb]);                
              // for other cell give a 100 drag coefficient
              for(k=Nkeb+1;k<grid->Nke[j];k++)
                 phys->utmp[j][k]+=-dt*(1-theta)*2.0*100*fabs(phys->u[j][k])/
@@ -3765,10 +3766,16 @@ static void UPredictor(gridT *grid, physT *phys,
                   subgrid->dzboteff[j]);       
           else
           {
-            b[Nkeb]=1.0+theta*dt*(a[Nkeb]+
-              2.0*phys->CdB[j]*fabs(phys->u[j][Nkeb])/
-              (grid->dzz[nc1][Nkeb]+
-              grid->dzz[nc2][Nkeb]));
+            if(!prop->subgrid)
+              b[Nkeb]=1.0+theta*dt*(a[Nkeb]+
+                2.0*phys->CdB[j]*fabs(phys->u[j][Nkeb])/
+                (grid->dzz[nc1][Nkeb]+
+                grid->dzz[nc2][Nkeb]));
+            else
+              b[Nkeb]=1.0+theta*dt*(a[Nkeb]+
+                phys->CdB[j]*fabs(phys->u[j][Nkeb])/
+                subgrid->dzboteff[j]);    
+
             // for the layer below the effective layer (zc>bufferheight) give 100 drag coefficient
             for(k=Nkeb+1;k<grid->Nke[j];k++){
               b[k]=1.0+theta*dt*2.0*100*fabs(phys->u[j][k])/
@@ -3988,10 +3995,10 @@ static void UPredictor(gridT *grid, physT *phys,
       for(k=grid->etop[ne];k<grid->Nke[ne];k++) 
       {  
         sum+=(fac2*phys->u[ne][k]+fac1*phys->utmp[ne][k]+fac3*phys->u_old2[ne][k])*
-          grid->df[ne]*normal*grid->dzf[ne][k];
+          grid->df[ne]*normal*grid->dzf[ne][k];     
       }
     }
-   
+
     if(prop->subgrid)
     {
       phys->htmp[i]=subgrid->Veff[i]-dt*sum;
@@ -4384,15 +4391,6 @@ static void UPredictor(gridT *grid, physT *phys,
       subgrid->Veff[i]=subgrid->Veffold[i]-sum0;   
     }
   }
-   i=64;
-   sum0=0;
-   for(nf=0;nf<grid->nfaces[i];nf++) {
-     ne = grid->face[i*grid->maxfaces+nf];
-     normal = grid->normal[i*grid->maxfaces+nf];
-     for(k=grid->etop[ne];k<grid->Nke[ne];k++){ 
-       sum0+=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*grid->df[ne]*normal*grid->dzf[ne][k];
-     }
-   }
    
   if(prop->subgrid)
     ISendRecvCellData2D(subgrid->Veff,grid,myproc,comm);
@@ -5919,10 +5917,10 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
     for(k=0;k<grid->etop[j];k++)
       grid->dzf[j][k]=0;
  
-    for(k=grid->etop[j];k<grid->Nke[j];k++)
+    for(k=grid->etop[j];k<grid->Nke[j];k++){
       grid->dzf[j][k]=UpWind(phys->u[j][k],grid->dzz[nc1][k],grid->dzz[nc2][k]);
 //      grid->dzf[j][k]=UFaceFlux(j,k, grid->dzz, phys->u, grid,prop->dt,prop->nonlinear);
-
+    }
     k=grid->Nke[j]-1;
     /* This works with Wet/dry but not with cylinder case...*/
     if(grid->etop[j]==k) {

@@ -112,3 +112,10 @@ erosionpara=2 use cdmean
 05/20/2016
 1. subgrid->veff<1e-3 || subgrid->veff<1e-2 + total volume different <1e-3 ==> phys->active=0
 2. when culvert model is on, subgrid->dp=grid->dv subgrid->dpe=min(grid->dv[nc1],grid->dv[nc2])
+
+02/05/2017
+1. a bug found in updatesubgridfluxheight when stratification happens
+since the direction the flow can not just determined by the flow at the top layer as the old method
+this is not a problem for z level but for generalized vertical coordinate, it will be a problem!
+fixed
+2. the effectiveness of subgrid when bottom drag is turned on is still need to be tested!

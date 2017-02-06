@@ -25,6 +25,7 @@
 #include "wave.h"
 #include "marsh.h"
 #include "culvert.h"
+#include "vertcoordinate.h"
 
 void ReadSubgridProperties(propT *prop, int myproc);
 void AllocateandInitializeSubgrid(gridT *grid, propT *prop, int myproc);
@@ -2344,7 +2345,7 @@ void UpdateSubgridVerticalAceff(gridT *grid, physT *phys, propT *prop, int optio
 void UpdateSubgridFluxHeight(gridT *grid, physT *phys, propT *prop, int myproc)
 {
   int ne, nc,nc1,nc2, nc3, i,base,k,j,nc_b;
-  REAL dh,h,fh,fhr,dfhr,dfh,culverttop,u,hbot,hc,wetperi;
+  REAL dh,h,fh,fhr,dfhr,dfh,culverttop,u,hbot,hc,wetperi,Af,zc;
   for(ne=0;ne<grid->Ne;ne++)
   {
     nc1 = grid->grad[2*ne];
@@ -2391,17 +2392,30 @@ void UpdateSubgridFluxHeight(gridT *grid, physT *phys, propT *prop, int myproc)
     for(k=0;k<grid->etop[ne];k++)
       grid->dzf[ne][k]=0;
     
-    hbot=hc;    
-    for(k=grid->ctop[nc];k<grid->etop[ne];k++)
-      hbot-=grid->dzz[nc][k];
+    if(prop->vertcoord==1){
+      hbot=hc;    
+      for(k=grid->ctop[nc];k<grid->etop[ne];k++)
+        hbot-=grid->dzz[nc][k];
 
-    for(k=grid->etop[ne];k<grid->Nke[ne]-1;k++)
-    {
-      hbot-=grid->dzz[nc][k];//grid->dzf[ne][k]; // still old dzf from the original dzf
-      grid->dzf[ne][k]=CalculateFluxHeight(ne,h)-CalculateFluxHeight(ne,hbot);//UpdateFluxHeight(ne,h)-UpdateFluxHeight(ne,hbot);
-      h=hbot;
+      for(k=grid->etop[ne];k<grid->Nke[ne]-1;k++)
+      {
+        hbot-=grid->dzz[nc][k];//grid->dzf[ne][k]; // still old dzf from the original dzf
+        grid->dzf[ne][k]=CalculateFluxHeight(ne,h)-CalculateFluxHeight(ne,hbot);//UpdateFluxHeight(ne,h)-UpdateFluxHeight(ne,hbot);
+        h=hbot;
+      }
+      grid->dzf[ne][grid->Nke[ne]-1]=CalculateFluxHeight(ne,h);
+    } else {
+      for(k=grid->etop[ne];k<grid->Nke[ne];k++)
+      {
+        if(subgrid->dzfmeth==2)
+          grid->dzf[ne][k]=0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]);
+        else{
+          hbot=UpWind(phys->u[ne][k],vert->zc[nc1][k]-grid->dzz[nc1][k]/2,vert->zc[nc2][k]-grid->dzz[nc2][k]/2);
+          h=UpWind(phys->u[ne][k],vert->zc[nc1][k]+grid->dzz[nc1][k]/2,vert->zc[nc2][k]+grid->dzz[nc2][k]/2);
+          grid->dzf[ne][k]=CalculateFluxHeight(ne,h)-CalculateFluxHeight(ne,hbot);//UpdateFluxHeight(ne,h)-UpdateFluxHeight(ne,hbot);
+        }
+      }      
     }
-    grid->dzf[ne][grid->Nke[ne]-1]=CalculateFluxHeight(ne,h);
 
    // if(prop->culvertmodel==1)
      // if(culvert->top[nc1]!=INFTY && culvert->top[nc2]!=INFTY)
@@ -2440,6 +2454,14 @@ void UpdateSubgridFluxHeight(gridT *grid, physT *phys, propT *prop, int myproc)
       nc=0;
 
     subgrid->dzboteff[ne]=grid->dzf[ne][grid->Nke[ne]-1]*grid->df[ne]/wetperi;
+
+    if(prop->vertcoord!=1){
+      Af=0;
+      for(k=vert->Nkeb[ne];k<grid->Nke[ne];k++)
+        Af+=grid->dzf[ne][k]*grid->df[ne];
+      subgrid->dzboteff[ne]=Af/wetperi;
+    }
+
     //if(grid->mark[ne]==1)
       //subgrid->dzboteff[ne]=0;
     
@@ -3445,26 +3467,9 @@ void SubgridFluxCheck(gridT *grid, physT *phys, propT *prop,int myproc){
   int i,iptr,ne,ktop,nf,k;
   REAL sum0,normal,sum,fac1,fac2,fac3,flux;
 
-  if(prop->n==1 || prop->wetdry) {
-    fac1=prop->theta;
-    fac2=1-prop->theta;
-    fac3=0;
-  } else {
-    if(prop->im==0)
-    {
-      fac1=prop->theta;
-      fac2=1-prop->theta;
-      fac3=0;
-    } else if(prop->im==1){
-      fac1=3.0/4.0;
-      fac2=0;
-      fac3=1.0/4.0;
-    } else {
-      fac1=5.0/4.0;
-      fac2=-1;
-      fac3=3.0/4.0;
-    }
-  }
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
 
   for(iptr=grid->celldist[0];iptr<grid->celldist[2];iptr++) {
     i = grid->cellp[iptr];

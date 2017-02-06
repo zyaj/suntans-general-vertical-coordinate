@@ -87,3 +87,9 @@ the isopycnal layer needs addition treatment for wetting and drying :
 02/04/2017
 1. add the monitor function to calculate variation approach in uservercoordinate.c
 2. add vert->M to store the monitor value for variational approach
+
+02/05/2017
+1. lockexchange test has been tested with both nonconservative and conservative advection
+2. for conservative method, the flow is not stable with nonlinear=2 (central differencing) and 4 (lax wendroff)
+3. need more discussion on the monitor function (whether to solve the exact function) and advection scheme.
+

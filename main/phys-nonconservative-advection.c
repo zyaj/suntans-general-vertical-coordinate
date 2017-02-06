@@ -1371,8 +1371,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
     if(prop->culvertmodel)
       SubgridCulverttopArea(grid, prop, myproc);
     SubgridFluxCheck(grid, phys, prop,myproc);
-    //prop->thetaM=-1;
-    //printf("Subgrid module is turned on, set thetaM=-1 which means vertical momentum advection calculation is explicit\n");
   }
 
   // interpolate z0B and z0T if Intz0t or Intz0B not zero
@@ -2157,8 +2155,8 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
         }  
 
         // Top cell is filled with momentum from neighboring cells
-  if(prop->conserveMomentum)
-    for(k=grid->etop[ne];k<grid->ctop[i];k++) 
+    if(prop->conserveMomentum)
+      for(k=grid->etop[ne];k<grid->ctop[i];k++) 
           {
             if(!prop->subgrid || prop->wetdry)
               Ac=grid->Ac[i];

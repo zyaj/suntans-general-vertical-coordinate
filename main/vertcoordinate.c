@@ -489,9 +489,12 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
     }
     //compute omega_im for updatescalar function
     for(k=grid->ctop[i];k<=grid->Nk[i];k++){
-      vert->omega_im[i][k]=fac1*omega[i][k]+fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k];
-      //if(i==0)
-        //printf("n %d k %d omega %e flux %e dzzdt %e fac1 %e fac2 %e fac3 %e\n",prop->n,k,vert->omega_im[i][k],flux,(grid->dzz[i][k]-grid->dzzold[i][k])/prop->dt,fac1,fac2,fac3);
+      if(!prop->subgrid)
+        vert->omega_im[i][k]=fac1*omega[i][k]+fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k];
+      else
+        vert->omega_im[i][k]=(fac2*vert->omega_old[i][k]*subgrid->Acveffold[i][k]+
+                fac3*vert->omega_old2[i][k]*subgrid->Acveffold2[i][k]+
+                fac1*omega[i][k]*subgrid->Acveff[i][k])/subgrid->Acveff[i][k];
     }
   }
 }
@@ -624,21 +627,22 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
    // 1. compute v and u at each edge center
    ComputeUf(grid, prop, phys,myproc);
 
+   // comment out due to use conservative method
    // 2. compute dvdx and dudy
-   ComputeCellAveragedHorizontalGradient(vert->dvdx, 0, vert->vf, grid, prop, phys, myproc);
-   ComputeCellAveragedHorizontalGradient(vert->dudy, 1, vert->uf, grid, prop, phys, myproc);
+   //ComputeCellAveragedHorizontalGradient(vert->dvdx, 0, vert->vf, grid, prop, phys, myproc);
+   //ComputeCellAveragedHorizontalGradient(vert->dudy, 1, vert->uf, grid, prop, phys, myproc);
 
    // 3. compute f_r
-   for(i=0;i<grid->Nc;i++)
-    for(k=0;k<grid->Nk[i];k++)
-      vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
+   //for(i=0;i<grid->Nc;i++)
+    //for(k=0;k<grid->Nk[i];k++)
+      //vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
   
-   if(prop->nonhydrostatic){
+   /*if(prop->nonhydrostatic){
      ComputeCellAveragedHorizontalGradient(vert->dwdy, 1, vert->wf, grid, prop, phys, myproc);
      ComputeCellAveragedHorizontalGradient(vert->dwdx, 0, vert->wf, grid, prop, phys, myproc);
      ComputeCellAveragedHorizontalGradient(vert->dvdy, 1, vert->vf, grid, prop, phys, myproc);
      ComputeCellAveragedHorizontalGradient(vert->dudx, 0, vert->uf, grid, prop, phys, myproc);
-   }
+   }*/
 }
 /*
  * Function: ComputeCellAveragedGradient
