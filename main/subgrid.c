@@ -2413,6 +2413,8 @@ void UpdateSubgridFluxHeight(gridT *grid, physT *phys, propT *prop, int myproc)
           hbot=UpWind(phys->u[ne][k],vert->zc[nc1][k]-grid->dzz[nc1][k]/2,vert->zc[nc2][k]-grid->dzz[nc2][k]/2);
           h=UpWind(phys->u[ne][k],vert->zc[nc1][k]+grid->dzz[nc1][k]/2,vert->zc[nc2][k]+grid->dzz[nc2][k]/2);
           grid->dzf[ne][k]=CalculateFluxHeight(ne,h)-CalculateFluxHeight(ne,hbot);//UpdateFluxHeight(ne,h)-UpdateFluxHeight(ne,hbot);
+          if(k==vert->Nkeb[ne])
+            wetperi=CalculateWetperimeter(ne,h);
         }
       }      
     }
@@ -2425,11 +2427,9 @@ void UpdateSubgridFluxHeight(gridT *grid, physT *phys, propT *prop, int myproc)
     {
       grid->dzf[ne][grid->Nke[ne]-1]=0;
     }
-
-    wetperi=CalculateWetperimeter(ne,h);
-
-    if(grid->dzf[ne][k]==0)
-      wetperi=grid->df[ne];
+    
+    if(prop->vertcoord==1)
+      wetperi=CalculateWetperimeter(ne,h);
 
     // added part
     k=grid->Nke[ne]-1;
@@ -2439,6 +2439,7 @@ void UpdateSubgridFluxHeight(gridT *grid, physT *phys, propT *prop, int myproc)
        grid->dzf[ne][k]=0.01;
        wetperi=grid->df[ne];
     }
+
     for(k=grid->etop[ne];k<grid->Nke[ne];k++) 
       if(grid->dzf[ne][k]<=2*DRYCELLHEIGHT)
         grid->dzf[ne][k]=0;
@@ -2452,18 +2453,21 @@ void UpdateSubgridFluxHeight(gridT *grid, physT *phys, propT *prop, int myproc)
       nc=1;
     else 
       nc=0;
+    
+    if(prop->vertcoord==1)
+      if(grid->dzf[ne][grid->Nke[ne]-1]==0)
+        wetperi=grid->df[ne];
 
     subgrid->dzboteff[ne]=grid->dzf[ne][grid->Nke[ne]-1]*grid->df[ne]/wetperi;
-
+    
     if(prop->vertcoord!=1){
       Af=0;
       for(k=vert->Nkeb[ne];k<grid->Nke[ne];k++)
         Af+=grid->dzf[ne][k]*grid->df[ne];
+      if(Af==0)
+        wetperi=grid->df[ne];
       subgrid->dzboteff[ne]=Af/wetperi;
     }
-
-    //if(grid->mark[ne]==1)
-      //subgrid->dzboteff[ne]=0;
     
     if(subgrid->dzboteff[ne]<2*DRYCELLHEIGHT)
       subgrid->dzboteff[ne]=DRYCELLHEIGHT;

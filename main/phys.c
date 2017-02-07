@@ -604,20 +604,6 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
   // dzz is too small when h=0.
   if(prop->vertcoord==1 || prop->vertcoord==5)
    UpdateDZ(grid,phys,prop, -1);
- 
-  /*
-  for(i=0;i<Nc;i++) {
-    grid->dv[i]=0;
-    for(k=0;k<grid->Nk[i];k++)
-      grid->dv[i]+=grid->dzz[i][k];
-  }
-
-  REAL mindepth=INFTY;
-  for(i=0;i<Nc;i++)
-    if(grid->dv[i]<mindepth)
-      mindepth=grid->dv[i];
-  printf("MINDEPTH=%f\n",mindepth);
-  */
 
   // Initialize the free surface
   if (prop->readinitialnc){
@@ -873,13 +859,15 @@ void SetDragCoefficients(gridT *grid, physT *phys, propT *prop) {
       // need new modification for subgrid bathymetry
       zfb=vert->zfb[j];
   
-    if(prop->vertcoord==1)  
+    if(prop->vertcoord==1)
+    {  
       if(2*zfb<BUFFERHEIGHT && grid->etop[j]==(grid->Nke[j]-1))
         phys->CdB[j]=100;  
-    else
+    }else {
       // for the new vertical coordinate there is always constant layer numbers
       if(2*zfb<BUFFERHEIGHT)
-        phys->CdB[j]=100; 
+        phys->CdB[j]=100;
+    } 
   }
 }
 
@@ -1136,8 +1124,6 @@ void UpdateDZ(gridT *grid, physT *phys, propT *prop, int option)
     for(i=0;i<Nc;i++)
       phys->h[i]=.0; 
 
-
-
   // First set the thickness of the bottom grid layer.  If this is a partial-step
   // grid then the dzz will vary over the horizontal at the bottom layer.  Otherwise,
   // the dzz at the bottom will be equal to dz at the bottom.
@@ -1217,8 +1203,8 @@ void UpdateDZ(gridT *grid, physT *phys, propT *prop, int option)
       if(!grid->stairstep && grid->fixdzz )   
         if(grid->dzz[i][k]<grid->dz[k]*grid->dzsmall) {
           grid->dv[i]+= (grid->dz[k]*grid->dzsmall-grid->dzz[i][k]);	
-          //grid->dzz[i][k]=grid->dz[k]*grid->dzsmall;
-      }
+          grid->dzz[i][k]=grid->dz[k]*grid->dzsmall;
+        }
 
     }
   }
@@ -1360,6 +1346,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
     SetupMarshmodel(grid,phys,prop,myproc,numprocs,comm);
     SetMarshTop(grid,phys,myproc);
   }
+
   // use subgrid method 
   if(prop->subgrid)
   {
@@ -1371,7 +1358,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
     UpdateSubgridVerticalAceff(grid, phys, prop, 0, myproc);
     if(prop->culvertmodel)
       SubgridCulverttopArea(grid, prop, myproc);
-    SubgridFluxCheck(grid, phys, prop,myproc);
+    //SubgridFluxCheck(grid, phys, prop,myproc);
     //prop->thetaM=-1;
     //printf("Subgrid module is turned on, set thetaM=-1 which means vertical momentum advection calculation is explicit\n");
   }
@@ -1514,7 +1501,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       if(prop->vertcoord!=1)
         VertCoordinateHorizontalSource(grid, phys, prop, myproc, numprocs, comm);
       HorizontalSource(grid,phys,prop,myproc,numprocs,comm);
-  
+
       // add wave part 
       if(prop->wavemodel)
         UpdateWave(grid, phys, prop, comm, blowup, myproc, numprocs);	
@@ -1557,8 +1544,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
 
       t0=Timer();
       // calculate flux in/out to each cell to ensure bounded scalar concentration under subgrid
-      if(prop->subgrid)
-        SubgridFluxCheck(grid, phys, prop,myproc);
+      //if(prop->subgrid)
+        //SubgridFluxCheck(grid, phys, prop,myproc);
 
       // Compute the eddy viscosity
       t0=Timer();
@@ -1618,7 +1605,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         ISendRecvCellData2D(met->tau_x,grid,myproc,comm);
         ISendRecvCellData2D(met->tau_y,grid,myproc,comm);
       }
-     
+
+
       // Update the salinity only if beta is nonzero in suntans.dat
       if(prop->beta) {
         t0=Timer();
@@ -1644,6 +1632,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         }
 
       ISendRecvCellData3D(phys->s,grid,myproc,comm);
+
 
       if(prop->metmodel>0){
         //Communicate across processors
@@ -1676,7 +1665,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         // now calculate omega^* for the new generalized vertical coordinate
         if(prop->vertcoord!=1){
           // recalculate uc and vc for the predictor velocity field
-          ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,0);
+          ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
           // now we have uc^* and vc^*
           // compute ul^* and vl^* at each layer top
           ComputeUl(grid, prop, phys, myproc);
@@ -1737,7 +1726,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         if(!prop->nonhydrostatic)
         {  
           // recalculate uc and vc for the predictor velocity field
-          ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,0);
+          ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
           // now we have uc^* and vc^*
           // compute ul^* and vl^* at each layer top
           ComputeUl(grid, prop, phys, myproc);
@@ -1988,7 +1977,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
       phys->Cn_U[j][k]=0;
     }
   }
-      
+
   // note that the above lines appear to allow use to "flush" Cn_U so
   // that it's values are utilizes and then it is free for additional
   // computations
@@ -3504,7 +3493,6 @@ static void UPredictor(gridT *grid, physT *phys,
              grid->dzz[nc1][k+1]+grid->dzz[nc2][k+1]));
       }
 
-
       // Coefficients for vertical momentum advection terms
       // d[] stores vertical velocity interpolated to faces vertically half-way between U locations
       // So d[k] contains w defined at the vertical w-location of cell k
@@ -3775,7 +3763,6 @@ static void UPredictor(gridT *grid, physT *phys,
               b[Nkeb]=1.0+theta*dt*(a[Nkeb]+
                 phys->CdB[j]*fabs(phys->u[j][Nkeb])/
                 subgrid->dzboteff[j]);    
-
             // for the layer below the effective layer (zc>bufferheight) give 100 drag coefficient
             for(k=Nkeb+1;k<grid->Nke[j];k++){
               b[k]=1.0+theta*dt*2.0*100*fabs(phys->u[j][k])/
@@ -4013,6 +4000,7 @@ static void UPredictor(gridT *grid, physT *phys,
       //exit(1);
     }
   }
+ 
 
   for(i=0;i<grid->Nc;i++){
     // store the old h as h_n-1 in the next time step
@@ -4291,6 +4279,7 @@ static void UPredictor(gridT *grid, physT *phys,
       }
     }
   }
+
   
   // correct cells drying below DRYCELLHEIGHT above the 
   // bathymetry
@@ -5340,14 +5329,16 @@ void Continuity(REAL **w, gridT *grid, physT *phys, propT *prop)
   }
 
   // calculate w_im for update scalar
-  for(i=0;i<grid->Nc;i++) 
-    for(k=0;k<grid->Nk[i]+1;k++)
+  for(i=0;i<grid->Nc;i++) {
+    for(k=0;k<grid->Nk[i];k++)
       if(!prop->subgrid)
         phys->w_im[i][k]=fac2*phys->w_old[i][k]+fac3*phys->w_old2[i][k]+fac1*w[i][k];
       else
         phys->w_im[i][k]=(fac2*phys->w_old[i][k]*subgrid->Acveffold[i][k]+
                 fac3*phys->w_old2[i][k]*subgrid->Acveffold2[i][k]+
                 fac1*w[i][k]*subgrid->Acveff[i][k])/subgrid->Acveff[i][k];
+    phys->w_im[i][grid->Nk[i]]=0;
+  }
 }
 
 /*
@@ -5427,9 +5418,10 @@ void ComputeConservatives(gridT *grid, physT *phys, propT *prop, int myproc, int
  */
 static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp, int subgridmodel, gridT *grid) {
 
-  int k, n, ne, nf, iptr,nc1,nc2,dry=1;
+  int i,k, n, ne, nf, iptr,nc1,nc2,dry=1;
   REAL alpha,d,V;
   REAL sum;
+
   // for each computational cell (non-stage defined)
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
     // get cell pointer transfering from boundary coordinates 
@@ -5471,7 +5463,7 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
         // add subgrid part
         //if(subgridmodel)// && grid->ctop[n]==grid->Nk[n]-1)
             //alpha=grid->dzf[ne][k]*grid->Ac[n]/V;
-
+        
         if(subgridmodel)
           if(V/subgrid->Acceff[n][k]/grid->dzz[n][k]<=1)
             alpha=grid->dzf[ne][k]/grid->dzz[n][k]*grid->Ac[n]/subgrid->Acceff[n][k];

@@ -405,6 +405,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
           if(k<grid->ctopold[nc2])
             temp[k]=phys->stmp[nc1][k];
         }
+
       } else {
         for(k=0;k<grid->Nke[ne];k++) {
           if((fac2*phys->u_old[ne][k]+fac1*phys->u[ne][k]+fac3*phys->u_old2[ne][k])>0)
@@ -479,7 +480,28 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
     for(k=0;k<grid->Nk[i];k++) 
       scal_old[i][k]=phys->stmp[i][k];
   }
-
+   for(i=0;i<grid->Nc;i++){
+      sum1=0;
+      for(k=0;k<grid->Nk[i];k++)
+      if(fabs(phys->s[i][k])>5.0001){
+          printf("n %d i %d k %d s %e veff %e  dv %e dzz %e %e \n",prop->n,i,k,phys->s[i][k],subgrid->Veff[i],grid->dv[i],
+                        grid->dzz[i][k],grid->dzzold[i][k]);
+        for(nf=0;nf<grid->nfaces[i];nf++) {
+          // get the edge pointer
+          ne = grid->face[i*grid->maxfaces+nf];
+          // for each of the defined edges over depth
+          // compute the horizontal source term via the (D_H)(u^*)
+          sum1+=(prop->imfac1*phys->u[ne][k]+prop->imfac2*phys->u_old[ne][k]+prop->imfac3*
+            phys->u_old2[ne][k])*grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne];
+          printf("ne %d k %d u %e\n",ne,k,(prop->imfac1*phys->u[ne][k]+prop->imfac2*phys->u_old[ne][k]+prop->imfac3*
+            phys->u_old2[ne][k]) );
+        }
+        printf("Nk %d sum1 %e w_im %e %e dzz %e %e Acc %e %e\n", grid->Nk[i],sum1,w_im[i][k+1],
+          sum1+w_im[i][k]*subgrid->Acveff[i][k],grid->dzz[i][k],grid->dzzold[i][k],subgrid->Acceff[i][k],
+          subgrid->Acceffold[i][k]);
+        exit(0);
+      }
+  }
   // Code to check divergence change CHECKCONSISTENCY to 1 in suntans.h
   if(CHECKCONSISTENCY && checkflag) {
 
@@ -542,14 +564,9 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
           div_da+=div_local;
           if(!prop->subgrid)
           {
-            div_local+=grid->Ac[i]*(fac1*(w_im[i][k]-w_im[i][k+1])+
-                fac2*(phys->w_old[i][k]-phys->w_old[i][k+1])+fac3*(phys->w_old2[i][k]-phys->w_old2[i][k+1]));
+            div_local+=grid->Ac[i]*(w_im[i][k]-w_im[i][k+1]);
           } else {
-            div_local+=(fac1*(w_im[i][k]*subgrid->Acveff[i][k]-subgrid->Acveff[i][k+1]*w_im[i][k+1])+
-                fac2*(subgrid->Acveffold[i][k]*phys->w_old[i][k]
-                -subgrid->Acveffold[i][k]*phys->w_old[i][k+1])
-                +fac3*(subgrid->Acveffold2[i][k]*phys->w_old2[i][k]
-                -subgrid->Acveffold2[i][k]*phys->w_old2[i][k+1]));                          
+            div_local+=w_im[i][k]*subgrid->Acveff[i][k]-subgrid->Acveff[i][k+1]*w_im[i][k+1];                          
           }
           if(fabs(div_local)>1e-10){
             printf("div_local %e i %d k %d\n",div_local,i,k);

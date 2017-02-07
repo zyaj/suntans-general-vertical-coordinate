@@ -114,7 +114,7 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
 void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
 {
    int i,k;
-   REAL alphaM=160,minM=1e-3,max;
+   REAL alphaM=40,minM=1e-3,max;
 
    for(i=0;i<grid->Nc;i++)
    {

@@ -119,3 +119,7 @@ since the direction the flow can not just determined by the flow at the top laye
 this is not a problem for z level but for generalized vertical coordinate, it will be a problem!
 fixed
 2. the effectiveness of subgrid when bottom drag is turned on is still need to be tested!
+
+02/06/2017
+1. for nonhydrostatic problem, it is possible that the extremely small bottom layer with subgrid bathymetry (like along a slope) may cause stability problem in both scalar transport (flux>Cell volume) and nonhydrostatic pressure (extremelly small dzz) a better way is to avoid this by dzsmall for z-level. Or try to use different coordinate
+2. fix a bug to avoid dzboteff==nan in Updatesubgridfluxheight

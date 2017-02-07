@@ -326,19 +326,26 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
  */
  void FindBottomLayer(gridT *grid, propT *prop, physT *phys, int myproc)
  {
-    int j,k,Nkeb;
+    int j,k,Nkeb,nc1,nc2;
     REAL zfb;
     // find 
     for(j=0;j<grid->Ne;j++)
     {
+      nc1=grid->grad[2*j];
+      nc2=grid->grad[2*j+1];
+      if(nc1==-1)
+        nc1=nc2;
+      if(nc2==-1)
+        nc2=nc1;
       // if constant drag coefficient 
       // use the bottom layer as the drag layer
       //if(prop->z0B!=0)
       //{
+
         zfb=0;
         for(k=grid->Nke[j]-1;k>=grid->etop[j];k--)
         {
-           zfb+=grid->dzf[j][k]/2;
+           zfb+=0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]);
            // find the layer when zfb>buffer height
            if(zfb>BUFFERHEIGHT){
              vert->Nkeb[j]=k;
@@ -353,12 +360,16 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
              vert->zfb[j]=zfb;
              break;           
            } 
-           zfb+=grid->dzf[j][k]/2;
+           zfb+=0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]);
         }
       //} else {
         //vert->Nkeb[j]=grid->Nke[j]-1;
         //vert->zfb[j]=grid->dzf[j][grid->Nke[j]-1]/2;
       //}
+        if(prop->z0B==0){
+          vert->Nkeb[j]=grid->Nke[j]-1;
+          vert->zfb[j]=0.5*(grid->dzz[nc1][grid->Nke[j]-1]+grid->dzz[nc2][grid->Nke[j]-1]);
+        }
     }
  }
 
@@ -488,7 +499,7 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
       omega[i][k]/=fac1;
     }
     //compute omega_im for updatescalar function
-    for(k=grid->ctop[i];k<=grid->Nk[i];k++){
+    for(k=grid->ctop[i];k<grid->Nk[i];k++){
       if(!prop->subgrid)
         vert->omega_im[i][k]=fac1*omega[i][k]+fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k];
       else
@@ -496,6 +507,7 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
                 fac3*vert->omega_old2[i][k]*subgrid->Acveffold2[i][k]+
                 fac1*omega[i][k]*subgrid->Acveff[i][k])/subgrid->Acveff[i][k];
     }
+    vert->omega_im[i][grid->Nk[i]]=0;
   }
 }
 

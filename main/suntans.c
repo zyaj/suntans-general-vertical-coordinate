@@ -25,7 +25,7 @@
 
 main(int argc, char *argv[])
 {
-  int myproc, numprocs, j;
+  int myproc, numprocs, i;
   MPI_Comm comm;
   gridT *grid;
   physT *phys;
@@ -56,7 +56,6 @@ main(int argc, char *argv[])
       InitializePhysicalVariables(grid,phys,prop,myproc,comm);
 
     Solve(grid,phys,prop,myproc,numprocs,comm);
-
     //    FreePhysicalVariables(grid,phys,prop);
     //    FreeTransferArrays(grid,myproc,numprocs,comm);
   }

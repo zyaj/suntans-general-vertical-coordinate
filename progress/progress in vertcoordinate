@@ -93,3 +93,8 @@ the isopycnal layer needs addition treatment for wetting and drying :
 2. for conservative method, the flow is not stable with nonlinear=2 (central differencing) and 4 (lax wendroff)
 3. need more discussion on the monitor function (whether to solve the exact function) and advection scheme.
 
+02/06/2017
+1. fix a bug in grid.c to setup the max layer number for each cell
+2. fix a bug in continuity and layeraveragecontinuity to calculate w_im and omega_im
+3. modify the calculation of findbottomlayer when z0B==0 always Nke-1 is the bottom layer
+4. with subgrid bathymetry, the best method for flux height is centeral differencing by dzfmeth=2 to avoid 0 dzf
