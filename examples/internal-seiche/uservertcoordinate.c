@@ -113,3 +113,14 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
     }
   }
 }
+
+/*
+ * Function: MonitorFunctionForVariationalMethod
+ * calculate the value of monitor function for the variational approach
+ * to update layer thickness when nonlinear==4
+ * ----------------------------------------------------
+ * Mii=sqrt(1-alphaM*(drhodz)^2)
+ */
+void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
+{
+}

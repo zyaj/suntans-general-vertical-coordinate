@@ -98,3 +98,4 @@ the isopycnal layer needs addition treatment for wetting and drying :
 2. fix a bug in continuity and layeraveragecontinuity to calculate w_im and omega_im
 3. modify the calculation of findbottomlayer when z0B==0 always Nke-1 is the bottom layer
 4. with subgrid bathymetry, the best method for flux height is centeral differencing by dzfmeth=2 to avoid 0 dzf
+5. when the orignal grid slope is already large, the alpHAm will further stretching the grid to cause large slope to voilate the mild slope approximation.
