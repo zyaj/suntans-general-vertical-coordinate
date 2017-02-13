@@ -53,39 +53,31 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-  int i,k,Nkmax=grid->Nkmax,Nk_noiso=20;
-  REAL alpha_s=0.99,delta=1,H=16,a=0.1,L=10,pi=3.14159265358979323846, rho_diff=0.01, drho,rho;
-  REAL zbot,ztop, DH;
-  drho=rho_diff/(grid->Nkmax-Nk_noiso),ztop,zbot;
-
+  int i,k,Nkmax=grid->Nkmax;
+  REAL ratio=1.0/Nkmax;
   for(i=0;i<grid->Nc;i++)
-  {
-    DH=(0-(delta/2-H/2+a*cos(pi/L*grid->xv[i])))/Nk_noiso*2;
-    for(k=0;k<Nk_noiso/2;k++)
-      grid->dzz[i][k]=DH;
-    ztop=(delta/2-H/2+a*cos(pi/L*grid->xv[i]));
-    for(k=Nk_noiso/2;k<grid->Nk[i]-Nk_noiso/2-1;k++)
-    {
-       rho=-rho_diff/2+drho*(k-Nk_noiso/2+1);
-       zbot=delta/2/atanh(alpha_s)*atanh(-2/rho_diff*rho)-H/2+a*cos(pi/L*grid->xv[i]);
-       grid->dzz[i][k]=ztop-zbot;
-       ztop=zbot;
-    }
-    grid->dzz[i][grid->Nk[i]-Nk_noiso/2-1]=ztop-(-delta/2-H/2+a*cos(pi/L*grid->xv[i]));
-    DH=(-delta/2+H/2+a*cos(pi/L*grid->xv[i]))/Nk_noiso*2;
-    for(k=grid->Nk[i]-Nk_noiso/2;k<grid->Nk[i];k++)
-      grid->dzz[i][k]=DH;
-  }
+    for(k=0;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=ratio*(phys->h[i]+grid->dv[i]);
 }
 
 /*
  * Function: InitializeVariationalCoordinate
  * Initialize dzz for variational vertical coordinate
- * ----------------------------------------------------
+ * --------zz--------------------------------------------
  */
 void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-	// one for prop->n==1
+  int i,k;
+  REAL ratio=1.0/grid->Nkmax;
+
+  for(i=0;i<grid->Nc;i++)
+  {
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+    {
+      grid->dzz[i][k]=ratio*(grid->dv[i]+phys->h[i]);
+      grid->dzzold[i][k]=grid->dzz[i][k];
+    }
+  }
 }
 
 /*
@@ -97,12 +89,10 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k;
-  for(k=0;k<grid->Nkmax-2;k++){
+  for(k=0;k<grid->Nkmax;k++){
 
   	vert->dsigma[k]=1.0/grid->Nkmax;
   }
-  vert->dsigma[grid->Nkmax-1]=1e-12;
-  vert->dsigma[grid->Nkmax-2]=2.0/grid->Nkmax-1e-12;
 
   for(i=0;i<grid->Nc;i++)
   {
@@ -124,8 +114,11 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
 void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
 {
    int i,k;
-   REAL alphaM=160,minM=0.02,max;
-
+   REAL alphaM=160,minM=0.15,max;
+   // nonlinear=1 or 5 stable with alpham=320
+   // nonlinear=2 stable with alpham=60
+   // nonlinear=4 stable with alpham=60
+ 
    for(i=0;i<grid->Nc;i++)
    {
      max=0;

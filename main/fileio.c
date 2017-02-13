@@ -485,6 +485,10 @@ double GetDefaultValue(char *str, int *status) {
     
     return modifydzf_DEFAULT;
  
+ } else if(!strcmp(str,"dJdtmeth")){
+    
+    return dJdtmeth_DEFAULT;
+ 
  } else {
     *status=0;
     return 0;

@@ -41,6 +41,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->Nkeb=(int *)SunMalloc(grid->Ne*sizeof(int),"AllocateVertCoordinate");
   vert->zfb=(REAL *)SunMalloc(grid->Ne*sizeof(REAL),"AllocateVertCoordinate");
   vert->modifydzf = MPI_GetValue(DATAFILE,"modifydzf","AllocateVertCoordinate",myproc);
+  vert->dJdtmeth = MPI_GetValue(DATAFILE,"dJdtmeth","AllocateVertCoordinate",myproc);
 
   for(j=0;j<grid->Ne;j++)
   {
@@ -617,10 +618,6 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
       {
         vert->U3[i][k]=phys->w[i][k]-alpha*vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
         alpha*vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid);
-        //if(i==2)
-          //printf("n %d k %d w %e udzdx %e u %e dzdx %e r %e ztop %e %e %e h %e %e %e\n",prop->n,k,phys->w[i][k], vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid),vert->ul[i][k],
-            //InterpToLayerTopFace(i,k,vert->dzdx,grid),phys->w[i][k]/vert->ul[i][k]/InterpToLayerTopFace(i,k,vert->dzdx,grid),vert->zc[1][k]+grid->dzz[1][k]/2,vert->zc[2][k]+grid->dzz[2][k]/2,vert->zc[3][k]+grid->dzz[3][k]/2,
-            //phys->h[1],phys->h[2],phys->h[3]);
       }
 }
 
@@ -849,10 +846,6 @@ void UpdateCellcenteredFreeSurface(gridT *grid, propT *prop, physT *phys, int my
       }
     }
     tmp=phys->h_old[i]-sum*prop->dt/grid->Ac[i];
-    //if(fabs(tmp-phys->h[i])>1e-5){
-      //printf("n %d i %d h %e tmp %e diff %e\n",prop->n,i,phys->h[i],tmp,phys->h[i]-tmp);
-      //exit(0);
-    //}
     phys->h[i]=tmp;
   }
 }
@@ -892,10 +885,6 @@ void VerifyFluxHeight(gridT *grid, propT *prop, physT *phys, int myproc)
     for(k=grid->etop[j];k<grid->Nke[j];k++){
       utmp=prop->imfac1*phys->u[j][k]+prop->imfac2*phys->u_old[j][k]+prop->imfac3*phys->u_old2[j][k];
       tmp=UpWind(utmp,grid->dzz[nc1][k],grid->dzz[nc2][k]);
-      //if(tmp!=grid->dzf[j][k])
-        //printf("n %d nc1 %d nc2 %d j %d k %d u %e %e %e utmp %e dzf %e tmp %e\n",
-        //prop->n,nc1,nc2,j,k,phys->u[j][k],phys->u_old[j][k],phys->u_old2[j][k],
-        //utmp,grid->dzf[j][k],tmp);
       grid->dzf[j][k]=tmp;
     }
 

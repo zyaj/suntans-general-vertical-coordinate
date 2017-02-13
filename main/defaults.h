@@ -268,4 +268,8 @@ const int vertcoord_DEFAULT = 1;
 */
 const int modifydzf_DEFAULT = 0;
 
-
+/* dJdtmeth
+  default 0 to use implicit method to resolve u/JdJdt term
+  otherwise use explicit method
+*/
+const int dJdtmeth_DEFAULT = 0;

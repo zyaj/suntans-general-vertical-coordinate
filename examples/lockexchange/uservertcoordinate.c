@@ -114,7 +114,7 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
 void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
 {
    int i,k;
-   REAL alphaM=20,minM=0.15,max;
+   REAL alphaM=160,minM=0.15,max;
    // nonlinear=1 or 5 stable with alpham=320
    // nonlinear=2 stable with alpham=60
    // nonlinear=4 stable with alpham=60

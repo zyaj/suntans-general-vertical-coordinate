@@ -1495,7 +1495,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
        * 4) Horizontal and vertical advection of horizontal momentum with AB2
        * 5) Horizontal laminar+turbulent diffusion of horizontal momentum
        */
-      
+
       // calculate the preparation for HorizontalSource function due to the new vertical coordinate
       // time comsuming function!
       if(prop->vertcoord!=1)
@@ -1902,7 +1902,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
 {
   int i, ib, iptr, boundary_index, nf, j, jptr, k, nc, nc1, nc2, ne, 
   k0, kmin, kmax;
-  REAL *a, *b, *c, fab1, fab2, fab3, sum, def1, def2, dgf, Cz, tempu,Ac, f_sum, ke1,ke2; //AB3
+  REAL *a, *b, *c, fab1, fab2, fab3, sum, def1, def2, dgf, Cz, tempu,Ac; //AB3
   // additions to test divergence averaging for w in momentum calc
   REAL wedge[3], lambda[3], wik, tmp_x, tmp_y,tmp;
   int aneigh;
@@ -1988,25 +1988,16 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
 
   // 3D Coriolis terms
   // note that this uses linear interpolation to the faces from the cell centers
-  
-  // set up total vorticity
-  f_sum=prop->Coriolis_f;
-
   for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
   {
     j = grid->edgep[jptr];
 
     nc1 = grid->grad[2*j];
     nc2 = grid->grad[2*j+1];
-    for(k=grid->etop[j];k<grid->Nke[j];k++) {
-      f_sum=prop->Coriolis_f;
-      // if not z-level add relative voricity due to momentum advection
-      //if(prop->vertcoord!=1 && prop->nonlinear)  
-        //f_sum+=InterpToFace(j,k,vert->f_r,phys->u,grid);
-      phys->Cn_U[j][k]+=prop->dt*f_sum*(
+    for(k=grid->etop[j];k<grid->Nke[j];k++)
+      phys->Cn_U[j][k]+=prop->dt*prop->Coriolis_f*(
           InterpToFace(j,k,phys->vc,phys->u,grid)*grid->n1[j]-
           InterpToFace(j,k,phys->uc,phys->u,grid)*grid->n2[j]);
-    }
   }
 
   // Baroclinic term
@@ -2062,47 +2053,24 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     for(k=0;k<grid->Nk[i];k++) 
       phys->stmp[i][k]=phys->stmp2[i][k]=0;
 
-  // compute horizontal momentum advection when not z-level 
-  // the horizontal momentum advection has been divided into two parts
-  // one is from the relative vorticity which is combined in f_sum with coriolis
-  // the other part is from the gradient of (u^2+v^2)/2
-  // the vertical momentum advection will be automatically implemented implicitly. 
-  
-  /*if(prop->nonlinear && prop->vertcoord!=1)
-  {
-     for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
-     {
-        j = grid->edgep[jptr];
-        nc1 = grid->grad[2*j];
-        nc2 = grid->grad[2*j+1];
-        for(k=grid->etop[j];k<grid->Nke[j];k++) 
-        {  
-          ke1=0.5*(phys->uc[nc1][k]*phys->uc[nc1][k]+phys->vc[nc1][k]*phys->vc[nc1][k]);
-          ke2=0.5*(phys->uc[nc2][k]*phys->uc[nc2][k]+phys->vc[nc2][k]*phys->vc[nc2][k]);
-          phys->Cn_U[j][k]-=prop->dt*(ke1-ke2)/grid->dg[j];
-        }  
-     }
-  }*/
-
   // new scheme for mometum advection if not z-level
   // keep the advection term conservative while add the additionterm u/J*dJ/dt
-  // do it with the explicit method
-  if(prop->nonlinear && prop->vertcoord!=1 && prop->vertcoord!=5)
-  {
-     for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
-     {
-        j = grid->edgep[jptr];
-        nc1 = grid->grad[2*j];
-        nc2 = grid->grad[2*j+1];
-        for(k=grid->etop[j];k<grid->Nke[j];k++) 
-          phys->Cn_U[j][k]-=phys->u[j][k]*
-          (1-(grid->dzzold[nc1][k]+grid->dzzold[nc2][k])/(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
-          // finite difference maybe needs modification for subgrid 
-     }
-  }  
+  // comment out since it is solved by implicit method, see function Upredictor
+  if(prop->nonlinear && prop->vertcoord!=1)
+    if(vert->dJdtmeth)
+      for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
+      {
+         j = grid->edgep[jptr];
+         nc1 = grid->grad[2*j];
+         nc2 = grid->grad[2*j+1];
+         for(k=grid->etop[j];k<grid->Nke[j];k++) 
+           phys->Cn_U[j][k]-=phys->u[j][k]*
+           (1-(grid->dzzold[nc1][k]+grid->dzzold[nc2][k])/(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
+      }
 
   // Compute Eulerian advection of momentum (nonlinear!=0)
   if(prop->nonlinear) {
+
     // Interpolate uc to faces and place into ut
     GetMomentumFaceValues(phys->ut,phys->uc,phys->boundary_u,phys->u,grid,phys,prop,comm,myproc,prop->nonlinear);
 
@@ -2705,15 +2673,6 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
   b = phys->b;
   c = phys->c;
 
-  /* if(prop->n==1) {
-    fab=1;
-    for(i=0;i<grid->Nc;i++)
-      for(k=0;k<grid->Nk[i];k++)
-	phys->Cn_W[i][k]=0;
-  } else
-    fab=1.5;
-  */
-
  // AB3
   if(prop->n==1) {
     fab1=1;
@@ -2932,34 +2891,15 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     phys->Cn_W[i][k]-=prop->dt*phys->stmp[i][k];
 
     // add the additional part for the new vertical coordinate
-    if(prop->vertcoord!=1 && prop->vertcoord!=5 && prop->nonlinear)
-    {
-      // the code is not use if the conservative form is kept for momentum advection
-      /*for(k=grid->ctop[i]+1;k<grid->Nk[i];k++){
-        // subtract the addition part of horizontal advection
-        phys->Cn_W[i][k]-=prop->dt*(InterpToLayerTopFace(i,k,phys->uc,grid)*
-                InterpToLayerTopFace(i,k,vert->dwdx,grid)+
-                InterpToLayerTopFace(i,k,phys->vc,grid)*InterpToLayerTopFace(i,k,vert->dwdy,grid));
-    
-        // add back vertical momentum advection
-        phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(grid->dzz[i][k-1]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k]+
-                grid->dzz[i][k]*(phys->w[i][k-1]-phys->w[i][k])/grid->dzz[i][k-1])/
-                (grid->dzz[i][k-1]+grid->dzz[i][k]);
-        //phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k-1]-phys->w[i][k+1])/(grid->dzz[i][k]+grid->dzz[i][k-1]);
+    // comment out since it is solved by implicit method for stability
+    if(prop->vertcoord!=1 && prop->nonlinear)
+      if(vert->dJdtmeth)
+      {
+        for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) 
+          phys->Cn_W[i][k]-=phys->w[i][k]*(1-(grid->dzzold[i][k]+grid->dzzold[i][k-1])/(grid->dzz[i][k]+grid->dzz[i][k-1]));
+        k=grid->ctop[i];
+        phys->Cn_W[i][k]-=phys->w[i][k]*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
       }
-
-      k=grid->ctop[i];
-      phys->Cn_W[i][k]-=prop->dt*(InterpToLayerTopFace(i,k,phys->uc,grid)*
-                InterpToLayerTopFace(i,k,vert->dwdx,grid)+
-                InterpToLayerTopFace(i,k,phys->vc,grid)*InterpToLayerTopFace(i,k,vert->dwdy,grid));
-      // top omega*dwdz
-      // can be comment out since omega_top=0
-      phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k]; */  
-      for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) 
-        phys->Cn_W[i][k]-=phys->w[i][k]*(1-(grid->dzzold[i][k]+grid->dzzold[i][k-1])/(grid->dzz[i][k]+grid->dzz[i][k-1]));
-      k=grid->ctop[i];
-      phys->Cn_W[i][k]-=phys->w[i][k]*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
-    }
   }
 
   // Vertical advection using Lax-Wendroff
@@ -3026,6 +2966,21 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
         b[k]*=(-prop->dt*fac1);
       }
       b[grid->ctop[i]]+=a[grid->ctop[i]];
+
+      // the w/JdJdt term for momentum advection
+      // treat with implicit method
+      // fully implicit
+      if(prop->vertcoord!=1 && prop->nonlinear)
+        if(!vert->dJdtmeth)
+        {
+          for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) {
+            c[k]+=1*(1-(grid->dzzold[i][k]+grid->dzzold[i][k-1])/(grid->dzz[i][k]+grid->dzz[i][k-1]));
+            phys->wtmp[i][k]-=(0*phys->w_old[i][k]+0*phys->w_old2[i][k])*(1-(grid->dzzold[i][k]+grid->dzzold[i][k-1])/(grid->dzz[i][k]+grid->dzz[i][k-1]));
+          }        
+          k=grid->ctop[i];
+          c[k]+=1*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
+          phys->wtmp[i][k]-=(0*phys->w_old[i][k]+0*phys->w_old2[i][k])*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
+        }
 
       TriSolve(&(a[grid->ctop[i]]),&(c[grid->ctop[i]]),&(b[grid->ctop[i]]),
           &(phys->wtmp[i][grid->ctop[i]]),&(phys->w[i][grid->ctop[i]]),grid->Nk[i]-grid->ctop[i]);
@@ -3688,23 +3643,17 @@ static void UPredictor(gridT *grid, physT *phys,
       {
         // conservative form part
         for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++)
-          phys->utmp[j][k]-=prop->dt*(a0[k]*(fac2*phys->u[j][k-1]+fac3*phys->u_old2[j][k-1])+
-                b0[k]*(fac2*phys->u[j][k]+fac3*phys->u_old2[j][k])+c0[k]*(fac2*phys->u[j][k+1]+fac3*phys->u_old2[j][k+1]));
+          phys->utmp[j][k]-=prop->dt*(a0[k]*(fac2*phys->u_old[j][k-1]+fac3*phys->u_old2[j][k-1])+
+                b0[k]*(fac2*phys->u_old[j][k]+fac3*phys->u_old2[j][k])+c0[k]*(fac2*phys->u_old[j][k+1]+fac3*phys->u_old2[j][k+1]));
         // Top boundary
         phys->utmp[j][grid->etop[j]]-=prop->dt*((a0[grid->etop[j]]+b0[grid->etop[j]])*
-                (fac2*phys->u[j][grid->etop[j]]+fac3*phys->u_old2[j][grid->etop[j]])+
-                c0[grid->etop[j]]*(fac2*phys->u[j][grid->etop[j]+1]+fac3*phys->u_old2[j][grid->etop[j]+1]));
+                (fac2*phys->u_old[j][grid->etop[j]]+fac3*phys->u_old2[j][grid->etop[j]])+
+                c0[grid->etop[j]]*(fac2*phys->u_old[j][grid->etop[j]+1]+fac3*phys->u_old2[j][grid->etop[j]+1]));
         
         // Bottom boundary
         phys->utmp[j][grid->Nke[j]-1]-=prop->dt*(a0[grid->Nke[j]-1]*
-                (fac2*phys->u[j][grid->Nke[j]-2]+fac3*phys->u_old2[j][grid->Nke[j]-2])+
-                (b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1])*(fac2*phys->u[j][grid->Nke[j]-1]+fac3*phys->u_old2[j][grid->Nke[j]-1]));
-        // second part udomegadz
-        // second part is no longer needed if keep the conservative form
-        //for(k=grid->etop[j];k<grid->Nke[j];k++)
-          //phys->utmp[j][k]+=prop->dt*(fac2*phys->u[j][k]+fac3*phys->u_old2[j][k])*
-          //(def2*(vert->omega_old[nc1][k]-vert->omega_old[nc1][k+1])+def1*(vert->omega_old[nc2][k]-vert->omega_old[nc2][k+1]))/
-          //grid->dg[j]/(0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
+                (fac2*phys->u_old[j][grid->Nke[j]-2]+fac3*phys->u_old2[j][grid->Nke[j]-2])+
+                (b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1])*(fac2*phys->u_old[j][grid->Nke[j]-1]+fac3*phys->u_old2[j][grid->Nke[j]-1]));
       }
 
       // Now set up the coefficients for the tridiagonal inversion for the
@@ -3872,13 +3821,21 @@ static void UPredictor(gridT *grid, physT *phys,
         a[grid->Nke[j]-1]+=prop->dt*fac1*a0[grid->Nke[j]-1];
         b[grid->Nke[j]-1]+=prop->dt*fac1*(b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1]);
         
-        // second part -udwdz
-        // second part is not needed if the conservative form is kept
-        //for(k=grid->etop[j];k<grid->Nke[j];k++)
-          //b[k]-=prop->dt*fac1*
-          //(def2*(vert->omega_old[nc1][k]-vert->omega_old[nc1][k+1])+def1*(vert->omega_old[nc2][k]-vert->omega_old[nc2][k+1]))/
-          //grid->dg[j]/(0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
       }
+
+      // implicit method for u/JdJdt term
+      // fully implicit
+      if(prop->vertcoord!=1 && prop->nonlinear)
+        if(!vert->dJdtmeth)
+          for(k=grid->etop[j];k<grid->Nke[j];k++) 
+          {
+            phys->utmp[j][k]-=(0*phys->u_old[j][k]+0*phys->u_old2[j][k])*
+             (1-(grid->dzzold[nc1][k]+grid->dzzold[nc2][k])/(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
+           
+            b[k]+=1*(1-(grid->dzzold[nc1][k]+grid->dzzold[nc2][k])/(grid->dzz[nc1][k]+grid->dzz[nc2][k])); 
+          }           
+
+
 
       for(k=grid->etop[j];k<grid->Nke[j];k++) {
 
@@ -3980,7 +3937,7 @@ static void UPredictor(gridT *grid, physT *phys,
         nc2=nc1;
       for(k=grid->etop[ne];k<grid->Nke[ne];k++) 
       {  
-        sum+=(fac2*phys->u[ne][k]+fac1*phys->utmp[ne][k]+fac3*phys->u_old2[ne][k])*
+        sum+=(fac2*phys->u_old[ne][k]+fac1*phys->utmp[ne][k]+fac3*phys->u_old2[ne][k])*
           grid->df[ne]*normal*grid->dzf[ne][k];     
       }
     }
@@ -6439,7 +6396,7 @@ static REAL HFaceFlux(int j, int k, REAL *phi, REAL **u, gridT *grid, REAL dt, i
 
 /*
  * Function: getTsurf
- * ----------------------------------------------------------------
+ * --------------------------------------------
  * Returns the temperature at the surface cell
  */
 static void getTsurf(gridT *grid, physT *phys){
