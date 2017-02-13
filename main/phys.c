@@ -2063,9 +2063,12 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
          j = grid->edgep[jptr];
          nc1 = grid->grad[2*j];
          nc2 = grid->grad[2*j+1];
+         def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+         def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+         dgf = def1+def2;
          for(k=grid->etop[j];k<grid->Nke[j];k++) 
            phys->Cn_U[j][k]-=phys->u[j][k]*
-           (1-(grid->dzzold[nc1][k]+grid->dzzold[nc2][k])/(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
+           (def2/dgf*(1-grid->dzzold[nc1][k]/grid->dzz[nc1][k])+def1/dgf*(1-grid->dzzold[nc2][k]/grid->dzz[nc2][k]));
       }
 
   // Compute Eulerian advection of momentum (nonlinear!=0)
@@ -2896,7 +2899,8 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
       if(vert->dJdtmeth)
       {
         for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) 
-          phys->Cn_W[i][k]-=phys->w[i][k]*(1-(grid->dzzold[i][k]+grid->dzzold[i][k-1])/(grid->dzz[i][k]+grid->dzz[i][k-1]));
+          phys->Cn_W[i][k]-=phys->w[i][k]*(grid->dzz[i][k]*(1-grid->dzzold[i][k-1]/grid->dzz[i][k-1])+
+              grid->dzz[i][k-1]*(1-grid->dzzold[i][k]/grid->dzz[i][k]))/(grid->dzz[i][k]+grid->dzz[i][k-1]);
         k=grid->ctop[i];
         phys->Cn_W[i][k]-=phys->w[i][k]*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
       }
@@ -2974,8 +2978,11 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
         if(!vert->dJdtmeth)
         {
           for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) {
-            c[k]+=1*(1-(grid->dzzold[i][k]+grid->dzzold[i][k-1])/(grid->dzz[i][k]+grid->dzz[i][k-1]));
-            phys->wtmp[i][k]-=(0*phys->w_old[i][k]+0*phys->w_old2[i][k])*(1-(grid->dzzold[i][k]+grid->dzzold[i][k-1])/(grid->dzz[i][k]+grid->dzz[i][k-1]));
+            c[k]+=1*(grid->dzz[i][k]*(1-grid->dzzold[i][k-1]/grid->dzz[i][k-1])+
+              grid->dzz[i][k-1]*(1-grid->dzzold[i][k]/grid->dzz[i][k]))/(grid->dzz[i][k]+grid->dzz[i][k-1]);     
+            phys->wtmp[i][k]-=(0*phys->w_old[i][k]+0*phys->w_old2[i][k])*
+              (grid->dzz[i][k]*(1-grid->dzzold[i][k-1]/grid->dzz[i][k-1])+
+              grid->dzz[i][k-1]*(1-grid->dzzold[i][k]/grid->dzz[i][k]))/(grid->dzz[i][k]+grid->dzz[i][k-1]);
           }        
           k=grid->ctop[i];
           c[k]+=1*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
@@ -3307,7 +3314,7 @@ static void UPredictor(gridT *grid, physT *phys,
 {
   int i, iptr, j, jptr, ne, nf, nf1, normal, nc1, nc2, k, n0, n1,iv,jv, botinterp,flag, Nkeb;
   REAL hmax,sum,sum0,sum1, dt=prop->dt, theta=prop->theta, h0, boundary_flag,fac1,fac2,fac3,tmp,tmp_x,tmp_y,tmp2;
-  REAL *a, *b, *c, *d, *e1, **E, *a0, *b0, *c0, *d0, theta0, alpha,min,min2,def1,def2,l0,l1,zfb;
+  REAL *a, *b, *c, *d, *e1, **E, *a0, *b0, *c0, *d0, theta0, alpha,min,min2,def1,def2,dgf,l0,l1,zfb;
 
   a = phys->a;
   b = phys->b;
@@ -3827,13 +3834,18 @@ static void UPredictor(gridT *grid, physT *phys,
       // fully implicit
       if(prop->vertcoord!=1 && prop->nonlinear)
         if(!vert->dJdtmeth)
+        {
+          def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+          def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+          dgf = def1+def2;
           for(k=grid->etop[j];k<grid->Nke[j];k++) 
           {
             phys->utmp[j][k]-=(0*phys->u_old[j][k]+0*phys->u_old2[j][k])*
-             (1-(grid->dzzold[nc1][k]+grid->dzzold[nc2][k])/(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
+             (def2/dgf*(1-grid->dzzold[nc1][k]/grid->dzz[nc1][k])+def1/dgf*(1-grid->dzzold[nc2][k]/grid->dzz[nc2][k]));
            
-            b[k]+=1*(1-(grid->dzzold[nc1][k]+grid->dzzold[nc2][k])/(grid->dzz[nc1][k]+grid->dzz[nc2][k])); 
+            b[k]+=1*(def2/dgf*(1-grid->dzzold[nc1][k]/grid->dzz[nc1][k])+def1/dgf*(1-grid->dzzold[nc2][k]/grid->dzz[nc2][k])); 
           }           
+        }  
 
 
 
