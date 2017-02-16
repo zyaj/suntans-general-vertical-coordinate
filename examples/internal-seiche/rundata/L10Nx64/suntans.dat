@@ -12,7 +12,7 @@ CorrectVoronoi		0	# Whether or not to correct Voronoi points
 VoronoiRatio		85	# Adjust the voronoi points by this amount if 1 then = centroid.
 vertgridcorrect 	0 	# Correct vertical grid if Nkmax is too small
 IntDepth 		0	# 1 if interpdepth, 0 otherwise
-interp                  1       #
+interp                  0       #
 kinterp                 1       # whether to use O.klepsova interpolation method
 dzsmall			0.01	# Smallest grid spacing ratio before correction
 depthelev               0       # increase the depth elevation, will decrease a same value in free surface

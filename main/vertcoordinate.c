@@ -285,7 +285,6 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
    int i,k,nf,Neigh;
    REAL thetaT=0.15,thetaS=0.25,sum;
    MonitorFunctionForVariationalMethod(grid, prop, phys, myproc);
-   
    // use the monitor function first
    for(i=0;i<grid->Nc;i++)
    {
@@ -304,9 +303,9 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
         // horizontal averaging
         for(nf=0;nf<grid->nfaces[i];nf++){
           if(grid->neigh[i*grid->maxfaces+nf]!=-1)
-            vert->dzztmp[i][k]+=grid->dzz[grid->neigh[i*grid->maxfaces+nf]][k]*thetaS/Neigh;
+            vert->dzztmp[i][k]+=grid->dzz[grid->neigh[i*grid->maxfaces+nf]][k]/Neigh;
         }
-        grid->dzz[i][k]=grid->dzz[i][k]*(1-thetaS)+vert->dzztmp[i][k];
+        grid->dzz[i][k]=grid->dzz[i][k]*(1-thetaS)+vert->dzztmp[i][k]*thetaS;
         sum+=grid->dzz[i][k];
      }
      for(k=0;k<grid->Nk[i];k++){

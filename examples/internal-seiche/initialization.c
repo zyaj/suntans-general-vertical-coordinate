@@ -92,15 +92,16 @@ REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
  * in phys.c in the InitializePhysicalVariables function.
  *
  */
-REAL ReturnSalinity(REAL x, REAL y, REAL z) {
- REAL alpha_s=0.99,delta=1,a=0.1,L=10, H=10,s;
- REAL rho_diff=0.01,beta=1e-3,pi=3.14159265358979323846;
- //if(z>(delta/2-H/2+a*cos(pi/L*x)))
-   //return 0;
- //if(z<(-delta/2-H/2+a*cos(pi/L*x)))
-   //return rho_diff/beta;
- s=rho_diff/2/beta*(1-tanh(2*atanh(alpha_s)/delta*(z+H/2-a*cos(pi*x/L))));
- return s;
+REAL ReturnSalinity(REAL x, REAL y, REAL z) 
+{
+  REAL alpha_s=0.99,delta=1,a=0.1,L=10, H=10,s;
+  REAL rho_diff=0.01,beta=1e-3,pi=3.14159265358979323846;
+  if(z>(delta/2-H/2+a*cos(pi/L*x)))
+    return 0;
+  if(z<(-delta/2-H/2+a*cos(pi/L*x)))
+    return rho_diff/beta;
+  s=rho_diff/2/beta*(1-tanh(2*atanh(alpha_s)/delta*(z+H/2-a*cos(pi*x/L))));
+  return s;
 }
 
 /*

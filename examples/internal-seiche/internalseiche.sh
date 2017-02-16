@@ -30,7 +30,6 @@ fi
 
 dirs="L10Nx64hydro"
 
-
 for dir in `echo $dirs` ; do
     echo On $dir...
 

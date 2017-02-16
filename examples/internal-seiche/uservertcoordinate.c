@@ -63,7 +63,7 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
     DH=(0-(delta/2-H/2+a*cos(pi/L*grid->xv[i])))/Nk_noiso*2;
     for(k=0;k<Nk_noiso/2;k++)
       grid->dzz[i][k]=DH;
-    ztop=(delta/2-H/2+a*cos(pi/L*grid->xv[i]));
+    /*ztop=(delta/2-H/2+a*cos(pi/L*grid->xv[i]));
     for(k=Nk_noiso/2;k<grid->Nk[i]-Nk_noiso/2-1;k++)
     {
        rho=-rho_diff/2+drho*(k-Nk_noiso/2+1);
@@ -72,6 +72,12 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
        ztop=zbot;
     }
     grid->dzz[i][grid->Nk[i]-Nk_noiso/2-1]=ztop-(-delta/2-H/2+a*cos(pi/L*grid->xv[i]));
+    */
+    for(k=Nk_noiso/2;k<grid->Nk[i]-Nk_noiso/2;k++)
+    {
+      grid->dzz[i][k]=delta/(grid->Nk[i]-Nk_noiso);
+    }
+
     DH=(-delta/2+H/2+a*cos(pi/L*grid->xv[i]))/Nk_noiso*2;
     for(k=grid->Nk[i]-Nk_noiso/2;k<grid->Nk[i];k++)
       grid->dzz[i][k]=DH;
