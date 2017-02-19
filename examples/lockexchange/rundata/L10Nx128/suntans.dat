@@ -138,7 +138,7 @@ zcFile                  vert_zc.dat
 dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat
 modifydzf               0 #
-dJdtmeth                1 #
+dJdtmeth                0 #
 ########################################################################
 #
 # Subgrid data

@@ -42,6 +42,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->zfb=(REAL *)SunMalloc(grid->Ne*sizeof(REAL),"AllocateVertCoordinate");
   vert->modifydzf = MPI_GetValue(DATAFILE,"modifydzf","AllocateVertCoordinate",myproc);
   vert->dJdtmeth = MPI_GetValue(DATAFILE,"dJdtmeth","AllocateVertCoordinate",myproc);
+  vert->Me=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
 
   for(j=0;j<grid->Ne;j++)
   {
@@ -52,6 +53,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->wf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->omegaf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->Me[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     for(k=0;k<grid->Nkc[j];k++)
     {
       vert->uf[j][k]=0;
@@ -59,6 +61,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->vf[j][k]=0;
       vert->wf[j][k]=0;
       vert->omegaf[j][k]=0;
+      vert->Me[j][k]=0;
     }
   }
 
@@ -89,6 +92,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->dzdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->M=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->Mw=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzztmp=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->Msum=(REAL *)SunMalloc(grid->Nc*sizeof(REAL),"AllocateVertCoordinate");
 
@@ -116,6 +120,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->dzdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->M[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->Mw[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzztmp[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     
     // initialize normal vector
@@ -136,6 +141,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->U3[i][k]=0;
       vert->U3_old[i][k]=0;
       vert->U3_old2[i][k]=0;
+      vert->Mw[i][k]=0;
     }
     for(k=0;k<grid->Nk[i];k++)
     {
@@ -221,7 +227,7 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
  * 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
  * need to modify grid.c to make sure ctop=0 and Nk=Nkmax for all cells 
  */
-void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int myproc)
+void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int myproc, int numprocs, MPI_Comm comm)
 {
   int i,k,j,nf,ne;
   REAL fac1,fac2,fac3,Ac,sum,sum_old;
@@ -266,7 +272,7 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
           grid->dzz[i][k]=vert->dsigma[k]*(phys->h[i]+grid->dv[i]);
       break;
     case 4:
-      VariationalVertCoordinate(grid,prop,phys,myproc);
+      VariationalVertCoordinate(grid,prop,phys,myproc,numprocs,comm);
       break;
     case 5:
       UpdateDZ(grid,phys,prop, 0); 
@@ -278,13 +284,13 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
  * Function: VariationalVertCoordinate
  * use the variational moving mesh approach (Tang & Tang, 2003) and (Koltakov & Fringer, 2013)
  * ----------------------------------------------------
- *
+ * here not solve full elliptic equation but averaging in horizontal equation
  */
-void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
+void VariationalVertCoordinateAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc)
 {
    int i,k,nf,Neigh;
    REAL thetaT=0.15,thetaS=0.25,sum;
-   MonitorFunctionForVariationalMethod(grid, prop, phys, myproc);
+   MonitorFunctionForAverageMethod(grid, prop, phys, myproc);
    // use the monitor function first
    for(i=0;i<grid->Nc;i++)
    {
@@ -312,10 +318,64 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
        grid->dzz[i][k]=(phys->h[i]+grid->dv[i])/sum*grid->dzz[i][k];
 
      }
-   
-
    }
+}
 
+/*
+ * Function: VariationalVertCoordinate
+ * use the variational moving mesh approach (Tang & Tang, 2003) and (Koltakov & Fringer, 2013)
+ * ----------------------------------------------------
+ * here not solve full elliptic equation but averaging in horizontal equation
+ */
+void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
+{
+   int i,k,nf,Neigh, iter_max=10,iter=0,fac,src,sum,tmp,eps;
+   REAL thetaT=0.15,thetaS=0.25;
+
+   while(1)
+   { 
+     iter++;
+     // use the monitor function first
+     MonitorFunctionForVariationalMethod(grid, prop, phys, myproc);
+     // compute the thickness of bottom layer
+     for(i=0;i<grid->Nc;i++)
+     { 
+       sum=0;
+       fac=0;
+       src=0;
+       //for(k=grid->ctop[i];k<grid->Nk[i];k++)
+         //vert->dzztmp[i][k]=grid->dzz[i][k];
+       for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
+       {
+         fac+=2*vert->Mw[i][k];
+         src+=2*vert->M[i][k];
+       }  
+       fac+=1+vert->Mw[i][grid->ctop[i]];
+       src+=2*(grid->dv[i]+phys->h[i])+vert->M[i][grid->ctop[i]];
+       // bottom layer
+       grid->dzz[i][grid->Nk[i]-1]=src/fac;
+       sum=grid->dzz[i][grid->Nk[i]-1];
+       // interior layer
+       for(k=grid->Nk[i]-2;k>grid->ctop[i];k--)
+       { 
+         grid->dzz[i][k]=2*vert->Mw[i][k]*grid->dzz[i][grid->Nk[i]-1]-grid->dzz[i][k+1]-2*vert->M[i][k];
+         sum+=grid->dzz[i][k];
+       }
+       grid->dzz[i][grid->ctop[i]]=phys->h[i]+grid->dv[i]-sum;
+//       if(sum!=(phys->h[i]+grid->dv[i]))
+//        printf("something wrong!!!!\n");
+       //for(k=grid->ctop[i];k<grid->Nk[i];k++)
+       //{
+       //  vert->dzztmp[i][k]-=grid->dzz[i][k]; 
+       //  vert->dzztmp[i][k]/=fabs(vert->dzztmp[i][k])/grid->dzz[i][k];     
+       //}
+       //eps=InnerProduct(culvert->condition,culvert->condition,grid,myproc,numprocs,comm);
+     }
+     ISendRecvCellData3D(grid->dzz,grid,myproc,comm);
+     ComputeZc(grid,prop,phys,1,myproc);
+     if(iter==iter_max)
+      break;
+   }
 }
 
 /*

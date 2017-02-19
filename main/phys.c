@@ -4443,10 +4443,10 @@ static void UPredictor(gridT *grid, physT *phys,
   if(prop->vertcoord==1)
     UpdateDZ(grid,phys,prop, 0); 
   else {
-    // use new method to update layerthickness
-    UpdateLayerThickness(grid, prop, phys, 0,myproc);
+    // use new method to update layerthickness, the old value is stored in zc_old
+    UpdateLayerThickness(grid, prop, phys, 0,myproc, numprocs, comm);
     ISendRecvCellData3D(grid->dzz,grid,myproc,comm);
-    // compute the new zc, the old value is stored in zc_old
+    // compute the new zc
     ComputeZc(grid,prop,phys,1,myproc);
   }
   // update vertical ac for scalar transport

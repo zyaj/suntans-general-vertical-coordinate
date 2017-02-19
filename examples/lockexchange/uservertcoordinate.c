@@ -111,7 +111,7 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
  * ----------------------------------------------------
  * Mii=sqrt(1-alphaM*(drhodz)^2)
  */
-void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
+void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc)
 {
    int i,k;
    REAL alphaM=160,minM=0.15,max;
@@ -148,6 +148,84 @@ void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, 
          vert->M[i][k]=minM;     
        vert->Msum[i]+=vert->M[i][k];
      }
-
    }
+}
+
+/*
+ * Function: MonitorFunctionForVariationalMethod
+ * calculate the value of monitor function for the variational approach
+ * to update layer thickness when nonlinear==4
+ * solve the elliptic equation using iteration method
+ * ----------------------------------------------------
+ * Mii=sqrt(1-alphaM*(drhodz)^2)
+ */
+void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
+{
+  int i,k,j,nf,neigh,ne,kk;
+  REAL alphaH=1, alphaV=160, minM=0.15,max,tmp;
+
+  // clean values
+  for(i=0;i<grid->Nc;i++)
+  {
+    for(k=0;k<grid->Nk[i]+1;k++)
+      vert->Mw[i][k]=0;
+    for(k=0;k<grid->Nk[i];k++)
+      vert->M[i][k]=0;
+  }
+
+  for(i=0;i<grid->Nc;i++)
+  {
+    // calculate Monitor function value at cell face
+    // to calculate A value
+    for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
+      vert->Mw[i][k]=1000*(phys->rho[i][k-1]-phys->rho[i][k])/(0.5*grid->dzz[i][k]+0.5*grid->dzz[i][k-1]);      
+    
+    // top surface 
+    k=grid->ctop[i];
+    vert->Mw[i][k]=grid->Mw[i][k+1];
+
+    // bottom surface
+    k=grid->Nk[i];
+    vert->Mw[i][k]=grid->Mw[i][k-1];
+
+    for(k=grid->ctop[i];k<grid->Nk[i]+1;k++)
+      vert->Mw[i][k]=sqrt(1+alphaV*vert->Mw[i][k]*vert->Mw[i][k]);
+
+    for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
+      vert->Mw[i][k]/=0.5*(grid->dzzold[i][k-1]+grid->dzzold[i][k]);
+
+    k=grid->ctop[i];
+    vert->Mw[i][k]/=grid->dzzold[i][k];
+    k=grid->Nk[i];
+    vert->Mw[i][k]/=grid->dzzold[i][k-1];
+
+    // Mw stores A_k to solve dz
+    for(k=grid->ctop[i];k<grid->Nk[i]+1;k++)
+      vert->Mw[i][k]=phys->Mw[i][grid->Nk[i]]/phys->Mw[i][k];
+
+    // calculate the effects from horizontal gradient
+    for(k=grid->ctop[i],k<grid->Nk[i];k++)
+    {
+      for(nf=0;nf<grid->nfaces[i];nf++)
+      {
+        tmp=0;
+        neigh=grid->neigh[i*grid->maxfaces+nf];
+        ne=grid->face[i*grid->maxfaces+nf];
+        if(neigh!=-1){
+          tmp=1000*(phys->rho[i][k]-phys->rho[neigh][k])/grid->dg[ne];
+          vert->M[i][k]+=grid->dzzold[i][k]*sqrt(1+alphaH*tmp*tmp)*(vert->zc[i][k]-vert->zc[neigh][k])/
+          grid->dg[ne]*grid->df[ne];
+        }
+      }  
+    }
+
+    // calculate B_k stores in M[i][k]
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+      for(kk=k+1;k<grid->Nk[i];k++)
+       vert->M[i][k]+=vert->M[i][kk];
+    for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
+      vert->M[i][k]=vert->M[i][k]/grid->Ac[i]/vert->Mw[i][k]*(grid->dzzold[i][k-1]+grid->dzzold[i][k])/2;
+    k=grid->ctop[i];
+    vert->M[i][k]=vert->M[i][k]/grid->Ac[i]/vert->Mw[i][k]*grid->dzzold[i][k];
+  }
 }

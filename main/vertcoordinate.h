@@ -20,9 +20,11 @@ REAL **zf; // the current vertical location z of each edge layer center [Nj][Nke
 REAL **omegaf; // the vertical contravariant flux at the face [Ne][Nke]
 REAL **ul,**vl; // the u v at the top and bottom face of each layer at each edge [Nc][Nk+1]
 REAL **omega; // the vertical contravariant flux [Nc][Nk+1]
-REAL **M; // monitor function value [Nc][Nk]
+REAL **M; // monitor function value at cell center [Nc][Nk]
 REAL **dzztmp; //temporary layer thickness [Nc][Nk]
-REAL *Msum; // calculate the sum of M value for each cell column [Nc]
+REAL *Msum; // calculate the sum of M value for each cell column [Nc] at cell center
+REAL **Me; // monitor function value at each edge face [Ne][Nke]
+REAL **Mw; // monitor function value at top of cell face [Nc][Nk+1] 
 //REAL **boundary_omega; // the boundary value of omega, used for momentum advection in Wpredictor [grid->edgedist[5]-grid->edgedist[2]][Nk+1]
 REAL **omega_im; // omega_im=fac1*omega+fac2*omega^n+fac3*omega^n-1 [Nc][Nk+1]
 REAL **omega_old; // omega^(n) [Nc][Nk+1]
@@ -48,7 +50,7 @@ int dJdtmeth; // how to treat the u/JdJdt term 0 implicit and 1 explicit
 vertT *vert;
 
 void AllocateVertCoordinate(gridT *grid, propT *prop, int myproc);
-void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int index, int myproc);
+void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int index, int myproc,int numprocs, MPI_Comm comm);
 void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeUl(gridT *grid, propT *prop, physT *phys, int myproc);
@@ -57,7 +59,8 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc);
 void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc);
 void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL **scalar, gridT *grid, propT *prop, physT *phys, int myproc);
-void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
+void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc,int numprocs, MPI_Comm comm);
+void VariationalVertCoordinateAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc);
 REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid);
 void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeNormalVector(gridT *grid, physT *phys, int myproc);
