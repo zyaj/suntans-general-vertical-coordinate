@@ -2402,7 +2402,7 @@ void DrawControls(dataT *data, int procnum, int numprocs) {
     bcolor=white;
     DrawButton(controlButtons[buttonnum].butwin,controlButtons[buttonnum].string,bcolor);
   }
-
+  
   sprintf(str,"Step: %d of %d (max %d)",n,data->noutput,data->nsteps);
   DrawHeader(controlButtons[prevwin].butwin,controlButtons[nextwin].butwin,str);
 

@@ -183,10 +183,10 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   }
 
   // user defined variable
-  (*phys)->user_def_nc = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->user_def_nc = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->user_def_ne = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables"); 
-  for(i=0;i<Nc;i++)
-    (*phys)->user_def_nc[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
+  //for(i=0;i<Nc;i++)
+    //(*phys)->user_def_nc[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
   for(j=0;j<Ne;j++)
     (*phys)->user_def_ne[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
 
@@ -1521,7 +1521,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       UPredictor(grid,phys,prop,myproc,numprocs,comm);
       ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
       ISendRecvCellData2D(phys->h,grid,myproc,comm);
-
+      //for(k=0;k<50;k++)
+        //printf("k %d dzz %e\n",k,grid->dzz[0][k] );
       t_predictor+=Timer()-t0;
       t0=Timer();
       blowup = CheckDZ(grid,phys,prop,myproc,numprocs,comm);
@@ -3875,7 +3876,7 @@ static void UPredictor(gridT *grid, physT *phys,
       // Now utmp will have U*** in it, which is given by A^{-1}U**, and E will have
       // A^{-1}e1, where e1 = [1,1,1,1,1,...,1]^T 
       // Store the tridiagonals so they can be used twice (TriSolve alters the values
-      // of the elements in the diagonals!!! d
+      // of the elements in the diagonals!!! 
 
       for(k=0;k<grid->Nke[j];k++) {
         a0[k]=a[k];
@@ -4448,6 +4449,8 @@ static void UPredictor(gridT *grid, physT *phys,
     ISendRecvCellData3D(grid->dzz,grid,myproc,comm);
     // compute the new zc
     ComputeZc(grid,prop,phys,1,myproc);
+    for(k=100;k<grid->Nk[63];k++)
+      printf("k %d dzz %e \n",k,grid->dzz[63][k] );
   }
   // update vertical ac for scalar transport
   if(prop->subgrid)
@@ -5446,6 +5449,7 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
 
         if(dry)
           alpha=1;
+        //alpha=1;
         // new edit for subgrid wetting and drying
         //if(subgridmodel && grid->ctop[n]==grid->Nk[n]-1 && grid->dzz[n][grid->ctop[n]]<=10*BUFFERHEIGHT)
           //alpha=1;

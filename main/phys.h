@@ -139,7 +139,7 @@ typedef struct _physT {
   REAL **w_old;
   REAL **w_old2; // store w_n-1
   REAL **w_im; // calculate wtmp^im in scalar.c
-  REAL **user_def_nc;
+  REAL *user_def_nc;
   REAL **user_def_ne;
   REAL **qtmp;
   //GLS Turbulence variables

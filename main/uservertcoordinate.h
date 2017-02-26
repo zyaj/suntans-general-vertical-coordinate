@@ -19,6 +19,6 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys, int myp
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
 void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys, int myproc);
-void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc);
+void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm);
 void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc);
 #endif

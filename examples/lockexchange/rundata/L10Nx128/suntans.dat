@@ -51,7 +51,7 @@ hiter                   0       # if 1 consider iteration method to calculate h 
 turbmodel		0	# Turbulence model (0 for none, 1 for MY25)
 dt 			0.025	# Time step
 Cmax 			1  	# Maximum permissible Courant number
-nsteps 		        2000       # Number of steps 1728000
+nsteps 		        2000   # Number of steps 1728000
 ntout   		20	# How often to output data
 ntprog   		5 	# How often to report progress (in %)
 ntconserve 		1	# How often to output conserved data
@@ -138,7 +138,7 @@ zcFile                  vert_zc.dat
 dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat
 modifydzf               0 #
-dJdtmeth                0 #
+dJdtmeth                1 #
 ########################################################################
 #
 # Subgrid data
