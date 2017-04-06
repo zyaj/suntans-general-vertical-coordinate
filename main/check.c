@@ -213,8 +213,9 @@ int Check(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_C
  */    
 int CheckDZ(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm)
 {
-  int i, k, iz, kz, iw, kw, Nc=grid->Nc, Ne=grid->Ne;
+  int i, k, iz, kz, iw, kw, Nc=grid->Nc, Ne=grid->Ne,nf,ne;
   int zflag=1, wflag=1, myalldone, alldone;
+  REAL C;
 
   iw=kw=iz=kz=0;
 
@@ -247,12 +248,20 @@ int CheckDZ(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI
 
     if(!zflag) {
       printf("Problems with the vertical grid spacing:\n");
-      printf("  Grid indices: j=%d k=%d\n", iz, kz);
+      printf("  Grid indices: i=%d k=%d\n", iz, kz);
       printf("  Location: x=%.3e, y=%.3e, z=%.3e\n",grid->xv[iz],grid->yv[iz],
           0.5*(DepthFromDZ(grid,phys,grid->grad[2*iz],kz)+
             DepthFromDZ(grid,phys,grid->grad[2*iz+1],kz)));
       printf("  Vertical grid spacing = %.3e <= 0.\n",grid->dzz[iz][kz]);
       printf("This problem may be occuring because the horizontal Courant number\n");
+      for(nf=0;nf<grid->nfaces[iz];nf++)
+      {
+        ne=grid->face[iz*grid->maxfaces+nf];
+        if(ne!=-1 && kz<grid->Nke[ne] && kz>=grid->etop[ne]){
+          C=(prop->imfac1*phys->u[ne][kz]+prop->imfac2*phys->u_old[ne][kz]+prop->imfac3*phys->u_old2[ne][kz])*prop->dt/grid->dg[ne];
+          printf("The current horizontal Courant number is %e at layer %d of edge %d of the face of cell %d\n",C,kz,ne,iz);
+        }
+      }
       printf("is exceeding the maximum allowable (Cmax in suntans.dat).\n");
     }
 

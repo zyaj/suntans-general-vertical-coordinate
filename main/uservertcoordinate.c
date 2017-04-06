@@ -30,8 +30,18 @@
  */
 void UserDefinedVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-	// one for other update scheme
-	
+  int i,k;
+  for(i=0;i<grid->Nc;i++)
+  { 
+    k=grid->ctop[i];
+    grid->dzz[i][k]=7.0+phys->h[i];
+    for(k=grid->ctop[i]+1;k<10;k++)
+      grid->dzz[i][k]=7.0;
+    for(k=10;k<50;k++)
+      grid->dzz[i][k]=1.5;
+    for(k=50;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=(grid->dv[i]-130.0)/(grid->Nk[i]-50);
+  }
 }
 
 /*
@@ -41,8 +51,18 @@ void UserDefinedVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
  */
 void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-	// one for other update scheme
-	
+  int i,k;
+  for(i=0;i<grid->Nc;i++)
+  { 
+    k=grid->ctop[i];
+    grid->dzz[i][k]=7.0;
+    for(k=grid->ctop[i]+1;k<10;k++)
+      grid->dzz[i][k]=7.0;
+    for(k=10;k<50;k++)
+      grid->dzz[i][k]=1.5;
+    for(k=50;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=(grid->dv[i]-130.0)/(grid->Nk[i]-50);
+  }	
 }
 
 /*
@@ -53,11 +73,27 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-  int i,k,Nkmax=grid->Nkmax;
-  REAL ratio=1.0/Nkmax;
+  int i,k,dry;
+  REAL s=0.2,H0=1000,x0=0,sum;
   for(i=0;i<grid->Nc;i++)
+  {
     for(k=0;k<grid->Nk[i];k++)
-      grid->dzz[i][k]=ratio*(phys->h[i]+grid->dv[i]);
+      grid->dzz[i][k]=H0/grid->Nk[i];
+    dry=0;
+    sum=0;
+    for(k=0;k<grid->Nk[i];k++) {
+      sum+=grid->dzz[i][k];
+      if(sum>grid->dv[i] && dry==0){
+        grid->dzz[i][k]-=sum-grid->dv[i]+1e-3*(grid->Nk[i]-k-1);
+        dry=1;
+        continue;
+      }
+      if(dry)
+        grid->dzz[i][k]=1e-3;
+    }
+    for(k=0;k<grid->Nk[i];k++)
+      grid->dzzold[i][k]=grid->dzz[i][k];
+  }
 }
 
 /*
@@ -68,15 +104,20 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
 void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k;
-  REAL ratio=1.0/grid->Nkmax;
+  REAL ratio=1.0/grid->Nkmax,a=250;
+  REAL L_rho=15000,eta,h1=250,L1=300000,delta=200,Nk1=2;
 
   for(i=0;i<grid->Nc;i++)
   {
-    for(k=grid->ctop[i];k<grid->Nk[i];k++)
-    {
-      grid->dzz[i][k]=ratio*(grid->dv[i]+phys->h[i]);
+    eta=a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
+    for(k=0;k<Nk1;k++)
+      grid->dzz[i][k]=(h1+eta-delta/2)/Nk1;
+    for(k=Nk1;k<grid->Nk[i]-Nk1;k++)
+      grid->dzz[i][k]=delta/(grid->Nk[i]-2*Nk1);
+    for(k=grid->Nk[i]-Nk1;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=(grid->dv[i]-h1-eta-delta/2)/Nk1;
+    for(k=0;k<grid->Nk[i];k++)
       grid->dzzold[i][k]=grid->dzz[i][k];
-    }
   }
 }
 
@@ -88,16 +129,19 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
  */
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
-  int i,k;
-  for(k=0;k<grid->Nkmax;k++){
-
-  	vert->dsigma[k]=1.0/grid->Nkmax;
-  }
-
+  int i,k,sum=0;
+  //for(k=0;k<10;k++)
+    //vert->dsigma[k]=8.5/300;
+  //for(k=10;k<30;k++)
+    //vert->dsigma[k]=1.5/300;
+  //for(k=30;k<grid->Nkmax;k++)
+    //vert->dsigma[k]=9.25/300;
+  
   for(i=0;i<grid->Nc;i++)
   {
   	for(k=grid->ctop[i];k<grid->Nk[i];k++)
   	{
+      vert->dsigma[k]=1.0/grid->Nkmax;
   	  grid->dzz[i][k]=vert->dsigma[k]*(grid->dv[i]+phys->h[i]);
   	  grid->dzzold[i][k]=grid->dzz[i][k];
     }
@@ -165,10 +209,9 @@ void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int 
 void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
   int i,k,j,nf,neigh,ne,kk,nc1,nc2;
-  REAL normal,alpha_H=0.5, alphaH=0, alphaV=10, minM=0.15, maxM=100,max,tmp;
+  REAL normal,alpha_H=0, alphaH=0, alphaV=10, minM=0.15, maxM=100000,max,tmp;
   REAL max_gradient_v,max_gradient_h=0,max_gradient_h_global,H1,H2,rho1,rho2;
   // initialize everything zero
-
   for(i=0;i<grid->Nc;i++)
     for(k=0;k<grid->Nk[i];k++)
       vert->Mc[i][k]=0;

@@ -165,7 +165,7 @@ void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int 
 void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
   int i,k,j,nf,neigh,ne,kk,nc1,nc2;
-  REAL normal,alpha_H=0.5, alphaH=0, alphaV=10, minM=0.15, maxM=100,max,tmp;
+  REAL normal,alpha_H=0.2, alphaH=1, alphaV=5, minM=0.15, maxM=100,max,tmp;
   REAL max_gradient_v,max_gradient_h=0,max_gradient_h_global,H1,H2,rho1,rho2;
   // initialize everything zero
 

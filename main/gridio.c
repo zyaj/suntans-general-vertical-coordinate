@@ -11,7 +11,7 @@
  */
 #include "gridio.h"
 #include "memory.h"
-
+#include "initialization.h"
 // Private Variables
 #define COLUMNS_IN_TRIANGLE_CELLS_FILE 8  // Number of columns in original cells.dat before hybrid version of code
 #define COLUMNS_IN_TRIANGLE_EDGES_FILE 5  // Number of columns in original edges.dat before netcdf version of code that includes edge_id
@@ -642,7 +642,6 @@ static void ReadCellCenteredData(char *filename, gridT *grid, int myproc) {
   int n, nf;
   char str[BUFFERLENGTH];
   FILE *ifile = MPI_FOpen(filename,"r","ReadGrid",myproc);
-
   for(n=0;n<grid->Nc;n++) {
     grid->nfaces[n]=(int)getfield(ifile,str);
     if(grid->nfaces[n]>grid->maxfaces) {

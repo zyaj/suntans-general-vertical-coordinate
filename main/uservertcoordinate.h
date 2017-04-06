@@ -8,7 +8,7 @@
  *
  */
 #ifndef _uservertcoordinate_h
-#define __uservertcoordinate_h
+#define _uservertcoordinate_h
 
 #include "suntans.h"
 #include "grid.h"

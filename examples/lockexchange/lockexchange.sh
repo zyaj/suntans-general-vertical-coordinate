@@ -28,7 +28,7 @@ if [ -z "$TRIANGLEHOME" ] ; then
     exit 1
 fi
 
-dirs="L10Nx128"
+dirs="L10Nx256"
 
 
 for dir in `echo $dirs` ; do

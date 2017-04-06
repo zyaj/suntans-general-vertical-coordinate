@@ -140,7 +140,7 @@ typedef struct _physT {
   REAL **w_old2; // store w_n-1
   REAL **w_im; // calculate wtmp^im in scalar.c
   REAL *user_def_nc;
-  REAL **user_def_ne;
+  REAL **user_def_nc_nk;
   REAL **qtmp;
   //GLS Turbulence variables
   REAL **TP;
@@ -205,12 +205,13 @@ typedef struct _propT {
     mergeArrays, computeSediments,Intz0B, Intz0T, marshmodel,wavemodel,culvertmodel,vertcoord;
   FILE *CdBFID, *CdTFID, *FreeSurfaceFID, *HorizontalVelocityFID, *VerticalVelocityFID, *SalinityFID, *BGSalinityFID, 
        *InitSalinityFID, *InitTemperatureFID, *TemperatureFID, *PressureFID, *VerticalGridFID, *ConserveFID,    
-       *StoreFID, *StartFID, *EddyViscosityFID, *ScalarDiffusivityFID; 
+       *StoreFID, *StartFID, *EddyViscosityFID, *ScalarDiffusivityFID, *UserDefVarFID; 
   interpolation interp; 
   int prettyplot;
   int kinterp;
   int metmodel,  varmodel, outputNetcdf,  metncid, netcdfBdy, netcdfBdyFileID, readinitialnc, initialNCfileID, calcage, agemethod, calcaverage;
   int outputNetcdfFileID, averageNetcdfFileID;
+  int output_user_var;
   REAL nctime, toffSet, gmtoffset;
   int nctimectr, avgtimectr, avgctr, avgfilectr, ntaverage, nstepsperncfile, ncfilectr;
   REAL nugget, sill, range, Lsw, Cda, Ce, Ch;

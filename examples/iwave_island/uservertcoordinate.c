@@ -74,8 +74,8 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k;
-  REAL ratio=1.0/grid->Nkmax,a=30;
-  REAL L_rho=2000,eta,h1=100;
+  REAL ratio=1.0/grid->Nkmax,a=100;
+  REAL L_rho=3000,eta,h1=250;
 
   for(i=0;i<grid->Nc;i++)
   {
@@ -85,6 +85,7 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
     for(k=grid->Nk[i]/2;k<grid->Nk[i];k++)   
       grid->dzz[i][k]=((grid->dv[i]+phys->h[i])-h1+eta)/grid->Nk[i]*2;
   }
+
 }
 
 /*
@@ -115,17 +116,18 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k,sum=0;
-  for(k=0;k<10;k++)
-    vert->dsigma[k]=8.5/300;
-  for(k=10;k<30;k++)
-    vert->dsigma[k]=1.5/300;
-  for(k=30;k<grid->Nkmax;k++)
-    vert->dsigma[k]=9.25/300;
-
+  //for(k=0;k<10;k++)
+    //vert->dsigma[k]=8.5/300;
+  //for(k=10;k<30;k++)
+    //vert->dsigma[k]=1.5/300;
+  //for(k=30;k<grid->Nkmax;k++)
+    //vert->dsigma[k]=9.25/300;
+  
   for(i=0;i<grid->Nc;i++)
   {
   	for(k=grid->ctop[i];k<grid->Nk[i];k++)
   	{
+      vert->dsigma[k]=1.0/grid->Nkmax;
   	  grid->dzz[i][k]=vert->dsigma[k]*(grid->dv[i]+phys->h[i]);
   	  grid->dzzold[i][k]=grid->dzz[i][k];
     }
@@ -150,9 +152,10 @@ void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int 
  * solve the elliptic equation using iteration method
  * ----------------------------------------------------
  * Mii=sqrt(1-alphaM*(drhodz)^2)
+ * alpha_H define how much horizontal diffusion 
+ * alphaH define how much horizontal density gradient 
+ * alphaV define how much vertical density gradient
  */
-void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int iter, int numprocs, MPI_Comm comm)
+void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
-  int i,k,j,nf,neigh,ne,kk,nc1,nc2;
-  REAL alphaH=1, alphaV=160, minM=0.15,max,tmp,max_gradient_v=0,max_gradient_h=0,max_gradient_h_global,H1,H2;
 }

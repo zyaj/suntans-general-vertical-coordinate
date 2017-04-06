@@ -69,7 +69,7 @@ flux 			0	# flux
 timescale		0	# timescale for open boundary condition
 volcheck		0	# Check for volume conservation
 masscheck		0	# Check for mass conservation
-nonlinear		0	# No momentum advection: 0, first-order upwind: 1, Central-differencing: 2
+nonlinear		5	# No momentum advection: 0, first-order upwind: 1, Central-differencing: 2
 newcells		0	# 1 if adjust momentum in surface cells as the volume changes, 0 otherwise
 wetdry			0       # 1 if wetting and drying, 0 otherwise
 Coriolis_f              0	# Coriolis frequency f=2*Omega*sin(phi)

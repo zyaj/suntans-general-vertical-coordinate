@@ -489,7 +489,15 @@ double GetDefaultValue(char *str, int *status) {
     
     return dJdtmeth_DEFAULT;
  
- } else {
+ } else if(!strcmp(str,"thetaT")){
+    
+    return thetaT_DEFAULT;
+ 
+ } else if(!strcmp(str,"outputuservar")){
+    
+    return output_user_var_DEFAULT;
+ 
+ }else {
     *status=0;
     return 0;
   }

@@ -30,8 +30,18 @@
  */
 void UserDefinedVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-	// one for other update scheme
-	
+  int i,k;
+  for(i=0;i<grid->Nc;i++)
+  { 
+    k=grid->ctop[i];
+    grid->dzz[i][k]=0.7+phys->h[i];
+    for(k=grid->ctop[i]+1;k<10;k++)
+      grid->dzz[i][k]=0.7;
+    for(k=10;k<50;k++)
+      grid->dzz[i][k]=0.05;
+    for(k=50;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=0.7;
+  }
 }
 
 /*
@@ -41,8 +51,18 @@ void UserDefinedVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
  */
 void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-	// one for other update scheme
-	
+  int i,k;
+  for(i=0;i<grid->Nc;i++)
+  { 
+    k=grid->ctop[i];
+    grid->dzz[i][k]=0.7;
+    for(k=grid->ctop[i]+1;k<10;k++)
+      grid->dzz[i][k]=0.7;
+    for(k=10;k<50;k++)
+      grid->dzz[i][k]=0.05;
+    for(k=50;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=0.7;
+  }	
 }
 
 /*
@@ -53,8 +73,8 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-  int i,k,Nkmax=grid->Nkmax,Nk_noiso=10;
-  REAL alpha_s=0.99,delta=1,H=10,a=0.1,L=10,pi=3.14159265358979323846, rho_diff=0.01, drho,rho;
+  int i,k,Nkmax=grid->Nkmax,Nk_noiso=50;
+  REAL alpha_s=0.99,delta=1,H=16,a=0.1,L=10,pi=3.14159265358979323846, rho_diff=0.01, drho,rho;
   REAL zbot,ztop, DH;
   drho=rho_diff/(grid->Nkmax-Nk_noiso),ztop,zbot;
 
@@ -63,7 +83,7 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
     DH=(0-(delta/2-H/2+a*cos(pi/L*grid->xv[i])))/Nk_noiso*2;
     for(k=0;k<Nk_noiso/2;k++)
       grid->dzz[i][k]=DH;
-    /*ztop=(delta/2-H/2+a*cos(pi/L*grid->xv[i]));
+    ztop=(delta/2-H/2+a*cos(pi/L*grid->xv[i]));
     for(k=Nk_noiso/2;k<grid->Nk[i]-Nk_noiso/2-1;k++)
     {
        rho=-rho_diff/2+drho*(k-Nk_noiso/2+1);
@@ -72,18 +92,13 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
        ztop=zbot;
     }
     grid->dzz[i][grid->Nk[i]-Nk_noiso/2-1]=ztop-(-delta/2-H/2+a*cos(pi/L*grid->xv[i]));
-    */
-    for(k=Nk_noiso/2;k<grid->Nk[i]-Nk_noiso/2;k++)
-    {
-      grid->dzz[i][k]=delta/(grid->Nk[i]-Nk_noiso);
-    }
-
     DH=(-delta/2+H/2+a*cos(pi/L*grid->xv[i]))/Nk_noiso*2;
     for(k=grid->Nk[i]-Nk_noiso/2;k<grid->Nk[i];k++)
       grid->dzz[i][k]=DH;
+    for(k=0;k<grid->Nk[i];k++)
+      grid->dzzold[i][k]=grid->dzz[i][k];
   }
 }
-
 /*
  * Function: InitializeVariationalCoordinate
  * Initialize dzz for variational vertical coordinate
@@ -127,6 +142,21 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
  * ----------------------------------------------------
  * Mii=sqrt(1-alphaM*(drhodz)^2)
  */
-void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
+void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc)
+{
+}
+
+/*
+ * Function: MonitorFunctionForVariationalMethod
+ * calculate the value of monitor function for the variational approach
+ * to update layer thickness when nonlinear==4
+ * solve the elliptic equation using iteration method
+ * ----------------------------------------------------
+ * Mii=sqrt(1-alphaM*(drhodz)^2)
+ * alpha_H define how much horizontal diffusion 
+ * alphaH define how much horizontal density gradient 
+ * alphaV define how much vertical density gradient
+ */
+void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
 }

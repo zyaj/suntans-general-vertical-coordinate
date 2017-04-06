@@ -105,5 +105,6 @@ change the function Interpdepth when subgrid is on. To make sure grid->dv=dmax w
 05/20/2016
 bug found in createFacearray function when 1 cell has two wall boundaries
 
-
+02/28/2017
+in gridio.c, the grid->dv[n] is recalculated by ReturnDepth if IntDepth=0
 

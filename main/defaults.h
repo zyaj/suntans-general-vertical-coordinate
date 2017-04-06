@@ -272,4 +272,15 @@ const int modifydzf_DEFAULT = 0;
   default 0 to use implicit method to resolve u/JdJdt term
   otherwise use explicit method
 */
-const int dJdtmeth_DEFAULT = 0;
+const int dJdtmeth_DEFAULT = 1;
+
+/* thetaT
+  the time averaging coefficient for variational mesh
+*/
+const REAL thetaT_DEFAULT = 1;
+
+/* output_user_var
+  whether output the user defined variable
+  0: no output 1: nc 2: nc_nk
+*/
+const int output_user_var_DEFAULT=0;

@@ -42,6 +42,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->zfb=(REAL *)SunMalloc(grid->Ne*sizeof(REAL),"AllocateVertCoordinate");
   vert->modifydzf = MPI_GetValue(DATAFILE,"modifydzf","AllocateVertCoordinate",myproc);
   vert->dJdtmeth = MPI_GetValue(DATAFILE,"dJdtmeth","AllocateVertCoordinate",myproc);
+  vert->thetaT = MPI_GetValue(DATAFILE,"thetaT","AllocateVertCoordinate",myproc);
   vert->Me_l=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
 
   for(j=0;j<grid->Ne;j++)
@@ -232,8 +233,8 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
  */
 void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int myproc, int numprocs, MPI_Comm comm)
 {
-  int i,k,j,nf,ne;
-  REAL fac1,fac2,fac3,Ac,sum,sum_old;
+  int i,k,j,nf,ne,dry,max_ind;
+  REAL fac1,fac2,fac3,Ac,sum,sum_old,maxdzz;
 
   fac1=prop->imfac1;
   fac2=prop->imfac2;
@@ -256,17 +257,36 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
     case 2:
       for(i=0;i<grid->Nc;i++)
       {
+        dry=0;
+        sum=0;
+        max_ind=grid->ctop[i];
+        maxdzz=grid->dzz[i][grid->ctop[i]];
         Ac=grid->Ac[i];
         for(k=grid->ctop[i];k<grid->Nk[i];k++){
-          for(nf=0;nf<grid->nfaces[i];nf++) {
+          for(nf=0;nf<grid->nfaces[i];nf++) {               
             ne = grid->face[i*grid->maxfaces+nf];
             if(k<grid->Nke[ne]){
               grid->dzz[i][k]-=prop->dt*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+
                 fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
+            
             }
-              // the function is not right for subgrid module
+          }
+          if(grid->dzz[i][k]<1e-3){
+            dry++;
+            grid->dzz[i][k]=1e-3;
+          }
+          sum+=grid->dzz[i][k];
+          if(k>grid->ctop[i]){
+            if(grid->dzz[i][k]>maxdzz){
+              max_ind=k;
+              maxdzz=grid->dzz[i][k];
+            }
           }
         }
+        if(dry)
+          for(k=grid->ctop[i];k<grid->Nk[i];k++)
+            if(k==max_ind)
+              grid->dzz[i][k]+=(grid->dv[i]+phys->h[i]-sum);
       }
       break;
     case 3:
@@ -334,7 +354,7 @@ void VariationalVertCoordinateAverageMethod(gridT *grid, propT *prop, physT *phy
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
    int i,k,nf,neigh,ne,iter_max=10,iter=0;
-   REAL *a,*b,*c,*d,max,sum,thetaT=1,tmp,def1,def2;
+   REAL *a,*b,*c,*d,max,sum,thetaT=vert->thetaT,tmp,def1,def2;
    a = phys->a;
    b = phys->b;
    c = phys->c;
@@ -601,6 +621,7 @@ void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys
         if(k<grid->Nke[ne])
           flux+=(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/Ac*grid->dzf[ne][k];
       }
+
       if(!prop->subgrid)
         omega[i][k]=(fac1*omega[i][k+1]+fac2*vert->omega_old[i][k+1]+fac3*vert->omega_old2[i][k+1])-
         (fac2*vert->omega_old[i][k]+fac3*vert->omega_old2[i][k])-flux-
@@ -682,13 +703,13 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc)
     if(prop->n==0)
       for(k=0;k<grid->Nk[i];k++)
         vert->zcold[i][k]=vert->zc[i][k];
-
+ 
     vert->zl[i][grid->Nk[i]]=-grid->dv[i];
     for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
       vert->zl[i][k]=vert->zl[i][k+1]+grid->dzz[i][k];
     if(fabs(vert->zl[i][grid->ctop[i]]-phys->h[i])>1e-9*grid->Nkmax){
-      printf("something wrong with the calculation of layerthickness at cell %d %e\n",
-        i,vert->zl[i][grid->ctop[i]]-phys->h[i]);
+      //printf("something wrong with the calculation of layerthickness at cell %d %e\n",
+        //i,vert->zl[i][grid->ctop[i]]-phys->h[i]);
       //exit(0);
     }
     grid->dzz[i][0]+=phys->h[i]-vert->zl[i][grid->ctop[i]];
@@ -904,7 +925,7 @@ void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MP
  */
 void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 {
-  int i,k;
+  int i,k,j;
   // allocate subgrid struture first
   vert=(vertT *)SunMalloc(sizeof(vertT),"VertCoordinateBasic");
 
@@ -922,10 +943,8 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 
   // compute normal vector
   ComputeNormalVector(grid,phys,myproc);
-  
-  // compute cell centered dzdx and dzdy
-  ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
 
+  ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
   ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc);
 }
 

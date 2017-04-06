@@ -109,6 +109,21 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
  * ----------------------------------------------------
  * Mii=sqrt(1-alphaM*(drhodz)^2)
  */
-void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc)
+void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc)
+{
+}
+
+/*
+ * Function: MonitorFunctionForVariationalMethod
+ * calculate the value of monitor function for the variational approach
+ * to update layer thickness when nonlinear==4
+ * solve the elliptic equation using iteration method
+ * ----------------------------------------------------
+ * Mii=sqrt(1-alphaM*(drhodz)^2)
+ * alpha_H define how much horizontal diffusion 
+ * alphaH define how much horizontal density gradient 
+ * alphaV define how much vertical density gradient
+ */
+void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
 }

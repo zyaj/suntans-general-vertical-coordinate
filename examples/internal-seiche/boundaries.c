@@ -207,12 +207,20 @@ void InitBoundaryData(propT *prop, gridT *grid, int myproc, MPI_Comm comm){}
 void AllocateBoundaryData(propT *prop, gridT *grid, boundT **bound, int myproc, MPI_Comm comm){}
 void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
 {
-  int k;
-  REAL sum1=0,sum2=0;
-  for(k=0;k<grid->Nk[16];k++)
+  int i,k;
+  REAL E_p=0,sum1=0,sum2=0,E_p_bg=1.2768014222e+07;
+
+  /*for(i=0;i<grid->Nc;i++)
+    for(k=grid->ctop[i];k<grid->Nk[i];k++){
+      E_p+=RHO0*(1+phys->rho[i][k])*grid->dzz[i][k]*grid->Ac[i]*(vert->zc[i][k]+grid->dv[i]);
+      //printf("%e\n",E_p);
+    }
+  printf("%12.10e\n",E_p-E_p_bg);*/
+  for(k=grid->Nk[16]/2;k<grid->Nk[16];k++)
   {
     sum1+=grid->dzz[16][k];
     sum2+=grid->dzz[0][k];
   }
-  printf("%e %e\n",sum1,phys->s[0][grid->Nk[0]/2]);
+  printf("%e %e %e\n",sum1,sum2,phys->s[0][grid->Nk[0]/2]);
+
 }

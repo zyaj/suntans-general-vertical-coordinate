@@ -8,7 +8,7 @@
  *
  */
 #ifndef _vertcoordinate_h
-#define __vertcoordinate_h
+#define _vertcoordinate_h
 
 #include "suntans.h"
 #include "grid.h"
@@ -43,10 +43,10 @@ REAL *tmp; //temporary array for output
 REAL *tmp_nc; // temporary array for zl
 int *Nkeb; // store the layer index for each edge when ze is higher than buffer height [Ne]
 REAL *zfb; // store the sum of dzf from bottom layer to Nkeb [Ne] 
-//int vertcoord; // the switch for different choice of vertical coordinates 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
 FILE *zcFID, *dzzFID, *omegaFID;
 int modifydzf;  // whether recalculate the u^im to check whether the flux height is upwind
 int dJdtmeth; // how to treat the u/JdJdt term 0 implicit and 1 explicit
+REAL thetaT;
 } vertT;
 
 vertT *vert;

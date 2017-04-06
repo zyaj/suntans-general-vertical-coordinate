@@ -3631,7 +3631,9 @@ void ReadData(dataT *data, int nstep, int numprocs) {
       }
       
       if(mergeArrays)
-	GetFile(string,DATADIR,DATAFILE,"SalinityFile",-1);
+	//GetFile(string,DATADIR,DATAFILE,"dzzFile",-1);
+        GetFile(string,DATADIR,DATAFILE,"SalinityFile",-1);
+
       else
 	GetFile(string,DATADIR,DATAFILE,"SalinityFile",proc);
       fid = fopen(string,"r");
@@ -3650,6 +3652,8 @@ void ReadData(dataT *data, int nstep, int numprocs) {
 	      data->sd[proc][i][j]=EMPTY;
 	  }
 	}
+        //for(j=0;j<data->Nc[proc];j++)
+          //data->s[proc][1][j]-=data->depth[proc][j]-250;
       }
       if(fid) fclose(fid);
 
@@ -4069,7 +4073,9 @@ void ReadData(dataT *data, int nstep, int numprocs) {
       if(fid) fclose(fid);
 
       if(mergeArrays)
-	GetFile(string,DATADIR,DATAFILE,"FreeSurfaceFile",-1);
+	//GetFile(string,DATADIR,DATAFILE,"UserDefVarFile",-1);
+  GetFile(string,DATADIR,DATAFILE,"FreeSurfaceFile",-1);
+      
       else
 	GetFile(string,DATADIR,DATAFILE,"FreeSurfaceFile",proc);
       fid = fopen(string,"r");

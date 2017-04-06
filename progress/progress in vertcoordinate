@@ -99,3 +99,12 @@ the isopycnal layer needs addition treatment for wetting and drying :
 3. modify the calculation of findbottomlayer when z0B==0 always Nke-1 is the bottom layer
 4. with subgrid bathymetry, the best method for flux height is centeral differencing by dzfmeth=2 to avoid 0 dzf
 5. when the orignal grid slope is already large, the alpHAm will further stretching the grid to cause large slope to voilate the mild slope approximation.
+
+03/05/2017
+1. it is important to ensure the omega_im*dt/dz <1 for scalar transport
+2. when variational method is turned on, try to avoid too much variation which may cause the problem 1.
+3. The effective way to limit the variation is to use time averaging by modifying thetaT
+
+03/26/2017
+1. TVD is not effective in isopycnal model since scalar/density is always constant within one layer and no momentum advection
+2. isopycnal model with less layers is more relied on horizontal grid resolution while zlevel is not

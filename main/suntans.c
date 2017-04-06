@@ -43,11 +43,10 @@ main(int argc, char *argv[])
   if(SOLVE) {
     //read parameters in suntans.dat into the solver
     ReadProperties(&prop,grid,myproc);
-
     // give space and initialize dzf(edge) dzz(center) dzzold(center)
     InitializeVerticalGrid(&grid,myproc);
     AllocatePhysicalVariables(grid,&phys,prop);
-    AllocateTransferArrays(&grid,myproc,numprocs,comm);
+    AllocateTransferArrays(&grid,myproc,numprocs,comm); 
     OpenFiles(prop,myproc);
 
     if(RESTART)

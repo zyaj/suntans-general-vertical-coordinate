@@ -173,13 +173,12 @@ void GetGrid(gridT **localgrid, int myproc, int numprocs, MPI_Comm comm)
         printf("No Voronoi points were corrected.\n");
     }
   }
-
+  
   // Get the depth and set the graph weights:
   //   maingrid->dv
   //   maingrid->vwgt
   if(myproc==0 && VERBOSE>0) printf("Getting the depth for graph weights...\n");
   GetDepth(maingrid,myproc,numprocs,comm);
-
   // functions to set up parallelization of the code and compute geometrical 
   // information needed for grid computations
 
@@ -196,7 +195,6 @@ void GetGrid(gridT **localgrid, int myproc, int numprocs, MPI_Comm comm)
   //   maingrid->eneigh
   if(myproc==0 && VERBOSE>0) printf("Computing Connectivity...\n");
   Connectivity(maingrid,myproc);
-
   if(myproc==0 && VERBOSE>0) printf("Partitioning...\n");
   // most important and complicated function to ensure parallelism for grid
   // takes the main grid and redistributes to local grids on each processor
@@ -752,7 +750,7 @@ static void CreateFaceArray(int *grad, int *gradf, int *neigh, int *face, int *n
     }
   }
 
-  for(n=0;n<Nc;n++) {
+  /*for(n=0;n<Nc;n++) {
     for(nf=0;nf<nfaces[n];nf++)
       face[n*maxfaces+nf]=-1;
     for(nf=0;nf<nfaces[n];nf++) {
@@ -778,7 +776,7 @@ static void CreateFaceArray(int *grad, int *gradf, int *neigh, int *face, int *n
         exit(1);
       }
     }
-  }
+  }*/
 
 
   // - seems like the possibility that gradf wouldn't get assigned for 
@@ -860,6 +858,7 @@ static void ReorderCellPoints(int *face, int *edges, int *cells, int *nfaces, in
         cells[maxfaces*nc + (nf+1)]  = sharednode;
 
     }
+
     // consider last pairs of touching faces in cycle
     e1 = face[nc*maxfaces+nfaces[nc]-1];
     e2 = face[nc*maxfaces  ];

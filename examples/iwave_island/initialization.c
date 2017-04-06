@@ -20,7 +20,9 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
   if(dz!=NULL) {
     if(r==1) {
      if(Nkmax<50)
-      dz[k]=depth/Nkmax;
+      for(k=0;k<Nkmax;k++){
+       dz[k]=depth/Nkmax;
+      }
      else{
      for(k=0;k<10;k++)
        dz[k]=7.0;
@@ -72,11 +74,14 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
  */
 REAL ReturnDepth(REAL x, REAL y) {
   REAL d;
-  d=600;
-  return d;
+  if(x<18000)
+    return 300;
+  if(x>=18000)
+    return 300.0+(x-18000)*5.0/300;
+  return 1000;  
 }
-
- /*
+ 
+/*
   * Function: ReturnFreeSurface
   * Usage: grid->h[n]=ReturnFreeSurface(grid->xv[n],grid->yv[n]);
   * -------------------------------------------------------------
@@ -99,9 +104,9 @@ REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
  *
  */
 REAL ReturnSalinity(REAL x, REAL y, REAL z) {
-  REAL alpha_s=0.99,delta=0.001,a=30, h1=100,s;
+  REAL alpha_s=0.99,delta=0.001,a=100, h1=250,s;
   REAL rho_diff=0.01,beta=1e-3;
-  REAL L_rho=2000, eta=-a*exp(-(x-60000)*(x-60000)/L_rho/L_rho);
+  REAL L_rho=3000, eta=-a*exp(-(x-60000)*(x-60000)/L_rho/L_rho);
   if(z>(delta/2+eta-h1))
     return -rho_diff/beta/2;
   if(z<(-delta/2+eta-h1))

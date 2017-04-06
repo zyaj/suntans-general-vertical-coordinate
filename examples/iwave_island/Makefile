@@ -44,4 +44,4 @@ clean:
 	rm -f *.o
 
 clobber: clean
-	rm -rf *~ \#*\# PI* $(EXEC) gmon.out data rundata/*~ r500
+	rm -rf *~ \#*\# PI* $(EXEC) gmon.out data rundata/*~ r500 r125 grid*

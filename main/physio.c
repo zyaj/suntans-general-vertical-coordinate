@@ -163,6 +163,15 @@ void OpenFiles(propT *prop, int myproc)
       sprintf(str,"%s.%d",filename,myproc);
     prop->VerticalVelocityFID = MPI_FOpen(str,"w","OpenFiles",myproc);
     
+    if(prop->output_user_var){
+      MPI_GetFile(filename,DATAFILE,"UserDefVarFile","OpenFiles",myproc);
+      if(prop->mergeArrays)
+        strcpy(str,filename);
+      else
+        sprintf(str,"%s.%d",filename,myproc);
+      prop->UserDefVarFID = MPI_FOpen(str,"w","OpenFiles",myproc);
+    }
+    
     MPI_GetFile(filename,DATAFILE,"SalinityFile","OpenFiles",myproc);
     if(prop->mergeArrays)
       strcpy(str,filename);
@@ -268,6 +277,12 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
       ISendRecvEdgeData3D(phys->u,grid,myproc,comm);
       ComputeUC(phys->uc, phys->vc, phys,grid, myproc, QUAD,prop->kinterp,prop->subgrid);
     }
+    if(prop->output_user_var==1)
+        Write2DData(phys->user_def_nc,prop->mergeArrays,prop->UserDefVarFID,"Error outputting user_def_nc data!\n",
+              grid,numprocs,myproc,comm); 
+    if(prop->output_user_var==2)
+        Write3DData(phys->user_def_nc_nk,phys->htmp,prop->mergeArrays,prop->UserDefVarFID,
+              "Error outputting user_def_nc_nk data!\n",grid,numprocs,myproc,comm);            
 
     // Output u, v, w.  Interpolate w from faces to obtain it at the cell-centers first
     for(i=0;i<grid->Nc;i++)
@@ -321,6 +336,8 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
     fclose(prop->HorizontalVelocityFID);
     fclose(prop->VerticalVelocityFID);
     fclose(prop->SalinityFID);
+    if(prop->output_user_var)
+      fclose(prop->UserDefVarFID);
     // No longer writing to vertical grid file
     if(myproc==0) fclose(prop->ConserveFID);
   }

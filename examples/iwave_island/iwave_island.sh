@@ -28,8 +28,7 @@ if [ -z "$TRIANGLEHOME" ] ; then
     exit 1
 fi
 
-dirs="r500"
-
+dirs="grid125"
 
 for dir in `echo $dirs` ; do
     echo On $dir...
@@ -37,12 +36,12 @@ for dir in `echo $dirs` ; do
 if [ ! -d $dir ] ; then
     cp -r $maindatadir/$dir $dir
     echo Creating grid...
-    $EXEC -g --datadir=$dir
+    $EXEC --datadir=$dir
 else
     rm -rf $dir
     cp -r $maindatadir/$dir $dir.
     echo Creating grid...
-    $EXEC -g --datadir=$dir    
+    $EXEC --datadir=$dir    
 fi
 
 echo Running suntans...
