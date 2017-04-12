@@ -339,3 +339,11 @@ omega_top=(-dh/dt+Horizontalflux-(1-theta)*omega_top_old)/theta
 w_top=omega_top+dhdt=(1-1/theta)dhdt+Horizontalflux/theta-(1-theta)/theta*omega_top_old
 for z level
 w_top=Horizontalflux/theta-(1-theta)/theta*omega_top_old
+
+04/10/2017
+1. new scheme is add for advection when wetdry=1 and vertcoord!=1
+the whole option for advection is shown below.
+if vertcoord==1: original suntans method with conservative form
+if vertcoord!=1 && !wetdry: use the (conservative form+udjdt/J)
+if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
+2. scalar transport is turned off when vertcoord==2; (not decided)

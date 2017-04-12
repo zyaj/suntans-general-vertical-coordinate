@@ -4508,7 +4508,7 @@ int GetNumOutput(int ntout) {
   }
   
   if(numoutput) {
-    numoutput=(int)((float)numoutput/(float)ntout);
+    numoutput=1+(int)((float)numoutput/(float)ntout);
     if(numoutput==0)
       numoutput=1;
     if(numoutput%ntout>0)

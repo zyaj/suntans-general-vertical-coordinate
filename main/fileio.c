@@ -497,7 +497,11 @@ double GetDefaultValue(char *str, int *status) {
     
     return output_user_var_DEFAULT;
  
- }else {
+ } else if(!strcmp(str,"vertdzmin")){
+    
+    return vertdzmin_DEFAULT;
+ 
+ } else {
     *status=0;
     return 0;
   }

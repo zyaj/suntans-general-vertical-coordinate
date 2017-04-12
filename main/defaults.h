@@ -284,3 +284,9 @@ const REAL thetaT_DEFAULT = 1;
   0: no output 1: nc 2: nc_nk
 */
 const int output_user_var_DEFAULT=0;
+
+/* vertdzmin
+  the minimum layerthickness when the generalized
+  vertical coordinate is applied
+*/
+const int vertdzmin_DEFAULT=1e-3;

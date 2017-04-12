@@ -37,7 +37,7 @@ REAL **zc,**zcold; // the cell center vertical location in the Cartesian coordin
 REAL **zl; // the cell center vertical location of cell top face in the cartesian coordinate [Nc][Nk+1]
 //REAL **f_r; // the cell center relative vorticity dvdx-dudy [Nc][Nk]
 REAL **dzdx, **dzdy; // the cell-centered averaged gradient of different variables
-// **dvdx, **dudy, **dvdy, **dudx, **dwdx, **dwdy;
+REAL **dvdx, **dudy, **dvdy, **dudx, **dwdx, **dwdy;
 REAL *dsigma; // the dsigma for the sigma coordinate to define the vertical coordinate density [Nkmax]
 REAL *tmp; //temporary array for output
 REAL *tmp_nc; // temporary array for zl
@@ -46,7 +46,7 @@ REAL *zfb; // store the sum of dzf from bottom layer to Nkeb [Ne]
 FILE *zcFID, *dzzFID, *omegaFID;
 int modifydzf;  // whether recalculate the u^im to check whether the flux height is upwind
 int dJdtmeth; // how to treat the u/JdJdt term 0 implicit and 1 explicit
-REAL thetaT;
+REAL thetaT,vertdzmin;
 } vertT;
 
 vertT *vert;

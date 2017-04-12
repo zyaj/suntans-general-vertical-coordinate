@@ -108,3 +108,7 @@ the isopycnal layer needs addition treatment for wetting and drying :
 03/26/2017
 1. TVD is not effective in isopycnal model since scalar/density is always constant within one layer and no momentum advection
 2. isopycnal model with less layers is more relied on horizontal grid resolution while zlevel is not
+
+04/12/2017
+1. vertdzmin is added when wetdry is turned on
+2. when wetdry, due to the new momentum advection scheme, dudx,dvdx,dudy,dvdy,dwdx,dwdy will be calculated.

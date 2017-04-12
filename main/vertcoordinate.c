@@ -43,6 +43,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->modifydzf = MPI_GetValue(DATAFILE,"modifydzf","AllocateVertCoordinate",myproc);
   vert->dJdtmeth = MPI_GetValue(DATAFILE,"dJdtmeth","AllocateVertCoordinate",myproc);
   vert->thetaT = MPI_GetValue(DATAFILE,"thetaT","AllocateVertCoordinate",myproc);
+  vert->vertdzmin = MPI_GetValue(DATAFILE,"vertdzmin","AllocateVertCoordinate",myproc);
   vert->Me_l=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
 
   for(j=0;j<grid->Ne;j++)
@@ -86,12 +87,12 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->zl=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zcold=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   //vert->f_r=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
-  //vert->dvdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
-  //vert->dudy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
-  //vert->dudx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
-  //vert->dvdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
-  //vert->dwdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
-  //vert->dwdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dvdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dudy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dudx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dvdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dwdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dwdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->Mc=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -113,13 +114,13 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->zc[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zcold[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zl[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
-    //vert->dvdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
-    //vert->dvdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dvdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dvdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     //vert->f_r[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
-    //vert->dudy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
-    //vert->dudx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
-    //vert->dwdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
-    //vert->dwdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dudy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dudx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dwdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dwdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->Mc[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
@@ -151,12 +152,12 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->zcold[i][k]=0;
       vert->zl[i][k]=0;
       //vert->f_r[i][k]=0;
-      //vert->dvdx[i][k]=0;
-      //vert->dudy[i][k]=0;
-      //vert->dudx[i][k]=0;
-      //vert->dvdy[i][k]=0;
-      //vert->dwdx[i][k]=0;
-      //vert->dwdy[i][k]=0;
+      vert->dvdx[i][k]=0;
+      vert->dudy[i][k]=0;
+      vert->dudx[i][k]=0;
+      vert->dvdy[i][k]=0;
+      vert->dwdx[i][k]=0;
+      vert->dwdy[i][k]=0;
       vert->dzdx[i][k]=0;      
       vert->dzdy[i][k]=0;
       vert->Mc[i][k]=0;
@@ -271,9 +272,9 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
             
             }
           }
-          if(grid->dzz[i][k]<1e-3){
+          if(grid->dzz[i][k]<vert->vertdzmin){
             dry++;
-            grid->dzz[i][k]=1e-3;
+            grid->dzz[i][k]=vert->vertdzmin;
           }
           sum+=grid->dzz[i][k];
           if(k>grid->ctop[i]){
@@ -537,7 +538,8 @@ void ComputeUl(gridT *grid, propT *prop, physT *phys, int myproc)
  */
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
 {
-  int i,j,k;
+  int i,j,k,nc1,nc2;
+  REAL sum,r1,r2,def1,def2;
   // compute omegac 
   for(i=0;i<grid->Nc;i++)
     for(k=grid->ctop[i];k<grid->Nk[i];k++){
@@ -546,14 +548,26 @@ void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
     }
 
   // uf vf and wf
-  for(j=0;j<grid->Ne;j++)
+  for(j=0;j<grid->Ne;j++){
+    nc1=grid->grad[2*j];
+    nc2=grid->grad[2*j+1];
+    def1=sqrt((grid->xe[j]-grid->xv[nc1])*(grid->xe[j]-grid->xv[nc1])+
+      (grid->ye[j]-grid->yv[nc1])*(grid->ye[j]-grid->yv[nc1]));
+    def2=grid->dg[j]-def1;
+    if(nc1==-1)
+      nc1=nc2;
+    if(nc2==-1)
+      nc2=nc1;
     for(k=grid->etop[j];k<grid->Nke[j];k++)
     {
-      vert->uf[j][k]=InterpToFace(j,k,phys->uc,phys->u,grid);
-      vert->vf[j][k]=InterpToFace(j,k,phys->vc,phys->u,grid);
+      r1=(def1*grid->dzz[nc1][k])/(grid->dzz[nc1][k]*def1+grid->dzz[nc2][k]*def2);
+      r2=(grid->dzz[nc2][k]*def2)/(grid->dzz[nc1][k]*def1+grid->dzz[nc2][k]*def2);
+      vert->uf[j][k]=r2*phys->uc[nc1][k]+r1*phys->uc[nc2][k];
+      vert->vf[j][k]=r2*phys->vc[nc1][k]+r1*phys->vc[nc2][k];
       vert->wf[j][k]=InterpToFace(j,k,phys->wc,phys->u,grid);
       vert->omegaf[j][k]=InterpToFace(j,k,vert->omegac,phys->u,grid);
     }
+  }
 }
 
 /*
@@ -787,9 +801,18 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
 
    // comment out due to use conservative method
    // 2. compute dvdx and dudy
-   //ComputeCellAveragedHorizontalGradient(vert->dvdx, 0, vert->vf, grid, prop, phys, myproc);
-   //ComputeCellAveragedHorizontalGradient(vert->dudy, 1, vert->uf, grid, prop, phys, myproc);
-
+   if(prop->wetdry)
+   {
+     ComputeCellAveragedHorizontalGradient(vert->dvdx, 0, vert->vf, grid, prop, phys, myproc);
+     ComputeCellAveragedHorizontalGradient(vert->dudy, 1, vert->uf, grid, prop, phys, myproc);
+     ComputeCellAveragedHorizontalGradient(vert->dvdy, 1, vert->vf, grid, prop, phys, myproc);
+     ComputeCellAveragedHorizontalGradient(vert->dudx, 0, vert->uf, grid, prop, phys, myproc);
+     if(prop->nonhydrostatic)
+     {
+       ComputeCellAveragedHorizontalGradient(vert->dwdy, 1, vert->wf, grid, prop, phys, myproc);
+       ComputeCellAveragedHorizontalGradient(vert->dwdx, 0, vert->wf, grid, prop, phys, myproc);
+     }
+   }
    // 3. compute f_r
    //for(i=0;i<grid->Nc;i++)
     //for(k=0;k<grid->Nk[i];k++)
