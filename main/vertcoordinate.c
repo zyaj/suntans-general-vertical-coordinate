@@ -86,7 +86,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->zc=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zl=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zcold=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
-  //vert->f_r=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->f_r=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dvdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dudy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dudx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
@@ -116,7 +116,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->zl[i]=(REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocateVertCoordinate");
     vert->dvdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dvdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
-    //vert->f_r[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->f_r[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dudy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dudx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dwdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
@@ -151,7 +151,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->zc[i][k]=0;
       vert->zcold[i][k]=0;
       vert->zl[i][k]=0;
-      //vert->f_r[i][k]=0;
+      vert->f_r[i][k]=0;
       vert->dvdx[i][k]=0;
       vert->dudy[i][k]=0;
       vert->dudx[i][k]=0;
@@ -814,9 +814,9 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
      }
    }
    // 3. compute f_r
-   //for(i=0;i<grid->Nc;i++)
-    //for(k=0;k<grid->Nk[i];k++)
-      //vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
+   for(i=0;i<grid->Nc;i++)
+    for(k=0;k<grid->Nk[i];k++)
+      vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
   
    /*if(prop->nonhydrostatic){
      ComputeCellAveragedHorizontalGradient(vert->dwdy, 1, vert->wf, grid, prop, phys, myproc);

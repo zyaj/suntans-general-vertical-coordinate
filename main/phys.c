@@ -1602,7 +1602,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       }
 
       // Update the salinity only if beta is nonzero in suntans.dat
-      if(prop->beta) {
+      if(prop->beta && prop->vertcoord!=2) {
         t0=Timer();
         if(prop->metmodel>0){
             SaltSource(phys->wtmp,phys->uold,grid,phys,prop,met);
@@ -1898,7 +1898,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
 {
   int i, ib, iptr, boundary_index, nf, j, jptr, k, nc, nc1, nc2, ne, 
   k0, kmin, kmax;
-  REAL *a, *b, *c, fab1, fab2, fab3, sum, def1, def2, dgf, Cz, tempu,Ac; //AB3
+  REAL *a, *b, *c, fab1, fab2, fab3, sum, def1, def2, dgf, Cz, tempu,Ac,f_sum, ke1,ke2,Vm; //AB3
   // additions to test divergence averaging for w in momentum calc
   REAL wedge[3], lambda[3], wik, tmp_x, tmp_y,tmp;
   int aneigh;
@@ -1991,9 +1991,16 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     nc1 = grid->grad[2*j];
     nc2 = grid->grad[2*j+1];
     for(k=grid->etop[j];k<grid->Nke[j];k++)
-      phys->Cn_U[j][k]+=prop->dt*prop->Coriolis_f*(
+    {
+      // if not z-level add relative voricity due to momentum advection
+      if(prop->vertcoord!=1 && prop->nonlinear && prop->wetdry)  
+        f_sum=prop->Coriolis_f+InterpToFace(j,k,vert->f_r,phys->u,grid);
+      else
+        f_sum=prop->Coriolis_f;
+      phys->Cn_U[j][k]+=prop->dt*f_sum*(
           InterpToFace(j,k,phys->vc,phys->u,grid)*grid->n1[j]-
           InterpToFace(j,k,phys->uc,phys->u,grid)*grid->n2[j]);
+    }
   }
 
 
@@ -2071,13 +2078,29 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
              (def2/dgf*(1-grid->dzzold[nc1][k]/grid->dzz[nc1][k])+def1/dgf*(1-grid->dzzold[nc2][k]/grid->dzz[nc2][k]));
         }
     } else {
-      for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
+      /*for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
         i=grid->cellp[iptr];
         for(k=grid->ctop[i];k<grid->Nk[i];k++)
         {
           phys->stmp[i][k]+=phys->uc[i][k]*vert->dudx[i][k]+phys->vc[i][k]*vert->dudy[i][k];
           phys->stmp2[i][k]+=phys->uc[i][k]*vert->dvdx[i][k]+phys->vc[i][k]*vert->dvdy[i][k];  
         }
+      }*/
+
+      for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
+      {
+        j = grid->edgep[jptr];
+        nc1 = grid->grad[2*j];
+        nc2 = grid->grad[2*j+1];
+        def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+        def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+        for(k=grid->etop[j];k<grid->Nke[j];k++) 
+        {  
+          Vm=def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k];
+          ke1=(phys->uc[nc1][k]*phys->uc[nc1][k]+phys->vc[nc1][k]*phys->vc[nc1][k])*grid->dzz[nc1][k]/2;
+          ke2=(phys->uc[nc2][k]*phys->uc[nc2][k]+phys->vc[nc2][k]*phys->vc[nc2][k])*grid->dzz[nc2][k]/2;
+          phys->Cn_U[j][k]-=prop->dt*(ke1-ke2)/Vm;
+        }  
       }
     }
     
@@ -5452,7 +5475,6 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
       dry=1;
       for(nf=0;nf<grid->nfaces[n];nf++) {
         ne = grid->face[n*grid->maxfaces+nf];
-        //if(grid->mark[ne]!=1)
         if(grid->dzf[ne][k]>0)
           dry=0;
         V+=grid->dzf[ne][k]*grid->df[ne]*grid->def[n*grid->maxfaces+nf];
@@ -5468,14 +5490,6 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
         if(nc2==-1)
           nc2=nc1;
       
-        // O.Klepsova method
-        alpha=1;
-        //if(kinterp && d>BUFFERHEIGHT)
-          //alpha=grid->hf[ne]/d;
-        // add subgrid part
-        //if(subgridmodel)// && grid->ctop[n]==grid->Nk[n]-1)
-            //alpha=grid->dzf[ne][k]*grid->Ac[n]/V;
-        
         if(subgridmodel)
           if(V/subgrid->Acceff[n][k]/grid->dzz[n][k]<=1)
             alpha=grid->dzf[ne][k]/grid->dzz[n][k]*grid->Ac[n]/subgrid->Acceff[n][k];
@@ -5490,17 +5504,10 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
 
         if(dry)
           alpha=1;
-        //alpha=1;
-        // new edit for subgrid wetting and drying
-        //if(subgridmodel && grid->ctop[n]==grid->Nk[n]-1 && grid->dzz[n][grid->ctop[n]]<=10*BUFFERHEIGHT)
-          //alpha=1;
-        //if(k<grid->etop[ne])
-          //alpha=0;
 
-        //if(k>(grid->Nke[ne]-1))
-          //alpha=0;
-        /*if(grid->dzz[n][k]<1e-3)
-          alpha=1;*/
+        //most stable with different dzf
+        // not best for varying dzf
+        alpha=1;
         if(!(grid->smoothbot)|| k<grid->Nke[ne]){
           uc[n][k]+=alpha*u[ne][k]*grid->n1[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne];
           vc[n][k]+=alpha*u[ne][k]*grid->n2[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne];

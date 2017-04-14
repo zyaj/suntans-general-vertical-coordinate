@@ -35,7 +35,7 @@ REAL *n1;  // the x component of the outpointing vector from cell center to its 
 REAL *n2; // the y component of the outpointing vector from cell center to its face center [Nc*maxfaces*Nc]
 REAL **zc,**zcold; // the cell center vertical location in the Cartesian coordinate [Nc][Nk]
 REAL **zl; // the cell center vertical location of cell top face in the cartesian coordinate [Nc][Nk+1]
-//REAL **f_r; // the cell center relative vorticity dvdx-dudy [Nc][Nk]
+REAL **f_r; // the cell center relative vorticity dvdx-dudy [Nc][Nk]
 REAL **dzdx, **dzdy; // the cell-centered averaged gradient of different variables
 REAL **dvdx, **dudy, **dvdy, **dudx, **dwdx, **dwdy;
 REAL *dsigma; // the dsigma for the sigma coordinate to define the vertical coordinate density [Nkmax]
