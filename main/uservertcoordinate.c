@@ -73,54 +73,45 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-  int i,k,dry;
-  REAL ratio=1.0/grid->Nkmax,a=250,delta=1000,sum;
-  REAL L_rho=15000,eta,h1=600,L1=300000,Min_dz=1e-3,Niso=18,dziso=delta/Niso,dmax=2000.0;
+  int i,k,Nkmax,Nk_noiso=2;  
+  REAL ratio=1.0/grid->Nkmax,a=250;
+  REAL L_rho=15000,eta,h1=250,L1=300000;
+  REAL alpha_s=0.99,delta=200;
+  REAL rho_diff=0.001,beta=1e-3,drho,rho;
+  REAL zbot,ztop;
+  drho=rho_diff/(grid->Nkmax-Nk_noiso);
+
+
+  /*for(i=0;i<grid->Nc;i++)
+  {
+    eta=a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
+    for(k=0;k<Nk_noiso/2;k++)
+      grid->dzz[i][k]=(h1+eta-delta)/Nk_noiso*2;
+    ztop=(delta/2-h1-eta);
+    for(k=Nk_noiso/2;k<grid->Nk[i]-Nk_noiso/2-1;k++)
+    {
+       rho=-rho_diff/2+drho*(k-Nk_noiso/2+1);
+       zbot=delta/2/atanh(alpha_s)*atanh(-2/rho_diff*rho)-h1-eta;
+       grid->dzz[i][k]=ztop-zbot;
+       ztop=zbot;
+    }
+    grid->dzz[i][grid->Nk[i]-Nk_noiso/2-1]=ztop-(-delta/2-h1-eta);
+    for(k=grid->Nk[i]-Nk_noiso/2;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=(grid->dv[i]-h1-eta-delta/2)/Nk_noiso*2;
+    for(k=0;k<grid->Nk[i];k++)
+      grid->dzzold[i][k]=grid->dzz[i][k];
+  }*/
+
   for(i=0;i<grid->Nc;i++)
   {
-    /*eta=a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
-    for(k=0;k<(grid->Nk[i]-Niso)/2;k++)
-      grid->dzz[i][k]=(h1-delta/2+eta)/(grid->Nk[i]-Niso)*2;
-    for(k=(grid->Nk[i]-Niso)/2;k<(grid->Nk[i]-(grid->Nk[i]-Niso)/2);k++)
-      grid->dzz[i][k]=dziso;
-    for(k=(grid->Nk[i]-(grid->Nk[i]-Niso)/2);k<grid->Nk[i];k++)
-      grid->dzz[i][k]=(dmax-eta-delta/2-h1)/(grid->Nk[i]-Niso)*2;
-    for(k=0;k<grid->Nk[i];k++) {
-      sum+=grid->dzz[i][k];
-      if(sum>grid->dv[i] && dry==0){
-        grid->dzz[i][k]-=sum-grid->dv[i]+1e-3*(grid->Nk[i]-k-1);
-        dry=1;
-        continue;
-      }
-      if(dry)
-        grid->dzz[i][k]=1e-3;
-    }*/
-    grid->dzz[i][0]=50;
-    grid->dzz[i][1]=50;
-    grid->dzz[i][2]=150;
-    grid->dzz[i][3]=210;
-    grid->dzz[i][4]=290;
-    grid->dzz[i][5]=250;
-    grid->dzz[i][6]=500;
-    grid->dzz[i][7]=500;
-    grid->dzz[i][8]=500;
-    grid->dzz[i][9]=500;
-    dry=0;
-    sum=0;
-    for(k=0;k<grid->Nk[i];k++) {
-      sum+=grid->dzz[i][k];
-      if(sum>grid->dv[i] && dry==0){
-        grid->dzz[i][k]-=sum-grid->dv[i]+vert->vertdzmin*(grid->Nk[i]-k-1);
-        dry=1;
-        continue;
-      }
-      if(dry)
-        grid->dzz[i][k]=vert->vertdzmin;
-    }
+    eta=-a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
+    for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)   
+      grid->dzz[i][k]=(h1-eta)/grid->Nk[i]*2;
+    for(k=grid->Nk[i]/2;k<grid->Nk[i];k++)   
+      grid->dzz[i][k]=((grid->dv[i]+phys->h[i])-h1+eta)/grid->Nk[i]*2;
     for(k=0;k<grid->Nk[i];k++)
       grid->dzzold[i][k]=grid->dzz[i][k];
   }
-  
 }
 
 /*
@@ -132,7 +123,7 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
 {
   int i,k;
   REAL ratio=1.0/grid->Nkmax,a=250;
-  REAL L_rho=15000,eta,h1=250,L1=300000,delta=200,Nk1=2;
+  REAL L_rho=15000,eta,h1=250,L1=300000,delta=0.000001,Nk1=2;
 
   for(i=0;i<grid->Nc;i++)
   {

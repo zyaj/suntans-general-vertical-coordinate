@@ -666,14 +666,19 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       z = 0;
       for(k=grid->ctop[i];k<grid->Nk[i];k++) {
         z-=grid->dzz[i][k]/2;
-        if(prop->vertcoord!=1)
+        if(prop->vertcoord!=1 && prop->vertcoord!=2)
         {
           phys->s[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],vert->zc[i][k]);
           phys->s0[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],vert->zc[i][k]);           
-        } else {     
+        } 
+        if(prop->vertcoord==1){     
           phys->s[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],z);
           phys->s0[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],z);                
         }
+        if(prop->vertcoord==2){     
+          phys->s[i][k]=IsoReturnSalinity(grid->xv[i],grid->yv[i],z,i,k);
+          phys->s0[i][k]=IsoReturnSalinity(grid->xv[i],grid->yv[i],z,i,k); 
+        }        
         z-=grid->dzz[i][k]/2;
       }
     }
@@ -697,10 +702,12 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       z = 0;
       for(k=grid->ctop[i];k<grid->Nk[i];k++) {
         z-=grid->dzz[i][k]/2;
-        if(prop->vertcoord!=1)
+        if(prop->vertcoord!=1 && prop->vertcoord!=2)
           phys->T[i][k]=ReturnTemperature(grid->xv[i],grid->yv[i],vert->zc[i][k],grid->dv[i]);          
-        else
+        if(prop->vertcoord==1)
           phys->T[i][k]=ReturnTemperature(grid->xv[i],grid->yv[i],z,grid->dv[i]);
+        if(prop->vertcoord==2)
+          phys->T[i][k]=IsoReturnTemperature(grid->xv[i],grid->yv[i],z,grid->dv[i],i,k);
         z-=grid->dzz[i][k]/2;
       }
     }
@@ -1517,6 +1524,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       UPredictor(grid,phys,prop,myproc,numprocs,comm);
       ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
       ISendRecvCellData2D(phys->h,grid,myproc,comm);
+      
       t_predictor+=Timer()-t0;
       t0=Timer();
       blowup = CheckDZ(grid,phys,prop,myproc,numprocs,comm);
@@ -1648,7 +1656,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // update subgrid->Acceff and subgrid->Acveff for non hydrostatic
       if(prop->subgrid)
         UpdateSubgridVerticalAceff(grid, phys, prop, 1, myproc);
-     
+
       // Compute vertical momentum and the nonhydrostatic pressure
       if(prop->nonhydrostatic && !blowup) {
 
@@ -1775,6 +1783,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       NewCells(grid,phys,prop);
       ISendRecvEdgeData3D(phys->u,grid,myproc,comm);
     }
+
     // Compute average
     if(prop->calcaverage){
       UpdateAverageVariables(grid,average,phys,met,prop,comm,myproc); 
@@ -4512,6 +4521,7 @@ static void UPredictor(gridT *grid, physT *phys,
         if(fabs(sum-(phys->h[i]+grid->dv[i]))>1e-6)
           printf("n %d something wrong on the cell depth calculation at cell %d error %e sum %e H %e\n",prop->n, i,fabs(sum-(phys->h[i]+grid->dv[i])),sum,phys->h[i]+grid->dv[i]);
     }
+
     // compute the new zc
     ComputeZc(grid,prop,phys,1,myproc);
   }
@@ -5665,7 +5675,8 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
     (*prop)->conserveMomentum = 0;
     (*prop)->thetaM = 1;//Fully implicit
     //(*prop)->thetaM = 0.5;
-    (*prop)->newcells = 1;
+    if((*prop)->vertcoord==1 || (*prop)->vertcoord==5)
+      (*prop)->newcells = 1;
   }
   
   (*prop)->calcage = MPI_GetValue(DATAFILE,"calcage","ReadProperties",myproc);

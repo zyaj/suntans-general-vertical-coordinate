@@ -347,3 +347,6 @@ if vertcoord==1: original suntans method with conservative form
 if vertcoord!=1 && !wetdry: use the (conservative form+udjdt/J)
 if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 2. scalar transport is turned off when vertcoord==2; (not decided)
+
+04/17/2017
+1. when wetdry, newcells=0 when vertcoord==1 or 5
