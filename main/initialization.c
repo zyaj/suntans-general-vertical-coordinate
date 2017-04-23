@@ -294,3 +294,30 @@ REAL ReturnFluxHeight(REAL x1,REAL y1, REAL x2, REAL y2, REAL h)
 {
   return 0;
 }
+
+/*
+ * Function: IsoReturnSalinity
+ * Usage: grid->s[n]=ReturnSalinity(grid->xv[n],grid->yv[n],z);
+ * ------------------------------------------------------------
+ * Helper function to create an initial salinity field under iso 
+ * pycnal coordinate. Used in phys.c in the 
+ * InitializePhysicalVariables function.
+ *
+ */
+REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) {
+  return ReturnSalinity(x,y,z);
+}
+
+/*
+ * Function: IsoReturnTemperature
+ * Usage: grid->T[n]=ReturnTemperaturegrid->xv[n],grid->yv[n],z);
+ * ------------------------------------------------------------
+ * Helper function to create an initial temperature field under iso 
+ * pycnal coordinate. Used in phys.c in the 
+ * InitializePhysicalVariables function.
+ *
+ */
+REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth, int i, int k) {
+  REAL h;
+  return 0;
+}

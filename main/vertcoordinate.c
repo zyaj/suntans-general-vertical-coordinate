@@ -393,8 +393,6 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
                tmp*grid->df[ne]/grid->Ac[i]*vert->Me_l[ne][k]/grid->dg[ne];
              d[k-grid->ctop[i]]+=0.5*(grid->dzzold[i][k]+grid->dzzold[i][k-1])*
                tmp*grid->df[ne]/grid->Ac[i]*vert->Me_l[ne][k]*(vert->zl[neigh][k])/grid->dg[ne];         
-             //if(i==0)
-              //printf("nf %d k %d me %e\n",nf,k,vert->Me_l[ne][k] );
            }
          }         
        }
@@ -410,10 +408,7 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
           max=fabs(c[k-grid->ctop[i]]);
        }
        if(max==0)
-        max=1.0;
-       //if(i==57 && prop->n==320)
-         //for(k=0;k<grid->Nk[i];k++)
-           //printf("i %d k %d a %e b %e c %e d %e mc %e\n",i,k,a[k],b[k],c[k],d[k],vert->Mc[i][k]);      
+        max=1.0;     
        // normalize all the vector
        for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
        {

@@ -4073,8 +4073,8 @@ void ReadData(dataT *data, int nstep, int numprocs) {
       if(fid) fclose(fid);
 
       if(mergeArrays)
-	GetFile(string,DATADIR,DATAFILE,"UserDefVarFile",-1);
-  //GetFile(string,DATADIR,DATAFILE,"FreeSurfaceFile",-1);
+	//GetFile(string,DATADIR,DATAFILE,"UserDefVarFile",-1);
+  GetFile(string,DATADIR,DATAFILE,"FreeSurfaceFile",-1);
       
       else
 	GetFile(string,DATADIR,DATAFILE,"FreeSurfaceFile",proc);
