@@ -3,7 +3,7 @@
 #  Input file for SUNTANS.
 #
 ########################################################################
-Nkmax			100	# Number of cells in the vertical
+Nkmax			10	# Number of cells in the vertical
 maxFaces                4       # Max Number of edges for one element
 outvwgt                 0      #
 stairstep		0	# 1 if stair-stepping, 0 if partial-stepping
@@ -136,7 +136,7 @@ culvert                 culvert.dat
 # General vertical coordinate data
 #
 ########################################################################
-vertcoord               5  #
+vertcoord               2  #
 zcFile                  vert_zc.dat
 dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat

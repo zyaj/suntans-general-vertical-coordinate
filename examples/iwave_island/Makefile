@@ -24,7 +24,7 @@ OBJS =
 SUN = $(SUNTANSHOME)/sun
 INCLUDES = -I$(SUNTANSHOME) $(MPIINC) $(PARMETISINC)
 DEFS = $(MPIDEF)
-NUMPROCS = 4
+NUMPROCS = 1
 
 all:	data
 
@@ -44,4 +44,4 @@ clean:
 	rm -f *.o
 
 clobber: clean
-	rm -rf *~ \#*\# PI* $(EXEC) gmon.out data rundata/*~ r500 r125 grid*
+	rm -rf *~ \#*\# PI* $(EXEC) gmon.out data rundata/*~ r500 r125 L*

@@ -74,18 +74,22 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k;
-  REAL ratio=1.0/grid->Nkmax,a=100;
-  REAL L_rho=3000,eta,h1=250;
-
+  REAL ratio=1.0/grid->Nkmax,a=150;
+  REAL L0=2108.2,eta,h1=500;
+  REAL r,v_sech;
   for(i=0;i<grid->Nc;i++)
   {
-    eta=-a*exp(-(grid->xv[i]-60000)*(grid->xv[i]-60000)/L_rho/L_rho);
+    r=(grid->xv[i])/2/L0;
+    //r*=r/4;
+    v_sech=2/(exp(r)+exp(-r));
+    eta=-2*a*v_sech*v_sech;
     for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)   
       grid->dzz[i][k]=(h1-eta)/grid->Nk[i]*2;
     for(k=grid->Nk[i]/2;k<grid->Nk[i];k++)   
       grid->dzz[i][k]=((grid->dv[i]+phys->h[i])-h1+eta)/grid->Nk[i]*2;
+    for(k=0;k<grid->Nk[i];k++)
+      grid->dzzold[i][k]=grid->dzz[i][k];
   }
-
 }
 
 /*
@@ -96,14 +100,20 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
 void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k;
-  REAL ratio=1.0/grid->Nkmax,a=30;
-  REAL L_rho=1000,eta,h1=100;
-
+  REAL ratio=1.0/grid->Nkmax,a=120;
+  REAL L0=6000/2,eta,h1=460;
+  REAL r,v_sech;
   for(i=0;i<grid->Nc;i++)
   {
-    eta=-a*exp(-(grid->xv[i]-60000)*(grid->xv[i]-60000)/L_rho/L_rho);
-    grid->dzz[i][0]=h1-eta;
-    grid->dzz[i][1]=(grid->dv[i]+phys->h[i])-grid->dzz[i][0];
+    r=-grid->xv[i]*grid->xv[i]/4/L0/L0;
+    v_sech=2/(exp(r)+exp(-r));
+    eta=-a*v_sech*v_sech;
+    for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)   
+      grid->dzz[i][k]=(h1-eta)/grid->Nk[i]*2;
+    for(k=grid->Nk[i]/2;k<grid->Nk[i];k++)   
+      grid->dzz[i][k]=((grid->dv[i]+phys->h[i])-h1+eta)/grid->Nk[i]*2;
+    for(k=0;k<grid->Nk[i];k++)
+      grid->dzzold[i][k]=grid->dzz[i][k];
   }
 }
 

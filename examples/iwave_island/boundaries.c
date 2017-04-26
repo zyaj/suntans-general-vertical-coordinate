@@ -211,11 +211,11 @@ void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
   REAL sum1=0,sum2=0,E_p=0;
   for(i=0;i<grid->Nc;i++){
     sum1=0;
-    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+    for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)
     {
-      if(phys->s[i][k]>0)
+      //if(phys->s[i][k]>0)
         sum1+=grid->dzz[i][k];
     }
-    phys->user_def_nc[i]=sum1-(grid->dv[i]-100);
+    phys->user_def_nc[i]=500-sum1;
   }
 }

@@ -26,8 +26,8 @@ OPTFLAGS = -O2 -g
 #OPTFLAGS = -O0 -g
 
 XLDFLAGS=-lX11 -lm
-XINC=-I/opt/X11/include
-XLIBDIR = /opt/X11/lib
+XINC= -I/usr/X11/include -I/usr/include -I/Library/Developer/CommandLineTools/usr/bin
+XLIBDIR = /usr/X11/lib
 
 ifneq ($(TRIANGLEHOME),)
   TRIANGLEINCLUDE = -I$(TRIANGLEHOME)

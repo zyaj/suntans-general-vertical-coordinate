@@ -74,11 +74,11 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
  */
 REAL ReturnDepth(REAL x, REAL y) {
   REAL d;
-  if(x<18000)
-    return 300;
-  if(x>=18000)
-    return 300.0+(x-18000)*5.0/300;
-  return 1000;  
+  //if(x<18000)
+    //return 300;
+  //if(x>=18000)
+    //return 300.0+(x-18000)*5.0/300;
+  return 1500;  
 }
  
 /*
@@ -104,15 +104,48 @@ REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
  *
  */
 REAL ReturnSalinity(REAL x, REAL y, REAL z) {
-  REAL alpha_s=0.99,delta=0.001,a=100, h1=250,s;
+  REAL alpha_s=0.99,delta=0.001,a=48, h1=250,s;
   REAL rho_diff=0.01,beta=1e-3;
-  REAL L_rho=3000, eta=-a*exp(-(x-60000)*(x-60000)/L_rho/L_rho);
+  REAL L_rho=6000, eta=-a*exp(-(x-300000)*(x-3000000)/L_rho/L_rho);
   if(z>(delta/2+eta-h1))
     return -rho_diff/beta/2;
   if(z<(-delta/2+eta-h1))
     return rho_diff/beta/2;
   s=-rho_diff/2/beta*(tanh(2*atanh(alpha_s)/delta*(z-eta+h1)));
   return s;
+}
+
+/*
+ * Function: IsoReturnSalinity
+ * Usage: grid->s[n]=ReturnSalinity(grid->xv[n],grid->yv[n],z);
+ * ------------------------------------------------------------
+ * Helper function to create an initial salinity field under iso 
+ * pycnal coordinate. Used in phys.c in the 
+ * InitializePhysicalVariables function.
+ *
+ */
+REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) {
+  REAL drho=0.00522,h0=224,p=1.15,s1=-0.00018,s2=-3.64e-8,beta=1e-3,s,zp;
+  // here rho0=1024.75
+    if(k==0)
+      s=-5;
+    if(k==1)
+      s=5;
+  return s;
+}
+
+/*
+ * Function: IsoReturnTemperature
+ * Usage: grid->T[n]=ReturnTemperaturegrid->xv[n],grid->yv[n],z);
+ * ------------------------------------------------------------
+ * Helper function to create an initial temperature field under iso 
+ * pycnal coordinate. Used in phys.c in the 
+ * InitializePhysicalVariables function.
+ *
+ */
+REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth, int i, int k) {
+  REAL h;
+  return 0;
 }
 
 /*
@@ -138,6 +171,20 @@ REAL ReturnTemperature(REAL x, REAL y, REAL z, REAL depth) {
  *
  */
 REAL ReturnHorizontalVelocity(REAL x, REAL y, REAL n1, REAL n2, REAL z) {
+  /*REAL a=30;
+  REAL L0=4714,eta,h1=500;
+  REAL r,v_sech,dz1,dz2;
+  REAL c=1.8354;
+  r=(x-150000)/L0;
+  v_sech=2/(exp(r)+exp(-r));
+  eta=-a*v_sech*v_sech;
+  dz1=h1-eta;
+  dz2=1500-dz1;
+  //printf("z %e u %e\n", z,c*(h1+a)/dz1*n1);
+  if(z>-500)
+    return -3.5*c*eta/dz1*n1;
+  else
+    return 3.5*c*eta/dz2*n1;*/
   return 0;
 }
 
