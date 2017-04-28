@@ -427,11 +427,12 @@ void InitMainGrid(gridT **grid, int Np, int Ne, int Nc, int myproc)
  */
 void GetDepth(gridT *grid, int myproc, int numprocs, MPI_Comm comm)
 {
-  int n, maxgridweight=1000, IntDepth, Nkmax, stairstep, fixdzz, kount=0,subgrid,N,i,segN;
+  int vertcoord,n, maxgridweight=1000, IntDepth, Nkmax, stairstep, fixdzz, kount=0,subgrid,N,i,segN;
   REAL *x_sub,*y_sub,*d_sub,dmax;
   REAL mindepth, maxdepth, maxdepth0, minimum_depth, *dz;
   char str[BUFFERLENGTH];
   FILE *ofile;
+  vertcoord = MPI_GetValue(DATAFILE,"vertcoord","VertGrid",myproc); // new vertical coordinate
 
   subgrid=MPI_GetValue(DATAFILE,"subgrid","InterpDepth",myproc);
   Nkmax = MPI_GetValue(DATAFILE,"Nkmax","GetDepth",myproc);
@@ -539,6 +540,9 @@ void GetDepth(gridT *grid, int myproc, int numprocs, MPI_Comm comm)
     } else
       for(n=0;n<grid->Nc;n++) 
 	grid->vwgt[n] = maxgridweight;
+    if(vertcoord!=1 && vertcoord!=5)
+      for(n=0;n<grid->Nc;n++) 
+        grid->vwgt[n] = Nkmax;
   } else {
       for(n=0;n<grid->Nc;n++) 
 	grid->vwgt[n] = Nkmax;

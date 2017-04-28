@@ -74,8 +74,8 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k;
-  REAL ratio=1.0/grid->Nkmax,a=150;
-  REAL L0=2108.2,eta,h1=500;
+  REAL ratio=1.0/grid->Nkmax,a=60;
+  REAL L0=843.274,eta,h1=200;
   REAL r,v_sech;
   for(i=0;i<grid->Nc;i++)
   {

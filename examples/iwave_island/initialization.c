@@ -78,7 +78,7 @@ REAL ReturnDepth(REAL x, REAL y) {
     //return 300;
   //if(x>=18000)
     //return 300.0+(x-18000)*5.0/300;
-  return 1500;  
+  return 600;  
 }
  
 /*

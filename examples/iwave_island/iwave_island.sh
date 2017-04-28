@@ -28,7 +28,7 @@ if [ -z "$TRIANGLEHOME" ] ; then
     exit 1
 fi
 
-dirs="L300kmNx600"
+dirs="r200_r"
 
 for dir in `echo $dirs` ; do
     echo On $dir...
@@ -45,7 +45,7 @@ else
 fi
 
 echo Running suntans...
-$EXEC -g -s -vv --datadir=$dir
+$EXEC -s -vv --datadir=$dir
 
 done
 
