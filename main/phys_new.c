@@ -45,8 +45,11 @@ static void UPredictor(gridT *grid, physT *phys,
     propT *prop, int myproc, int numprocs, MPI_Comm comm);
 static void Corrector(REAL **qc, gridT *grid, physT *phys, propT *prop, int myproc, 
     int numprocs, MPI_Comm comm);
+static void CorrectorTmp(REAL **qc, REAL **u, REAL **w, gridT *grid, physT *phys, propT *prop, int myproc, 
+    int numprocs, MPI_Comm comm);
 static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, 
     int myproc, int numprocs);
+static void DivergenceCheck(REAL **src, REAL **u, REAL **w, gridT *grid, physT *phys, propT *prop, int myproc, int numprocs);
 static void CGSolve(gridT *grid, physT *phys, propT *prop, 
     int myproc, int numprocs, MPI_Comm comm);
 static void HPreconditioner(REAL *x, REAL *y, gridT *grid, physT *phys, propT *prop);
@@ -131,6 +134,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
 
   // allocate  variables in plan
   (*phys)->u = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->divtmp_u = (REAL **)SunMalloc(Ne*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->uc = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->vc = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->wc = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
@@ -164,6 +168,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
     }
     // allocate memory for the max (cell-centered) quanity on the edge (from definition above)
     (*phys)->u[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->divtmp_u[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->utmp[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->u_old[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->u_old2[j] = (REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocatePhysicalVariables");
@@ -190,6 +195,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
 
   // cell-centered physical variables in plan (no vertical direction)
   (*phys)->h = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
+  (*phys)->divtmp = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->dhdt = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->hcorr = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->active = (unsigned char *)SunMalloc(Nc*sizeof(char),"AllocatePhysicalVariables");
@@ -205,6 +211,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
 
   // cell-centered values that are also depth-varying
   (*phys)->w = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->divtmp_w = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->wnew = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->wtmp = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->w_old = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
@@ -225,6 +232,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   (*phys)->Cn_R = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->Cn_T = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->stmp = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
+  (*phys)->divtmp_src = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->stmp2 = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->stmp3 = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
   (*phys)->nu_tv = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
@@ -282,6 +290,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
     (*phys)->uold[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->vold[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->w[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->divtmp_w[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->wnew[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->wtmp[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->w_old[i] = (REAL *)SunMalloc((grid->Nk[i]+1)*sizeof(REAL),"AllocatePhysicalVariables");
@@ -311,6 +320,7 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
       (*phys)->lT_old[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     }
     (*phys)->stmp[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
+    (*phys)->divtmp_src[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->stmp2[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->stmp3[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
     (*phys)->nu_tv[i] = (REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocatePhysicalVariables");
@@ -424,6 +434,7 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   // free all the arrays over depth for edge-oriented
   for(j=0;j<Ne;j++) {
     free(phys->u[j]);
+    free(phys->divtmp_u[j]);
     free(phys->utmp[j]);
     free(phys->u_old[j]);
     free(phys->u_old2[j]);
@@ -440,6 +451,7 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
     free(phys->uold[i]);
     free(phys->vold[i]);
     free(phys->w[i]);
+    free(phys->divtmp_w[i]);
     free(phys->wnew[i]);
     free(phys->wtmp[i]);
     free(phys->w_old[i]);
@@ -467,6 +479,7 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
       free(phys->qT_old[i]);
       free(phys->lT_old[i]);
     }
+    free(phys->divtmp_src[i]);
     free(phys->stmp[i]);
     free(phys->stmp2[i]);
     free(phys->stmp3[i]);
@@ -490,6 +503,7 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   free(phys->vc);
   free(phys->wc);
   free(phys->w);
+  free(phys->divtmp_w);
   free(phys->wnew);
   free(phys->wtmp);
   free(phys->w_old);
@@ -501,6 +515,7 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   free(phys->qc);
   free(phys->qtmp);
   free(phys->s);
+  free(phys->divtmp_src);
   free(phys->T);
   free(phys->s_old);
   free(phys->T_old);
@@ -529,6 +544,7 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
   free(phys->z0T);
   free(phys->z0B);
   free(phys->u);
+  free(phys->divtmp_u);
   free(phys->D);
   free(phys->utmp);
   free(phys->u_old);
@@ -666,14 +682,19 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       z = 0;
       for(k=grid->ctop[i];k<grid->Nk[i];k++) {
         z-=grid->dzz[i][k]/2;
-        if(prop->vertcoord!=1)
+        if(prop->vertcoord!=1 && prop->vertcoord!=2)
         {
           phys->s[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],vert->zc[i][k]);
-          phys->s0[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],vert->zc[i][k]);                
-        } else {     
+          phys->s0[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],vert->zc[i][k]);           
+        } 
+        if(prop->vertcoord==1){     
           phys->s[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],z);
           phys->s0[i][k]=ReturnSalinity(grid->xv[i],grid->yv[i],z);                
         }
+        if(prop->vertcoord==2){     
+          phys->s[i][k]=IsoReturnSalinity(grid->xv[i],grid->yv[i],z,i,k);
+          phys->s0[i][k]=IsoReturnSalinity(grid->xv[i],grid->yv[i],z,i,k); 
+        }        
         z-=grid->dzz[i][k]/2;
       }
     }
@@ -697,10 +718,12 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       z = 0;
       for(k=grid->ctop[i];k<grid->Nk[i];k++) {
         z-=grid->dzz[i][k]/2;
-        if(prop->vertcoord!=1)
+        if(prop->vertcoord!=1 && prop->vertcoord!=2)
           phys->T[i][k]=ReturnTemperature(grid->xv[i],grid->yv[i],vert->zc[i][k],grid->dv[i]);          
-        else
+        if(prop->vertcoord==1)
           phys->T[i][k]=ReturnTemperature(grid->xv[i],grid->yv[i],z,grid->dv[i]);
+        if(prop->vertcoord==2)
+          phys->T[i][k]=IsoReturnTemperature(grid->xv[i],grid->yv[i],z,grid->dv[i],i,k);
         z-=grid->dzz[i][k]/2;
       }
     }
@@ -1275,7 +1298,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   metinT *metin;
   metT *met;
   averageT *average;
-
+  
   // Compute the initial quantities for comparison to determine conservative properties
   prop->n=0;
   // this make sure that we aren't loosing mass/energy
@@ -1285,7 +1308,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   if(VERBOSE>2) MemoryStats(grid,myproc,numprocs,comm);
   // initialize theta0
   prop->theta0=prop->theta;
-
+  
   // initialize the timers
   t_start=Timer();
   t_source=t_predictor=t_nonhydro=t_turb=t_transport=t_io=t_comm=t_check=0;
@@ -1315,6 +1338,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   // get the boundary scalars (boundaries.c)
   BoundaryScalars(grid,phys,prop,myproc,comm);
   // set the height of the face bewteen cells to compute the flux
+  if(prop->vertcoord!=1 && prop->vertcoord!=5)
+    TvdFluxHeight(grid, phys, prop, vert->dzfmeth,comm, myproc);
   SetFluxHeight(grid,phys,prop);
   // find the bottom layer number which zfb>Bufferheight only works for new vertical coordinate
   if(prop->vertcoord!=1)
@@ -1458,6 +1483,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // begin the timer
       t0=Timer();
       // get the flux height (since free surface is changing) which is stored in dzf
+      if(prop->vertcoord!=1 && prop->vertcoord!=5)
+        TvdFluxHeight(grid, phys, prop, vert->dzfmeth,comm, myproc);
       SetFluxHeight(grid,phys,prop);
       
       // find the bottom layer number which zfb>Bufferheight only works for new vertical coordinate
@@ -1496,6 +1523,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // time comsuming function!
       if(prop->vertcoord!=1)
         VertCoordinateHorizontalSource(grid, phys, prop, myproc, numprocs, comm);
+
       HorizontalSource(grid,phys,prop,myproc,numprocs,comm);
 
       // add wave part 
@@ -1512,9 +1540,12 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // to the neighboring processors.
       // The predicted horizontal velocity is now in phys->u
       t0=Timer();
+  
+      // compute U^* and h^* (Eqn 40 and Eqn 31)
       UPredictor(grid,phys,prop,myproc,numprocs,comm);
       ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
       ISendRecvCellData2D(phys->h,grid,myproc,comm);
+      
       t_predictor+=Timer()-t0;
       t0=Timer();
       blowup = CheckDZ(grid,phys,prop,myproc,numprocs,comm);
@@ -1631,8 +1662,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         }
 
         t_transport+=Timer()-t0;
-      }   
-            
+      }
+
       // Compute sediment transport when prop->computeSediments=1
       if(prop->computeSediments){
         t0=Timer(); 
@@ -1646,15 +1677,14 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // update subgrid->Acceff and subgrid->Acveff for non hydrostatic
       if(prop->subgrid)
         UpdateSubgridVerticalAceff(grid, phys, prop, 1, myproc);
-     
+
       // Compute vertical momentum and the nonhydrostatic pressure
       if(prop->nonhydrostatic && !blowup) {
 
         // Predicted vertical velocity field is in phys->w
         WPredictor(grid,phys,prop,myproc,numprocs,comm);
 
-
-         // Wpredictor calculate w^*
+        // Wpredictor calculate w^*
         // now calculate omega^* for the new generalized vertical coordinate
         if(prop->vertcoord!=1){
           // recalculate uc and vc for the predictor velocity field
@@ -1712,7 +1742,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         // no need to update omega again since the omega is already consistent with the freesurface
         //LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
         //ISendRecvWData(vert->omega,grid,myproc,comm);
-
         // if nonhydrostatic=1, w is solved in the corrector function
         // no need to solve from omega
         // w is recalculated by omega only for hydrostatic case
@@ -1727,12 +1756,15 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           // zf is calculate in ComputeZc function
           ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
           ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
-
+  
           // compute w from omega
           ComputeOmega(grid, prop, phys,0, myproc);
         }
         ISendRecvWData(phys->w,grid,myproc,comm);
-
+       //for(i=0;i<grid->Nc;i++)
+        //for(k=0;k<grid->Nk[i];k++)
+          //if(vert->dzdx[i]!=0)
+            //printf("i %d k %d dzdx %e\n",i,k,vert->dzdx[i][k]);
        // update U3 with the new w
        ComputeOmega(grid, prop, phys,-1, myproc);
        ISendRecvWData(vert->U3,grid,myproc,comm);
@@ -1773,6 +1805,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       NewCells(grid,phys,prop);
       ISendRecvEdgeData3D(phys->u,grid,myproc,comm);
     }
+
     // Compute average
     if(prop->calcaverage){
       UpdateAverageVariables(grid,average,phys,met,prop,comm,myproc); 
@@ -1896,7 +1929,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
 {
   int i, ib, iptr, boundary_index, nf, j, jptr, k, nc, nc1, nc2, ne, 
   k0, kmin, kmax;
-  REAL *a, *b, *c, fab1, fab2, fab3, sum, def1, def2, dgf, Cz, tempu,Ac; //AB3
+  REAL *a, *b, *c, fab1, fab2, fab3, sum, def1, def2, dgf, Cz, tempu,Ac,f_sum, ke1,ke2,Vm; //AB3
   // additions to test divergence averaging for w in momentum calc
   REAL wedge[3], lambda[3], wik, tmp_x, tmp_y,tmp;
   int aneigh;
@@ -1989,9 +2022,16 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     nc1 = grid->grad[2*j];
     nc2 = grid->grad[2*j+1];
     for(k=grid->etop[j];k<grid->Nke[j];k++)
-      phys->Cn_U[j][k]+=prop->dt*prop->Coriolis_f*(
+    {
+      // if not z-level add relative voricity due to momentum advection
+      if(prop->vertcoord!=1 && prop->nonlinear && prop->wetdry)  
+        f_sum=prop->Coriolis_f+InterpToFace(j,k,vert->f_r,phys->u,grid);
+      else
+        f_sum=prop->Coriolis_f;
+      phys->Cn_U[j][k]+=prop->dt*f_sum*(
           InterpToFace(j,k,phys->vc,phys->u,grid)*grid->n1[j]-
           InterpToFace(j,k,phys->uc,phys->u,grid)*grid->n2[j]);
+    }
   }
 
 
@@ -2049,26 +2089,58 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     for(k=0;k<grid->Nk[i];k++) 
       phys->stmp[i][k]=phys->stmp2[i][k]=0;
 
-  // new momentum advection
-  if(prop->nonlinear && prop->vertcoord!=1 && prop->vertcoord!=5)
-  {    
-     for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
-       i=grid->cellp[iptr];
-       for(k=grid->ctop[i];k<grid->Nk[i];k++)
-       {
+  // new scheme for mometum advection if not z-level
+  // keep the advection term conservative while add the additionterm u/J*dJ/dt
+  // comment out since it is solved by implicit method, see function Upredictor
+
+  if(prop->nonlinear && prop->vertcoord!=1)
+    if(!prop->wetdry){
+      if(vert->dJdtmeth==1)
+        for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
+        {
+           j = grid->edgep[jptr];
+           nc1 = grid->grad[2*j];
+           nc2 = grid->grad[2*j+1];
+           def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+           def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+           dgf = def1+def2;
+           for(k=grid->etop[j];k<grid->Nke[j];k++) 
+             phys->Cn_U[j][k]-=phys->u[j][k]*
+             (def2/dgf*(1-grid->dzzold[nc1][k]/grid->dzz[nc1][k])+def1/dgf*(1-grid->dzzold[nc2][k]/grid->dzz[nc2][k]));
+        }
+    } else {
+      /*for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
+        i=grid->cellp[iptr];
+        for(k=grid->ctop[i];k<grid->Nk[i];k++)
+        {
           phys->stmp[i][k]+=phys->uc[i][k]*vert->dudx[i][k]+phys->vc[i][k]*vert->dudy[i][k];
           phys->stmp2[i][k]+=phys->uc[i][k]*vert->dvdx[i][k]+phys->vc[i][k]*vert->dvdy[i][k];  
-          //if(i==54 || i==55)
-            //    if(k==7)
-              //    printf("n %d i %d stmp %e %e uc %e dudx %e dz %e\n", prop->n,i,phys->stmp[i][k],phys->stmp2[i][k],phys->uc[i][k],vert->dudx[i][k],grid->dzz[i][k]);
+        }
+      }*/
 
-       }
-     }
-  }
-  //printf("n %d u %e utmp %e dzf %e nc %d %d \n",prop->n,phys->u[164][7],phys->utmp[164][7],grid->dzf[164][7],grid->grad[2*164],grid->grad[2*164+1]);
-
+      for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
+      {
+        j = grid->edgep[jptr];
+        nc1 = grid->grad[2*j];
+        nc2 = grid->grad[2*j+1];
+        if(nc1==-1)
+          nc1=nc2;
+        if(nc2==-1)
+          nc2=nc1;
+        def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+        def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+        for(k=grid->etop[j];k<grid->Nke[j];k++) 
+        {  
+          Vm=def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k];
+          ke1=(phys->uc[nc1][k]*phys->uc[nc1][k]+phys->vc[nc1][k]*phys->vc[nc1][k])*grid->dzz[nc1][k]/2;
+          ke2=(phys->uc[nc2][k]*phys->uc[nc2][k]+phys->vc[nc2][k]*phys->vc[nc2][k])*grid->dzz[nc2][k]/2;
+          phys->Cn_U[j][k]-=prop->dt*(ke1-ke2)/Vm;
+        }  
+      }
+    }
+    
   // Compute Eulerian advection of momentum (nonlinear!=0)
-  if(prop->nonlinear && (prop->vertcoord==1 || prop->vertcoord==5)) {
+  if(prop->nonlinear && (prop->vertcoord==1 || (prop->vertcoord!=1 && !prop->wetdry))) {
 
     // Interpolate uc to faces and place into ut
     GetMomentumFaceValues(phys->ut,phys->uc,phys->boundary_u,phys->u,grid,phys,prop,comm,myproc,prop->nonlinear);
@@ -2545,7 +2617,6 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
     def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
     dgf = def1+def2;
-
     if(grid->ctop[nc1]>grid->ctop[nc2])
       k0=grid->ctop[nc1];
     else
@@ -2677,7 +2748,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     fab2=fab3=0;
     for(i=0;i<grid->Nc;i++)
       for(k=0;k<grid->Nk[i];k++)
-	phys->Cn_W[i][k]=phys->Cn_W2[i][k]=0;
+        phys->Cn_W[i][k]=phys->Cn_W2[i][k]=0;
   } else if(prop->n==2) {
     fab1=3.0/2.0;
     fab2=-1.0/2.0;
@@ -2687,7 +2758,6 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     fab2=prop->exfac2;
     fab3=prop->exfac3;   
   }
-
   fac1=prop->imfac1;
   fac2=prop->imfac2;
   fac3=prop->imfac3;
@@ -2718,7 +2788,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
       phys->stmp[i][k]=0;
 
   // Compute Eulerian advection (nonlinear!=0)
-  if(prop->nonlinear && (prop->vertcoord==1 || prop->vertcoord==5)) {
+  if(prop->nonlinear && (prop->vertcoord==1 || (prop->vertcoord!=1 && !prop->wetdry))) {
     // Compute the w-component fluxes at the faces
     
     // First compute w at the cell centers (since w is defined at the faces)
@@ -2889,34 +2959,39 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     phys->Cn_W[i][k]-=prop->dt*phys->stmp[i][k];
 
     // add the additional part for the new vertical coordinate
-    if(prop->vertcoord!=1 && prop->vertcoord!=5 && prop->nonlinear)
-    {
-      for(k=grid->ctop[i]+1;k<grid->Nk[i];k++){
-        // subtract the addition part of horizontal advection
-        phys->Cn_W[i][k]-=prop->dt*(InterpToLayerTopFace(i,k,phys->uc,grid)*
+    // comment out since it is solved by implicit method for stability
+    if(prop->vertcoord!=1 && prop->nonlinear)
+      if(!prop->wetdry){
+        if(vert->dJdtmeth==1)
+        {
+          for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) 
+            phys->Cn_W[i][k]-=phys->w[i][k]*(grid->dzz[i][k]*(1-grid->dzzold[i][k-1]/grid->dzz[i][k-1])+
+                grid->dzz[i][k-1]*(1-grid->dzzold[i][k]/grid->dzz[i][k]))/(grid->dzz[i][k]+grid->dzz[i][k-1]);
+          k=grid->ctop[i];
+          phys->Cn_W[i][k]-=phys->w[i][k]*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
+        }
+      } else {
+        for(k=grid->ctop[i]+1;k<grid->Nk[i];k++){
+          // subtract the addition part of horizontal advection
+          phys->Cn_W[i][k]-=prop->dt*(InterpToLayerTopFace(i,k,phys->uc,grid)*
                 InterpToLayerTopFace(i,k,vert->dwdx,grid)+
                 InterpToLayerTopFace(i,k,phys->vc,grid)*InterpToLayerTopFace(i,k,vert->dwdy,grid));
     
-        // add back vertical momentum advection
-        //phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(grid->dzz[i][k-1]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k]+
-          //      grid->dzz[i][k]*(phys->w[i][k-1]-phys->w[i][k])/grid->dzz[i][k-1])/
-            //    (grid->dzz[i][k-1]+grid->dzz[i][k]);
-        phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k-1]-phys->w[i][k+1])/(grid->dzz[i][k]+grid->dzz[i][k-1]);
+          phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k-1]-phys->w[i][k+1])/(grid->dzz[i][k]+grid->dzz[i][k-1]);
+        }
+
+        k=grid->ctop[i];
+        phys->Cn_W[i][k]-=prop->dt*(InterpToLayerTopFace(i,k,phys->uc,grid)*
+                  InterpToLayerTopFace(i,k,vert->dwdx,grid)+
+                  InterpToLayerTopFace(i,k,phys->vc,grid)*InterpToLayerTopFace(i,k,vert->dwdy,grid));
+        // top omega*dwdz
+        // can be comment out since omega_top=0
+        phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k];         
       }
-
-      k=grid->ctop[i];
-      phys->Cn_W[i][k]-=prop->dt*(InterpToLayerTopFace(i,k,phys->uc,grid)*
-                InterpToLayerTopFace(i,k,vert->dwdx,grid)+
-                InterpToLayerTopFace(i,k,phys->vc,grid)*InterpToLayerTopFace(i,k,vert->dwdy,grid));
-      // top omega*dwdz
-      // can be comment out since omega_top=0
-      phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k];  
-    }
-
   }
 
   // Vertical advection using Lax-Wendroff
-  if(prop->nonlinear==4 && (prop->vertcoord==1 || prop->vertcoord==5)) 
+  if(prop->nonlinear==4 && (prop->vertcoord==1 || (prop->vertcoord!=1 && !prop->wetdry))) 
     for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
       i = grid->cellp[iptr]; 
       if(prop->vertcoord==1)
@@ -2980,6 +3055,24 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
       }
       b[grid->ctop[i]]+=a[grid->ctop[i]];
 
+      // the w/JdJdt term for momentum advection
+      // treat with implicit method
+      // fully implicit
+      if(prop->vertcoord!=1 && prop->nonlinear && !prop->wetdry)
+        if(vert->dJdtmeth==0)
+        {
+          for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) {
+            c[k]+=1*(grid->dzz[i][k]*(1-grid->dzzold[i][k-1]/grid->dzz[i][k-1])+
+              grid->dzz[i][k-1]*(1-grid->dzzold[i][k]/grid->dzz[i][k]))/(grid->dzz[i][k]+grid->dzz[i][k-1]);     
+            phys->wtmp[i][k]-=(0*phys->w_old[i][k]+0*phys->w_old2[i][k])*
+              (grid->dzz[i][k]*(1-grid->dzzold[i][k-1]/grid->dzz[i][k-1])+
+              grid->dzz[i][k-1]*(1-grid->dzzold[i][k]/grid->dzz[i][k]))/(grid->dzz[i][k]+grid->dzz[i][k-1]);
+          }        
+          k=grid->ctop[i];
+          c[k]+=1*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
+          phys->wtmp[i][k]-=(0*phys->w_old[i][k]+0*phys->w_old2[i][k])*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
+        }
+
       TriSolve(&(a[grid->ctop[i]]),&(c[grid->ctop[i]]),&(b[grid->ctop[i]]),
           &(phys->wtmp[i][grid->ctop[i]]),&(phys->w[i][grid->ctop[i]]),grid->Nk[i]-grid->ctop[i]);
     } else { // one layer
@@ -3031,6 +3124,32 @@ static void Corrector(REAL **qc, gridT *grid, physT *phys, propT *prop, int mypr
     if(grid->ctop[i]<grid->Nk[i]-1)
       for(k=grid->ctop[i];k<grid->Nk[i];k++) 
         phys->q[i][k]+=qc[i][k];
+  }
+}
+
+static void CorrectorTmp(REAL **qc, REAL **u, REAL **w, gridT *grid, physT *phys, propT *prop, int myproc, 
+    int numprocs, MPI_Comm comm)
+{
+
+  int i, iptr, j, jptr, k;
+
+  // Correct the horizontal velocity only if this is not a boundary point.
+  // no boundary points are corrected for non-hydrostatic pressure!!!
+  for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
+    j = grid->edgep[jptr]; 
+    if(phys->D[j]!=0 && grid->etop[j]<grid->Nke[j]-1)
+      for(k=grid->etop[j];k<grid->Nke[j];k++)
+        u[j][k]=phys->u[j][k]-prop->dt/grid->dg[j]*
+          (qc[grid->grad[2*j]][k]-qc[grid->grad[2*j+1]][k]);
+  }
+  // Correct the vertical velocity
+  for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
+    i = grid->cellp[iptr]; 
+    for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
+      w[i][k]=phys->w[i][k]-2.0*prop->dt/(grid->dzz[i][k-1]+grid->dzz[i][k])*
+        (qc[i][k-1]-qc[i][k]);
+    w[i][grid->ctop[i]]=phys->w[i][grid->ctop[i]]+2.0*prop->dt/grid->dzz[i][grid->ctop[i]]*
+      qc[i][grid->ctop[i]];
   }
 }
 
@@ -3120,6 +3239,56 @@ static void ComputeQSource(REAL **src, gridT *grid, physT *phys, propT *prop, in
   }
 }
 
+
+static void DivergenceCheck(REAL **src, REAL **u, REAL **w, gridT *grid, physT *phys, propT *prop, int myproc, int numprocs) 
+{
+  int i, iptr, j, jptr, k, nf, ne, nc1, nc2;
+  REAL fac1,fac2,fac3,flux;
+
+  // new implicit method
+  fac1=prop->imfac1;
+  fac2=prop->imfac2;
+  fac3=prop->imfac3;
+ 
+  // for each cell
+  for(i=0;i<grid->Nc;i++)
+    // initialize to zero
+    for(k=grid->ctop[i];k<grid->Nk[i];k++) 
+      src[i][k] = 0;
+
+  // for each computational cell
+  for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
+    // get the cell pointer
+    i = grid->cellp[iptr];
+    /* VERTICAL CONTRIBUTION */
+    // over all cells that are defined to a depth
+    for(k=grid->ctop[i];k<grid->Nk[i];k++) {
+      // compute the vertical contributions to the source term
+      if(!prop->subgrid)
+        src[i][k] = grid->Ac[i]*fac1*(w[i][k]-w[i][k+1])
+           +fac2*grid->Ac[i]*(phys->w_old[i][k]-phys->w_old[i][k+1])+fac3*grid->Ac[i]*(phys->w_old2[i][k]-phys->w_old2[i][k+1]);
+      else
+        src[i][k] = fac1*(subgrid->Acveff[i][k]*w[i][k]-subgrid->Acveff[i][k+1]*w[i][k+1])
+          +fac2*(subgrid->Acveffold[i][k]*phys->w_old[i][k]-subgrid->Acveffold[i][k+1]*phys->w_old[i][k+1])
+          +fac3*(subgrid->Acveffold2[i][k]*phys->w_old2[i][k]-subgrid->Acveffold2[i][k+1]*phys->w_old2[i][k+1]);
+    }
+
+    /* HORIZONTAL CONTRIBUTION */
+    // over each face to get the horizontal contributions to the source term
+    // no change is needed for the new generalized vertical coordinate
+    for(nf=0;nf<grid->nfaces[i];nf++) {
+      // get the edge pointer
+      ne = grid->face[i*grid->maxfaces+nf];
+      // for each of the defined edges over depth
+      for(k=grid->ctop[i];k<grid->Nke[ne];k++) 
+        // compute the horizontal source term via the (D_H)(u^*)
+        src[i][k]+=(fac1*u[ne][k]+fac2*phys->u_old[ne][k]+fac3*
+          phys->u_old2[ne][k])*grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne];
+    }
+  }
+}
+
+
 /*
  * Function: CGSolveQ
  * Usage: CGSolveQ(q,src,c,grid,phys,prop,myproc,numprocs,comm);
@@ -3138,7 +3307,7 @@ static void CGSolveQ(REAL **q, REAL **src, REAL **c, gridT *grid, physT *phys, p
 
   int i, iptr, k, n, niters;
 
-  REAL **x, **r, **rtmp, **p, **z, mu, nu, alpha, alpha0, eps, eps0;
+  REAL **x, **r, **rtmp, **p, **z, mu, nu, alpha, alpha0, eps, eps0,divtmp;
 
   z = phys->stmp2;
   x = q;
@@ -3244,10 +3413,27 @@ static void CGSolveQ(REAL **q, REAL **src, REAL **c, gridT *grid, physT *phys, p
     else
       eps=alpha;
 
+    //ISendRecvCellData3D(x,grid,myproc,comm);    
+    // calculate local continuity form
+    //CorrectorTmp(x, phys->divtmp_u, phys->divtmp_w, grid, phys, prop,myproc, numprocs,comm);
+    //DivergenceCheck(phys->divtmp_src, phys->divtmp_u,phys->divtmp_w, grid, phys, prop, myproc, numprocs);
+    //divtmp=sqrt(InnerProduct3(phys->divtmp_src,phys->divtmp_src,grid,myproc,numprocs,comm));
+   
     //    if(myproc==0) printf("%d %e %e %e %e\n",myproc,mu,nu,eps0,sqrt(eps/eps0));
-    if(VERBOSE>3 && myproc==0) printf("CGSolve Pressure Iteration: %d, resid=%e\n",n,sqrt(eps/eps0));
-    if(sqrt(eps/eps0)<prop->qepsilon) 
-      break;
+    //printf("n %d iter %d divtmp %e\n",prop->n,n,divtmp );
+    if(VERBOSE>2 && myproc==0) printf("CGSolve Pressure Iteration: %d, resid=%e\n",n,sqrt(eps/eps0));
+   
+    //if(eps0<=1)
+      if(sqrt(eps/eps0)<prop->qepsilon) {
+        printf("n %d iter %d divtmp %e eps0 %e eps %e\n",prop->n,n,divtmp,eps0,eps);
+        break;
+      }
+    /*if(eps0>1){
+      if(sqrt(eps)<prop->qepsilon) {
+        printf("n %d iter %d divtmp %e eps0 %e eps %e\n",prop->n,n,divtmp,eps0,eps);
+        break;
+      }  
+    } */   
   }
 
   if(myproc==0 && VERBOSE>2) 
@@ -3268,6 +3454,8 @@ static void CGSolveQ(REAL **q, REAL **src, REAL **c, gridT *grid, physT *phys, p
         x[i][k]/=c[i][k];
     }
   }
+
+
 
   // Send the solution to the neighboring processors
   ISendRecvCellData3D(x,grid,myproc,comm);
@@ -3399,15 +3587,15 @@ static void UPredictor(gridT *grid, physT *phys,
     if(nc2==-1)
       nc2=nc1;
     
-    def1=sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+pow(grid->yv[nc1]-grid->ye[j],2));
-    def2=grid->dg[j]-def1;
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
 
     // Add the wind shear stress from the top cell
     phys->utmp[j][grid->etop[j]]+=2.0*dt*phys->tau_T[j]/
       (grid->dzz[nc1][grid->etop[j]]+grid->dzz[nc2][grid->etop[j]]);
 
     // define the bottom layer
-    if(prop->vertcoord==1 || phys->CdB[j]==-1 || prop->z0B==0)
+    if(prop->vertcoord==1 || phys->CdB[j]==-1)
       Nkeb=grid->Nke[j]-1;
     else
       Nkeb=vert->Nkeb[j];
@@ -3493,7 +3681,7 @@ static void UPredictor(gridT *grid, physT *phys,
           d[k]=0;
         // omega[top]=0 omega[bot]=0
         for(k=grid->ctop[n1];k<grid->Nke[j];k++)
-          d[k] =(l1*vert->omega_old[n0][k]+l0*vert->omega_old[n1][k])/grid->dg[j];
+          d[k] =(l1*vert->omega_old[n0][k]+l0*vert->omega_old[n1][k])/(l1+l0);
         d[grid->Nke[j]]=0; // Assume w=0 at a corners (even if w is nonzero on one side of the face)
         for(k=grid->etop[j];k<grid->Nke[j];k++) 
         {
@@ -3653,11 +3841,11 @@ static void UPredictor(gridT *grid, physT *phys,
                 (b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1])*(fac2*phys->u_old[j][grid->Nke[j]-1]+fac3*phys->u_old2[j][grid->Nke[j]-1]));
       
         // second part udomegadz
-        for(k=grid->etop[j];k<grid->Nke[j];k++)
-          phys->utmp[j][k]+=prop->dt*(fac2*phys->u[j][k]+fac3*phys->u_old2[j][k])*
-          (def2*(vert->omega_old[nc1][k]-vert->omega_old[nc1][k+1])+def1*(vert->omega_old[nc2][k]-vert->omega_old[nc2][k+1]))/
-          grid->dg[j]/(0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
-
+        if(prop->wetdry)
+          for(k=grid->etop[j];k<grid->Nke[j];k++)
+            phys->utmp[j][k]+=prop->dt*(fac2*phys->u[j][k]+fac3*phys->u_old2[j][k])*
+            (def2*(vert->omega_old[nc1][k]-vert->omega_old[nc1][k+1])+def1*(vert->omega_old[nc2][k]-vert->omega_old[nc2][k+1]))/
+            (def1+def2)/(0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]));
       }
 
       // Now set up the coefficients for the tridiagonal inversion for the
@@ -3824,13 +4012,32 @@ static void UPredictor(gridT *grid, physT *phys,
         // Bottom boundary 
         a[grid->Nke[j]-1]+=prop->dt*fac1*a0[grid->Nke[j]-1];
         b[grid->Nke[j]-1]+=prop->dt*fac1*(b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1]);
-
         // second part -udwdz
-        for(k=grid->etop[j];k<grid->Nke[j];k++)
-          b[k]-=prop->dt*fac1*
-          (def2*(vert->omega_old[nc1][k]-vert->omega_old[nc1][k+1])+def1*(vert->omega_old[nc2][k]-vert->omega_old[nc2][k+1]))/
-          grid->dg[j]/(0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]));        
+        if(prop->wetdry)
+          for(k=grid->etop[j];k<grid->Nke[j];k++)
+            b[k]-=prop->dt*fac1*
+            (def2*(vert->omega_old[nc1][k]-vert->omega_old[nc1][k+1])+def1*(vert->omega_old[nc2][k]-vert->omega_old[nc2][k+1]))/
+            (def1+def2)/(0.5*(grid->dzz[nc1][k]+grid->dzz[nc2][k]));         
       }
+
+      // implicit method for u/JdJdt term
+      // fully implicit
+      if(prop->vertcoord!=1 && prop->nonlinear && !prop->wetdry)
+        if(vert->dJdtmeth==0)
+        {
+          def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+          def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+          dgf = def1+def2;
+          for(k=grid->etop[j];k<grid->Nke[j];k++) 
+          {
+            phys->utmp[j][k]-=(0*phys->u_old[j][k]+0*phys->u_old2[j][k])*
+             (def2/dgf*(1-grid->dzzold[nc1][k]/grid->dzz[nc1][k])+def1/dgf*(1-grid->dzzold[nc2][k]/grid->dzz[nc2][k]));
+           
+            b[k]+=1*(def2/dgf*(1-grid->dzzold[nc1][k]/grid->dzz[nc1][k])+def1/dgf*(1-grid->dzzold[nc2][k]/grid->dzz[nc2][k])); 
+          }           
+        }  
+
+
 
       for(k=grid->etop[j];k<grid->Nke[j];k++) {
 
@@ -4433,6 +4640,7 @@ static void UPredictor(gridT *grid, physT *phys,
         if(fabs(sum-(phys->h[i]+grid->dv[i]))>1e-6)
           printf("n %d something wrong on the cell depth calculation at cell %d error %e sum %e H %e\n",prop->n, i,fabs(sum-(phys->h[i]+grid->dv[i])),sum,phys->h[i]+grid->dv[i]);
     }
+
     // compute the new zc
     ComputeZc(grid,prop,phys,1,myproc);
   }
@@ -5396,7 +5604,6 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
       dry=1;
       for(nf=0;nf<grid->nfaces[n];nf++) {
         ne = grid->face[n*grid->maxfaces+nf];
-        //if(grid->mark[ne]!=1)
         if(grid->dzf[ne][k]>0)
           dry=0;
         V+=grid->dzf[ne][k]*grid->df[ne]*grid->def[n*grid->maxfaces+nf];
@@ -5412,14 +5619,6 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
         if(nc2==-1)
           nc2=nc1;
       
-        // O.Klepsova method
-        alpha=1;
-        //if(kinterp && d>BUFFERHEIGHT)
-          //alpha=grid->hf[ne]/d;
-        // add subgrid part
-        //if(subgridmodel)// && grid->ctop[n]==grid->Nk[n]-1)
-            //alpha=grid->dzf[ne][k]*grid->Ac[n]/V;
-        
         if(subgridmodel)
           if(V/subgrid->Acceff[n][k]/grid->dzz[n][k]<=1)
             alpha=grid->dzf[ne][k]/grid->dzz[n][k]*grid->Ac[n]/subgrid->Acceff[n][k];
@@ -5434,18 +5633,10 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
 
         if(dry)
           alpha=1;
-        //alpha=1;
-        // new edit for subgrid wetting and drying
-        //if(subgridmodel && grid->ctop[n]==grid->Nk[n]-1 && grid->dzz[n][grid->ctop[n]]<=10*BUFFERHEIGHT)
-          //alpha=1;
-        //if(k<grid->etop[ne])
-          //alpha=0;
 
-        //if(k>(grid->Nke[ne]-1))
-          //alpha=0;
-        /*if(grid->dzz[n][k]<1e-3)
-          alpha=1;*/
-        //alpha=1;
+        //most stable with different dzf
+        // not best for varying dzf
+        alpha=1;
         if(!(grid->smoothbot)|| k<grid->Nke[ne]){
           uc[n][k]+=alpha*u[ne][k]*grid->n1[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne];
           vc[n][k]+=alpha*u[ne][k]*grid->n2[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne];
@@ -5603,7 +5794,8 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
     (*prop)->conserveMomentum = 0;
     (*prop)->thetaM = 1;//Fully implicit
     //(*prop)->thetaM = 0.5;
-    (*prop)->newcells = 1;
+    if((*prop)->vertcoord==1 || (*prop)->vertcoord==5)
+      (*prop)->newcells = 1;
   }
   
   (*prop)->calcage = MPI_GetValue(DATAFILE,"calcage","ReadProperties",myproc);
@@ -5711,12 +5903,9 @@ REAL InterpToFace(int j, int k, REAL **phi, REAL **u, gridT *grid) {
     nc1=nc2;
   if(nc2==-1)
     nc2=nc1;
-
-  Dj = grid->dg[j];
-
-  def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
-      pow(grid->yv[nc1]-grid->ye[j],2));
-  def2 = Dj-def1;
+  def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+  def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+  Dj=def1+def2;
   if(def1==0 || def2==0) {
     return UpWind(u[j][k],phi[nc1][k],phi[nc2][k]);
   }
@@ -5742,14 +5931,12 @@ static REAL UFaceFlux(int j, int k, REAL **phi, REAL **u, gridT *grid, REAL dt, 
   nc2 = grid->grad[2*j+1];
   if(nc1==-1) nc1=nc2;
   if(nc2==-1) nc2=nc1;
-  Dj = grid->dg[j];
-  def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
-      pow(grid->yv[nc1]-grid->ye[j],2));
-  def2 = Dj-def1;
-
+  def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+  def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+  Dj=def1+def2;
   if(method==4) C = u[j][k]*dt/Dj;
-
-  if(def1==0 || def2==0) {
+  if(method==2) C = 0;
+  if(def1==0 || def2==0 || method==1) {
     // this happens on a boundary cell
     return UpWind(u[j][k],phi[nc1][k],phi[nc2][k]);
   }
@@ -5870,7 +6057,13 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
  
     for(k=grid->etop[j];k<grid->Nke[j];k++){
       grid->dzf[j][k]=UpWind(phys->u[j][k],grid->dzz[nc1][k],grid->dzz[nc2][k]);
-//      grid->dzf[j][k]=UFaceFlux(j,k, grid->dzz, phys->u, grid,prop->dt,prop->nonlinear);
+      if(prop->vertcoord!=1 && prop->vertcoord!=5){
+        if(grid->mark[j]==0)
+          if(phys->u[j][k]>0)
+            grid->dzf[j][k]=phys->SfHp[j][k];
+          else
+            grid->dzf[j][k]=phys->SfHm[j][k];
+      }
     }
     k=grid->Nke[j]-1;
 
@@ -5901,7 +6094,7 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
     for(k=grid->etop[j];k<grid->Nke[j];k++) 
       if(grid->dzf[j][k]<=DRYCELLHEIGHT)
         grid->dzf[j][k]=0;
-
+      
     for(k=grid->etop[j];k<grid->Nke[j];k++)
       grid->hf[j]+=grid->dzf[j][k];
   } 
@@ -6377,11 +6570,9 @@ static REAL HFaceFlux(int j, int k, REAL *phi, REAL **u, gridT *grid, REAL dt, i
   nc2 = grid->grad[2*j+1];
   if(nc1==-1) nc1=nc2;
   if(nc2==-1) nc2=nc1;
-  Dj = grid->dg[j];
-  def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
-      pow(grid->yv[nc1]-grid->ye[j],2));
-  def2 = Dj-def1;
-
+  def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+  def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+  Dj=def1+def2;
   if(method==4) C = u[j][k]*dt/Dj;
 
   if(def1==0 || def2==0) {

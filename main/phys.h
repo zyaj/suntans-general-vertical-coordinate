@@ -126,10 +126,6 @@ typedef struct _physT {
   REAL **u_old;
   REAL **u_old2; // store u_n-1
   REAL **ut;
-  REAL *divtmp; // calculate divergence of flow after q calculation
-  REAL **divtmp_src; // calculate divergence of flow after q calculation
-  REAL **divtmp_u; // calculate divergence of flow after q calculation
-  REAL **divtmp_w; // calculate divergence of flow after q calculation
   REAL **Cn_R;
   REAL **Cn_T;
   REAL **Cn_U;

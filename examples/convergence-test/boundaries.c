@@ -213,13 +213,13 @@ void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
   if(prop->n==prop->nsteps-1)
     for(i=0;i<grid->Nc;i++)
       for(k=0;k<grid->Nk[i];k++)
-        phys->user_def_nc[i][k]=phys->q[i][k];
+        phys->user_def_nc_nk[i][k]=phys->q[i][k];
 
   if(prop->n==prop->nsteps)
     for(i=0;i<grid->Nc;i++)
     {
       for(k=0;k<grid->Nk[i];k++)
-        phys->user_def_nc[i][k]=1.5*phys->q[i][k]-0.5*phys->user_def_nc[i][k];
+        phys->user_def_nc_nk[i][k]=1.5*phys->q[i][k]-0.5*phys->user_def_nc_nk[i][k];
       //printf("%e %e %12.12e\n",phys->user_def_nc[i][0],phys->user_def_nc[i][1],-50+grid->dzz[i][1]);
     }
 

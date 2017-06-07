@@ -105,6 +105,33 @@ REAL ReturnSalinity(REAL x, REAL y, REAL z)
 }
 
 /*
+ * Function: IsoReturnSalinity
+ * Usage: grid->T[n]=IsoReturnSalinity(grid->xv[n],grid->yv[n],z);
+ * ------------------------------------------------------------
+ * Helper function to create an initial salinity field under iso 
+ * pycnal coordinate. Used in phys.c in the 
+ * InitializePhysicalVariables function.
+ *
+ */
+REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) { 
+  return ReturnSalinity(x,y,z);
+}
+
+/*
+ * Function: IsoReturnTemperature
+ * Usage: grid->T[n]=IsoReturnTemperature(grid->xv[n],grid->yv[n],z);
+ * ------------------------------------------------------------
+ * Helper function to create an initial temperature field under iso 
+ * pycnal coordinate. Used in phys.c in the 
+ * InitializePhysicalVariables function.
+ *
+ */
+REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth, int i, int k) {
+  return ReturnTemperature(x,y,z,depth);
+}
+
+
+/*
  * Function: ReturnTemperature
  * Usage: grid->T[n]=ReturnTemperaturegrid->xv[n],grid->yv[n],z);
  * ------------------------------------------------------------

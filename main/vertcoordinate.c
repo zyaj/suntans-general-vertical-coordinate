@@ -789,8 +789,8 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
         alpha*vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)+alpha_s*prop->dt*\
         (InterpToLayerTopFace(i,k,vert->dqdx,grid)*InterpToLayerTopFace(i,k,vert->dzdx,grid)+\
           InterpToLayerTopFace(i,k,vert->dqdy,grid)*InterpToLayerTopFace(i,k,vert->dzdy,grid));
-        if(fabs(vert->U3[i][k]-phys->w[i][k])>1e-6)
-        printf("i %d k %d u3 %e w %e\n",i,k,vert->U3[i][k],phys->w[i][k] );
+        //if(fabs(vert->U3[i][k]-phys->w[i][k])>1e-6)
+        //printf("i %d k %d u3 %e w %e\n",i,k,vert->U3[i][k],phys->w[i][k] );
       }
 }
 
