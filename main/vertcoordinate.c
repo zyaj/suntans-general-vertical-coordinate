@@ -36,12 +36,14 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->uf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->vf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->wf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->qcf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->omegaf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->zf=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
   vert->Nkeb=(int *)SunMalloc(grid->Ne*sizeof(int),"AllocateVertCoordinate");
   vert->zfb=(REAL *)SunMalloc(grid->Ne*sizeof(REAL),"AllocateVertCoordinate");
   vert->modifydzf = MPI_GetValue(DATAFILE,"modifydzf","AllocateVertCoordinate",myproc);
   vert->dJdtmeth = MPI_GetValue(DATAFILE,"dJdtmeth","AllocateVertCoordinate",myproc);
+  vert->dzfmeth = MPI_GetValue(DATAFILE,"dzfmeth","AllocateVertCoordinate",myproc);
   vert->thetaT = MPI_GetValue(DATAFILE,"thetaT","AllocateVertCoordinate",myproc);
   vert->vertdzmin = MPI_GetValue(DATAFILE,"vertdzmin","AllocateVertCoordinate",myproc);
   vert->Me_l=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
@@ -50,6 +52,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   {
     vert->Nkeb[j]=0;
     vert->zfb[j]=0.0;
+    vert->qcf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->uf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->vf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->wf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
@@ -58,6 +61,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->Me_l[j]=(REAL *)SunMalloc((grid->Nkc[j]+1)*sizeof(REAL),"AllocateVertCoordinate");
     for(k=0;k<grid->Nkc[j];k++)
     {
+      vert->qcf[j][k]=0;
       vert->uf[j][k]=0;
       vert->zf[j][k]=0;
       vert->vf[j][k]=0;
@@ -95,6 +99,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->dwdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dqdy=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->dqdx=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->Mc=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->dzztmp=(REAL **)SunMalloc(grid->Nc*sizeof(REAL *),"AllocateVertCoordinate");
   vert->Msum=(REAL *)SunMalloc(grid->Nc*sizeof(REAL),"AllocateVertCoordinate");
@@ -123,6 +129,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     vert->dwdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dqdy[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->dqdx[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->Mc[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     vert->dzztmp[i]=(REAL *)SunMalloc(grid->Nk[i]*sizeof(REAL),"AllocateVertCoordinate");
     
@@ -160,6 +168,8 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->dwdy[i][k]=0;
       vert->dzdx[i][k]=0;      
       vert->dzdy[i][k]=0;
+      vert->dqdx[i][k]=0;      
+      vert->dqdy[i][k]=0;
       vert->Mc[i][k]=0;
       vert->dzztmp[i][k]=0;
     }
@@ -560,6 +570,7 @@ void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
       vert->uf[j][k]=r2*phys->uc[nc1][k]+r1*phys->uc[nc2][k];
       vert->vf[j][k]=r2*phys->vc[nc1][k]+r1*phys->vc[nc2][k];
       vert->wf[j][k]=InterpToFace(j,k,phys->wc,phys->u,grid);
+      vert->qcf[j][k]=r2*phys->qc[nc1][k]+r1*phys->qc[nc2][k];
       vert->omegaf[j][k]=InterpToFace(j,k,vert->omegac,phys->u,grid);
     }
   }
@@ -753,7 +764,7 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc)
 void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
 {
   int i,k;
-  REAL alpha=1;
+  REAL alpha=1,alpha_s=0;
   if(prop->vertcoord==5)
     alpha=0;
   if(index==1)
@@ -775,7 +786,11 @@ void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc)
       for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
       {
         vert->U3[i][k]=phys->w[i][k]-alpha*vert->ul[i][k]*InterpToLayerTopFace(i,k,vert->dzdx,grid)-\
-        alpha*vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid);
+        alpha*vert->vl[i][k]*InterpToLayerTopFace(i,k,vert->dzdy,grid)+alpha_s*prop->dt*\
+        (InterpToLayerTopFace(i,k,vert->dqdx,grid)*InterpToLayerTopFace(i,k,vert->dzdx,grid)+\
+          InterpToLayerTopFace(i,k,vert->dqdy,grid)*InterpToLayerTopFace(i,k,vert->dzdy,grid));
+        if(fabs(vert->U3[i][k]-phys->w[i][k])>1e-6)
+        printf("i %d k %d u3 %e w %e\n",i,k,vert->U3[i][k],phys->w[i][k] );
       }
 }
 
@@ -813,12 +828,14 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
     for(k=0;k<grid->Nk[i];k++)
       vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
   
-   /*if(prop->nonhydrostatic){
-     ComputeCellAveragedHorizontalGradient(vert->dwdy, 1, vert->wf, grid, prop, phys, myproc);
-     ComputeCellAveragedHorizontalGradient(vert->dwdx, 0, vert->wf, grid, prop, phys, myproc);
-     ComputeCellAveragedHorizontalGradient(vert->dvdy, 1, vert->vf, grid, prop, phys, myproc);
-     ComputeCellAveragedHorizontalGradient(vert->dudx, 0, vert->uf, grid, prop, phys, myproc);
-   }*/
+   if(prop->nonhydrostatic){
+     ComputeCellAveragedHorizontalGradient(vert->dqdy, 1, vert->qcf, grid, prop, phys, myproc);
+     ComputeCellAveragedHorizontalGradient(vert->dqdx, 0, vert->qcf, grid, prop, phys, myproc);     
+     //ComputeCellAveragedHorizontalGradient(vert->dwdy, 1, vert->wf, grid, prop, phys, myproc);
+     //ComputeCellAveragedHorizontalGradient(vert->dwdx, 0, vert->wf, grid, prop, phys, myproc);
+     //ComputeCellAveragedHorizontalGradient(vert->dvdy, 1, vert->vf, grid, prop, phys, myproc);
+     //ComputeCellAveragedHorizontalGradient(vert->dudx, 0, vert->uf, grid, prop, phys, myproc);
+   }
 }
 /*
  * Function: ComputeCellAveragedGradient
@@ -855,7 +872,7 @@ void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL 
  * ----------------------------------------------------
  * n1 is the x-component and n2 is y-component
  */
-void ComputeNormalVector(gridT *grid, physT *phys, int myproc)
+/*void ComputeNormalVector(gridT *grid, physT *phys, int myproc)
 { 
   int i,nf,ne;
   REAL D,Dx,Dy;
@@ -868,6 +885,37 @@ void ComputeNormalVector(gridT *grid, physT *phys, int myproc)
       D=sqrt(D);
       Dx=grid->xe[ne]-grid->xv[i];
       Dy=grid->ye[ne]-grid->yv[i];
+      vert->n1[i*grid->maxfaces+nf]=Dx/D;
+      vert->n2[i*grid->maxfaces+nf]=Dy/D;
+    }
+}*/
+
+void ComputeNormalVector(gridT *grid, physT *phys, int myproc)
+{ 
+  int i,nf,ne, p1,p2;
+  REAL D,Dx,Dy,a,b,c,x,y,DD;
+  for(i=0;i<grid->Nc;i++)
+    for(nf=0;nf<grid->nfaces[i];nf++)
+    {
+      ne=grid->face[i*grid->maxfaces+nf];
+      p1 = grid->edges[NUMEDGECOLUMNS*ne];
+      p2 = grid->edges[NUMEDGECOLUMNS*ne+1];
+      if(grid->xp[p2]!=grid->xp[p1]){
+        a=(grid->yp[p2]-grid->yp[p1])/(grid->xp[p2]-grid->xp[p1]);
+        b=-1;
+        c=(grid->yp[p1]*grid->xp[p2]-grid->yp[p2]*grid->xp[p1])/(grid->xp[p2]-grid->xp[p1]);
+      } else {
+        a=1;
+        b=0;
+        c=-grid->xp[p1];
+      }
+      // calculate orthogonal distance
+      D=fabs(grid->xv[i]*a+b*grid->yv[i]+c)/sqrt(a*a+b*b);
+      // calculate x and y intersection point
+      x=(b*(b*grid->xv[i]-a*grid->yv[i])-a*c)/(a*a+b*b);
+      y=(a*(-b*grid->xv[i]+a*grid->yv[i])-b*c)/(a*a+b*b);
+      Dx=x-grid->xv[i];
+      Dy=y-grid->yv[i];
       vert->n1[i*grid->maxfaces+nf]=Dx/D;
       vert->n2[i*grid->maxfaces+nf]=Dy/D;
     }
@@ -1067,5 +1115,30 @@ void VerifyFluxHeight(gridT *grid, propT *prop, physT *phys, int myproc)
     for(k=grid->etop[j];k<grid->Nke[j];k++)
       grid->hf[j]+=grid->dzf[j][k];
   }
+}
+
+/*
+ * Function: TvdFluxHeight
+ * Usage: TvdFluxHeight(gridT *grid, physT *phys, propT *prop, int TVD, MPI_Comm comm, int myproc)
+ * ---------------------------------
+ * calculate flux height use tvd scheme
+ */
+void TvdFluxHeight(gridT *grid, physT *phys, propT *prop, int TVD, MPI_Comm comm, int myproc)
+{
+  int jptr, j, iptr, i, ib, k;
+  REAL z;
+
+  // give values for the boundary flux height
+  for(jptr=grid->edgedist[2];jptr<grid->edgedist[4];jptr++) {
+      j=grid->edgep[jptr];
+      ib=grid->grad[2*j];
+
+      for(k=grid->ctop[ib];k<grid->Nk[ib];k++) {
+        phys->boundary_tmp[jptr-grid->edgedist[2]][k]=grid->dzz[ib][k];
+      }
+  }
+
+  // calculate tvd face values
+  HorizontalFaceScalars(grid,phys,prop,grid->dzz,phys->boundary_tmp,vert->dzfmeth,comm,myproc);
 }
 

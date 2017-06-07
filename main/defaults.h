@@ -94,7 +94,7 @@ const int ntoutStore_DEFAULT = 0;
 /* TVDmomentum
    TVD for advection of momentum, default is vanleer
 */
-const int TVDmomentum_DEFAULT = 3;
+const int TVDmomentum_DEFAULT = 4;
 
 /* conserveMomentum
    Use conservative momentum advection scheme by default.
@@ -290,3 +290,10 @@ const int output_user_var_DEFAULT=0;
   vertical coordinate is applied
 */
 const int vertdzmin_DEFAULT=1e-3;
+
+/* dzfmeth
+  how to calculate flux height 1 upwind, 2 laxwendroff, 3 superbee, 4 van deer, 5 central differencing
+  only use when vertcoord!=1
+  default upwind
+*/
+const int dzfmeth_DEFAULT=1;

@@ -208,14 +208,23 @@ void AllocateBoundaryData(propT *prop, gridT *grid, boundT **bound, int myproc, 
 void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
 {
   int k,i;
-  REAL sum1=0,sum2=0,E_p=0;
+  REAL sum1=0,sum2=0,E_p=0,h1=50;
   for(i=0;i<grid->Nc;i++){
     sum1=0;
-    for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)
+    for(k=grid->ctop[i];k<grid->Nk[i]-1;k++)
     {
-      //if(phys->s[i][k]>0)
-        sum1+=grid->dzz[i][k];
+      if(phys->s[i][k]<0 && phys->s[i][k+1]>=0)
+      { 
+        //sum1+=grid->dzz[i][k];
+        sum1=vert->zc[i][k+1]+phys->s[i][k+1]*(vert->zc[i][k]-vert->zc[i][k+1])/(phys->s[i][k+1]-phys->s[i][k]);   
+      }  
     }
-    phys->user_def_nc[i]=500-sum1;
+    phys->user_def_nc[i]=h1+sum1;
+    if(prop->vertcoord==2){
+      sum1=0;
+      for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)
+        sum1+=grid->dzz[i][k];
+      phys->user_def_nc[i]=h1-sum1;
+    }
   }
 }

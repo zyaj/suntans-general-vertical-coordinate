@@ -501,6 +501,10 @@ double GetDefaultValue(char *str, int *status) {
     
     return vertdzmin_DEFAULT;
  
+ } else if(!strcmp(str,"dzfmeth")){
+    
+    return dzfmeth_DEFAULT;
+ 
  } else {
     *status=0;
     return 0;

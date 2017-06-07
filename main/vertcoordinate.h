@@ -15,7 +15,7 @@
 #include "phys.h"
 
 typedef struct _vertT {
-REAL **uf,**wf,**vf; // the u v w at the layer center of each edge [Nj][Nke]
+REAL **uf,**wf,**vf, **qcf; // the u v w at the layer center of each edge [Nj][Nke]
 REAL **zf; // the current vertical location z of each edge layer center [Nj][Nke]
 REAL **omegaf; // the vertical contravariant flux at the face [Ne][Nke]
 REAL **ul,**vl; // the u v at the top and bottom face of each layer at each edge [Nc][Nk+1]
@@ -36,7 +36,7 @@ REAL *n2; // the y component of the outpointing vector from cell center to its f
 REAL **zc,**zcold; // the cell center vertical location in the Cartesian coordinate [Nc][Nk]
 REAL **zl; // the cell center vertical location of cell top face in the cartesian coordinate [Nc][Nk+1]
 REAL **f_r; // the cell center relative vorticity dvdx-dudy [Nc][Nk]
-REAL **dzdx, **dzdy; // the cell-centered averaged gradient of different variables
+REAL **dzdx, **dzdy, **dqdx, **dqdy; // the cell-centered averaged gradient of different variables
 REAL **dvdx, **dudy, **dvdy, **dudx, **dwdx, **dwdy;
 REAL *dsigma; // the dsigma for the sigma coordinate to define the vertical coordinate density [Nkmax]
 REAL *tmp; //temporary array for output
@@ -46,6 +46,7 @@ REAL *zfb; // store the sum of dzf from bottom layer to Nkeb [Ne]
 FILE *zcFID, *dzzFID, *omegaFID;
 int modifydzf;  // whether recalculate the u^im to check whether the flux height is upwind
 int dJdtmeth; // how to treat the u/JdJdt term 0 implicit and 1 explicit
+int dzfmeth; // how to calculate flux height 1 upwind, 2 lax wendroff, 3 superbee, 4 vanleer
 REAL thetaT,vertdzmin;
 } vertT;
 
@@ -72,4 +73,5 @@ void StoreVertVariables(gridT *grid, physT *phys);
 void FindBottomLayer(gridT *grid, propT *prop, physT *phys, int myproc);
 void UpdateCellcenteredFreeSurface(gridT *grid, propT *prop, physT *phys, int myproc);
 void VerifyFluxHeight(gridT *grid, propT *prop, physT *phys, int myproc);
+void TvdFluxHeight(gridT *grid, physT *phys, propT *prop, int TVD, MPI_Comm comm, int myproc);
 #endif

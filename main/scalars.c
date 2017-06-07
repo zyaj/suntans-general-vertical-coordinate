@@ -67,7 +67,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
   } else
     fab=1.5;
   
-  /*
+  
   if(prop->n==1) {
     fab1=1;
     fab2=fab3=0;
@@ -79,7 +79,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
     fab1=prop->exfac1;
     fab2=prop->exfac2;
     fab3=prop->exfac3;   
-  }*/
+  }
 
   // store the old value
   // here stmp=scal^n scal_old=scal^n-1

@@ -19,17 +19,15 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
 
   if(dz!=NULL) {
     if(r==1) {
-     if(Nkmax<50)
+     if(Nkmax<100)
       for(k=0;k<Nkmax;k++){
        dz[k]=depth/Nkmax;
       }
      else{
-     for(k=0;k<10;k++)
-       dz[k]=7.0;
-     for(k=10;k<50;k++)
-       dz[k]=1.5;
-     for(k=50;k<Nkmax;k++)
-       dz[k]=(depth-130)/(Nkmax-50);
+     for(k=0;k<60;k++)
+       dz[k]=2.5;
+     for(k=60;k<Nkmax;k++)
+       dz[k]=9.0;
      }
     }else if(r>1 && r<=1.1) {    
       dz[0] = depth*(r-1)/(pow(r,Nkmax)-1);
@@ -78,6 +76,7 @@ REAL ReturnDepth(REAL x, REAL y) {
     //return 300;
   //if(x>=18000)
     //return 300.0+(x-18000)*5.0/300;
+  //return 150.0+fabs(x-60000.0)/60000.0*450.0;
   return 600;  
 }
  
@@ -104,9 +103,15 @@ REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
  *
  */
 REAL ReturnSalinity(REAL x, REAL y, REAL z) {
-  REAL alpha_s=0.99,delta=0.001,a=48, h1=250,s;
-  REAL rho_diff=0.01,beta=1e-3;
-  REAL L_rho=6000, eta=-a*exp(-(x-300000)*(x-3000000)/L_rho/L_rho);
+  REAL a=15;
+  REAL L0=381.3850*3,h1=50;
+  REAL r,v_sech;
+  REAL alpha_s=0.99,delta=h1,s;
+  REAL rho_diff=0.01,beta=1e-3,eta;
+  r=(x)/2/L0;
+  v_sech=2/(exp(r)+exp(-r));
+  eta=-2*a*v_sech*v_sech;
+  //REAL L_rho=6000, eta=-a*exp(-(x-300000)*(x-3000000)/L_rho/L_rho);
   if(z>(delta/2+eta-h1))
     return -rho_diff/beta/2;
   if(z<(-delta/2+eta-h1))
@@ -125,13 +130,17 @@ REAL ReturnSalinity(REAL x, REAL y, REAL z) {
  *
  */
 REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) {
-  REAL drho=0.00522,h0=224,p=1.15,s1=-0.00018,s2=-3.64e-8,beta=1e-3,s,zp;
-  // here rho0=1024.75
-    if(k==0)
-      s=-5;
-    if(k==1)
-      s=5;
+  REAL drho=0.00522,h0=224,p=1.15,s1=-0.00018,s2=-3.64e-8,beta=1e-3,s,zp,Nkmax=10;
+  // compared to the z-level simulation, -4.1 5 for Nk=2 will provide the same wave speed
+  // compared 
+  if(k<Nkmax/2)
+    s=-4;
+  if(k>=Nkmax/2)
+    s=5;
   return s;
+  
+    
+  return ReturnSalinity(x, y, z);
 }
 
 /*

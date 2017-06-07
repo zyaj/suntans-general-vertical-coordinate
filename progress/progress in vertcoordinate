@@ -112,3 +112,7 @@ the isopycnal layer needs addition treatment for wetting and drying :
 04/12/2017
 1. vertdzmin is added when wetdry is turned on
 2. when wetdry, due to the new momentum advection scheme, dudx,dvdx,dudy,dvdy,dwdx,dwdy will be calculated.
+
+06/07/2017
+1. change the way to calculate normalvector
+2. turn off alpha_s to avoid divergence error especially for zlevel

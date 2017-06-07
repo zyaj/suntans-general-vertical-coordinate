@@ -73,9 +73,9 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-  int i,k;
-  REAL ratio=1.0/grid->Nkmax,a=60;
-  REAL L0=843.274,eta,h1=200;
+  int i,k,Nk1=10,Nk2=20,Nk3=30, Nk4=grid->Nkmax-Nk1-Nk2-Nk3;
+  REAL ratio=1.0/grid->Nkmax,a=15,h3=75.0;
+  REAL L0=381.3850*3,eta,h1=50;
   REAL r,v_sech;
   for(i=0;i<grid->Nc;i++)
   {
@@ -83,12 +83,21 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
     //r*=r/4;
     v_sech=2/(exp(r)+exp(-r));
     eta=-2*a*v_sech*v_sech;
+    // for two layer system
     for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)   
       grid->dzz[i][k]=(h1-eta)/grid->Nk[i]*2;
     for(k=grid->Nk[i]/2;k<grid->Nk[i];k++)   
       grid->dzz[i][k]=((grid->dv[i]+phys->h[i])-h1+eta)/grid->Nk[i]*2;
+    /*for(k=0;k<Nk1;k++)
+      grid->dzz[i][k]=(h1/2-eta)/Nk1;
+    for(k=Nk1;k<(Nk1+Nk2);k++)
+      grid->dzz[i][k]=(h1)/Nk2;
+    for(k=(Nk1+Nk2);k<(Nk1+Nk2+Nk3);k++)
+      grid->dzz[i][k]=h3/Nk3;
+    for(k=(Nk1+Nk2+Nk3);k<(grid->Nk[i]);k++)
+      grid->dzz[i][k]=(grid->dv[i]+phys->h[i]-1.5*h1+eta-h3)/Nk4;
     for(k=0;k<grid->Nk[i];k++)
-      grid->dzzold[i][k]=grid->dzz[i][k];
+      grid->dzzold[i][k]=grid->dzz[i][k];*/
   }
 }
 

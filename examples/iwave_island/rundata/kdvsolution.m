@@ -4,12 +4,12 @@
 % yun zhang @stanford
 %%%%%%%%%%%%%%%%%%%
 % parameter
-h1=200;
-h2=400;
+h1=50;
+h2=150;
 rho1=999.5;
 rho2=1000.5;
 g=9.81;
-eta0=60;
+eta0=15;
 % prepared variable
 sigma=2*(rho2-rho1)/(rho2+rho1);
 c0=sqrt(g*sigma*h1*h2/(h1+h2));

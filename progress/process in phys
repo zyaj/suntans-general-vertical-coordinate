@@ -350,3 +350,7 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 
 04/17/2017
 1. when wetdry, newcells=0 when vertcoord==1 or 5
+
+06/07/2017
+1. use def1 and def2 as grid->def[nc1*grid->maxfaces+grid->gradf[2*j]]
+2. when interpolation always use def1+def2
