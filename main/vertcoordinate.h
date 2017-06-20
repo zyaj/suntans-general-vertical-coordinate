@@ -28,7 +28,6 @@ REAL **Me_l; // monitor function value at each edge top face of each layer [Ne][
 REAL **omega_im; // omega_im=fac1*omega+fac2*omega^n+fac3*omega^n-1 [Nc][Nk+1]
 REAL **omega_old; // omega^(n) [Nc][Nk+1]
 REAL **omega_old2; // omega^(n-1) [Nc][Nk+1]
-REAL **omega_star; // the vertical contravariant flux [Nc][Nk+1] for hydrostatic calculation and prepare for scalar transport 
 REAL **omegac; // the cell-centered vertical contravariant flux [Nc][Nk]
 REAL **U3,**U3_old,**U3_old2; // w-udzdx-vdzdy [Nc][Nk+1] 
 REAL *n1;  // the x component of the outpointing vector from cell center to its face center [Nc*maxfaces*Nc]
@@ -60,12 +59,14 @@ void ComputeUl(gridT *grid, propT *prop, physT *phys, int myproc);
 void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeOmega(gridT *grid, propT *prop, physT *phys, int index, int myproc);
 void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc);
+void ComputeDSigma(gridT *grid, physT *phys, int myproc);
 void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm);
 void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL **scalar, gridT *grid, propT *prop, physT *phys, int myproc);
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc,int numprocs, MPI_Comm comm);
 void VariationalVertCoordinateAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc);
 REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid);
 void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);
+void VertCoordinateBasicRestart(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeNormalVector(gridT *grid, physT *phys, int myproc);
 void OpenVertCoordinateFiles(gridT *grid,int mergeArrays, int myproc);
 void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MPI_Comm comm);

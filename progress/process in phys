@@ -354,3 +354,12 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 06/07/2017
 1. use def1 and def2 as grid->def[nc1*grid->maxfaces+grid->gradf[2*j]]
 2. when interpolation always use def1+def2
+
+06/19/2017
+1. need to modify restart function
+1) add u_old u_old2 output input done
+2) add w_old w_old2 w_im output input done
+3) add h_old output input done
+4) add omega, omega_old, omega_old2, omega_im
+5) add dzz dzzold need to compute zc zcold done
+6) modify physio.c to adapt the restart with new generalized vertical coordinate

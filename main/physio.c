@@ -10,6 +10,7 @@
  *
  */
 #include "physio.h"
+#include "vertcoordinate.h"
 #include "merge.h"
 #include "mynetcdf.h"
 
@@ -355,6 +356,8 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
     nwritten=fwrite(&(prop->n),sizeof(int),1,prop->StoreFID);
 
     fwrite(phys->h,sizeof(REAL),grid->Nc,prop->StoreFID);
+    fwrite(phys->h_old,sizeof(REAL),grid->Nc,prop->StoreFID);
+
     for(j=0;j<grid->Ne;j++) 
       fwrite(phys->Cn_U[j],sizeof(REAL),grid->Nke[j],prop->StoreFID);
     for(j=0;j<grid->Ne;j++) 
@@ -386,8 +389,20 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
 
     for(j=0;j<grid->Ne;j++) 
       fwrite(phys->u[j],sizeof(REAL),grid->Nke[j],prop->StoreFID);
+    for(j=0;j<grid->Ne;j++) 
+      fwrite(phys->u_old[j],sizeof(REAL),grid->Nke[j],prop->StoreFID);
+    for(j=0;j<grid->Ne;j++) 
+      fwrite(phys->u_old2[j],sizeof(REAL),grid->Nke[j],prop->StoreFID);
+
     for(i=0;i<grid->Nc;i++) 
       fwrite(phys->w[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+    for(i=0;i<grid->Nc;i++) 
+      fwrite(phys->w_old[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+    for(i=0;i<grid->Nc;i++) 
+      fwrite(phys->w_old2[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+    for(i=0;i<grid->Nc;i++) 
+      fwrite(phys->w_im[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+
     for(i=0;i<grid->Nc;i++) 
       fwrite(phys->q[i],sizeof(REAL),grid->Nk[i],prop->StoreFID);
     for(i=0;i<grid->Nc;i++) 
@@ -399,7 +414,24 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
       fwrite(phys->T[i],sizeof(REAL),grid->Nk[i],prop->StoreFID);
     for(i=0;i<grid->Nc;i++) 
       fwrite(phys->s0[i],sizeof(REAL),grid->Nk[i],prop->StoreFID);
+    
+    for(i=0;i<grid->Nc;i++) 
+      fwrite(grid->dzz[i],sizeof(REAL),grid->Nk[i],prop->StoreFID);      
+    for(i=0;i<grid->Nc;i++) 
+      fwrite(grid->dzzold[i],sizeof(REAL),grid->Nk[i],prop->StoreFID); 
 
+    // add new part for new vertical coordinate restart data
+    if(prop->vertcoord!=1)
+    {
+      for(i=0;i<grid->Nc;i++) 
+        fwrite(vert->omega[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+      for(i=0;i<grid->Nc;i++) 
+        fwrite(vert->omega_old[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+      for(i=0;i<grid->Nc;i++) 
+        fwrite(vert->omega_old2[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+      for(i=0;i<grid->Nc;i++) 
+        fwrite(vert->omega_im[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+    }  
     fclose(prop->StoreFID);
   }
 
@@ -427,6 +459,9 @@ void ReadPhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MP
 
   if(fread(phys->h,sizeof(REAL),grid->Nc,prop->StartFID) != grid->Nc)
     printf("Error reading phys->h\n");
+  if(fread(phys->h_old,sizeof(REAL),grid->Nc,prop->StartFID) != grid->Nc)
+    printf("Error reading phys->h\n");
+
   for(j=0;j<grid->Ne;j++) 
     if(fread(phys->Cn_U[j],sizeof(REAL),grid->Nke[j],prop->StartFID) != grid->Nke[j])
       printf("Error reading phys->Cn_U[j]\n");
@@ -471,9 +506,26 @@ void ReadPhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MP
   for(j=0;j<grid->Ne;j++) 
     if(fread(phys->u[j],sizeof(REAL),grid->Nke[j],prop->StartFID) != grid->Nke[j])
       printf("Error reading phys->u[j]\n");
+  for(j=0;j<grid->Ne;j++) 
+    if(fread(phys->u_old[j],sizeof(REAL),grid->Nke[j],prop->StartFID) != grid->Nke[j])
+      printf("Error reading phys->u_old[j]\n");
+  for(j=0;j<grid->Ne;j++) 
+    if(fread(phys->u_old2[j],sizeof(REAL),grid->Nke[j],prop->StartFID) != grid->Nke[j])
+      printf("Error reading phys->u_old2[j]\n");
+
   for(i=0;i<grid->Nc;i++) 
     if(fread(phys->w[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
       printf("Error reading phys->w[i]\n");
+  for(i=0;i<grid->Nc;i++) 
+    if(fread(phys->w_old[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+      printf("Error reading phys->w_old[i]\n");
+  for(i=0;i<grid->Nc;i++) 
+    if(fread(phys->w_old2[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+      printf("Error reading phys->w_old2[i]\n");
+  for(i=0;i<grid->Nc;i++) 
+    if(fread(phys->w_im[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+      printf("Error reading phys->w_im[i]\n");
+
   for(i=0;i<grid->Nc;i++) 
     if(fread(phys->q[i],sizeof(REAL),grid->Nk[i],prop->StartFID) != grid->Nk[i])
       printf("Error reading phys->q[i]\n");
@@ -490,9 +542,33 @@ void ReadPhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MP
   for(i=0;i<grid->Nc;i++) 
     if(fread(phys->s0[i],sizeof(REAL),grid->Nk[i],prop->StartFID) != grid->Nk[i])
       printf("Error reading phys->s0[i]\n");
-  fclose(prop->StartFID);
 
-  UpdateDZ(grid,phys,prop, 0);
+  //UpdateDZ(grid,phys,prop, 0);
+
+  for(i=0;i<grid->Nc;i++) 
+    if(fread(grid->dzz[i],sizeof(REAL),grid->Nk[i],prop->StartFID) != grid->Nk[i])
+      printf("Error reading grid->dzz[i]\n");
+  for(i=0;i<grid->Nc;i++) 
+    if(fread(grid->dzzold[i],sizeof(REAL),grid->Nk[i],prop->StartFID) != grid->Nk[i])
+      printf("Error reading grid->dzzold[i]\n");
+
+  if(prop->vertcoord!=1){
+    // setup vertcoordinate part
+    VertCoordinateBasicRestart(grid,prop,phys,myproc);
+    for(i=0;i<grid->Nc;i++) 
+      if(fread(vert->omega[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+        printf("Error reading vert->omega[i]\n");
+    for(i=0;i<grid->Nc;i++) 
+      if(fread(vert->omega_old[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+        printf("Error reading vert->omega_old[i]\n");
+    for(i=0;i<grid->Nc;i++) 
+      if(fread(vert->omega_old2[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+        printf("Error reading vert->omega_old2[i]\n");
+    for(i=0;i<grid->Nc;i++) 
+      if(fread(vert->omega_im[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+        printf("Error reading vert->omega_im[i]\n");    
+  }
+  fclose(prop->StartFID);
 
   // cell centered velocity computed so that this does not 
   // need to be reconsidered 

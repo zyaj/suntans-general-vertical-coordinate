@@ -73,28 +73,44 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-  int i,k,Nktop=68,Nkbot=32;
-  REAL alpha_s=0.99,delta=0.02,a=0.1, h1=0.30,s;
-  REAL rho_diff=0.03,beta=1e-3;
-  REAL L_rho=0.7, eta,dztmp,dztmp1,dztmp2, h2=0.26;
+  int i,k,Nkmax,Nk_noiso=2;  
+  REAL ratio=1.0/grid->Nkmax,a=250;
+  REAL L_rho=15000,eta,h1=250,L1=300000;
+  REAL alpha_s=0.99,delta=200;
+  REAL rho_diff=0.001,beta=1e-3,drho,rho;
+  REAL zbot,ztop;
+  drho=rho_diff/(grid->Nkmax-Nk_noiso);
+
+
+  /*for(i=0;i<grid->Nc;i++)
+  {
+    eta=a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
+    for(k=0;k<Nk_noiso/2;k++)
+      grid->dzz[i][k]=(h1+eta-delta)/Nk_noiso*2;
+    ztop=(delta/2-h1-eta);
+    for(k=Nk_noiso/2;k<grid->Nk[i]-Nk_noiso/2-1;k++)
+    {
+       rho=-rho_diff/2+drho*(k-Nk_noiso/2+1);
+       zbot=delta/2/atanh(alpha_s)*atanh(-2/rho_diff*rho)-h1-eta;
+       grid->dzz[i][k]=ztop-zbot;
+       ztop=zbot;
+    }
+    grid->dzz[i][grid->Nk[i]-Nk_noiso/2-1]=ztop-(-delta/2-h1-eta);
+    for(k=grid->Nk[i]-Nk_noiso/2;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=(grid->dv[i]-h1-eta-delta/2)/Nk_noiso*2;
+    for(k=0;k<grid->Nk[i];k++)
+      grid->dzzold[i][k]=grid->dzz[i][k];
+  }*/
+
   for(i=0;i<grid->Nc;i++)
   {
-    eta=a*exp(-grid->xv[i]*grid->xv[i]/L_rho/L_rho);
-    dztmp=(grid->dv[i]+phys->h[i])/grid->Nkmax;
-    dztmp1=(h1+eta+phys->h[i])/Nktop;
-    dztmp2=(grid->dv[i]-h1-eta)/Nkbot;
-    for(k=grid->ctop[i];k<grid->Nk[i];k++)
-    {
-      if(dztmp2<dztmp){
-        grid->dzz[i][k]=1.0/grid->Nkmax*(grid->dv[i]+phys->h[i]);
-      }else{
-        if(k<Nktop)
-          grid->dzz[i][k]=dztmp1;
-        else
-          grid->dzz[i][k]=dztmp2;
-      }
+    eta=-a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
+    for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)   
+      grid->dzz[i][k]=(h1-eta)/grid->Nk[i]*2;
+    for(k=grid->Nk[i]/2;k<grid->Nk[i];k++)   
+      grid->dzz[i][k]=((grid->dv[i]+phys->h[i])-h1+eta)/grid->Nk[i]*2;
+    for(k=0;k<grid->Nk[i];k++)
       grid->dzzold[i][k]=grid->dzz[i][k];
-    }
   }
 }
 
@@ -106,16 +122,20 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
 void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k;
-  REAL ratio=1.0/grid->Nkmax,a=30;
-  REAL L_rho=1000,eta,h1=100;
+  REAL ratio=1.0/grid->Nkmax,a=250;
+  REAL L_rho=15000,eta,h1=250,L1=300000,delta=0.000001,Nk1=2;
 
   for(i=0;i<grid->Nc;i++)
   {
-    for(k=grid->ctop[i];k<grid->Nk[i];k++)
-    {
-      grid->dzz[i][k]=1.0/grid->Nkmax*(grid->dv[i]+phys->h[i]);
+    eta=a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
+    for(k=0;k<Nk1;k++)
+      grid->dzz[i][k]=(h1+eta-delta/2)/Nk1;
+    for(k=Nk1;k<grid->Nk[i]-Nk1;k++)
+      grid->dzz[i][k]=delta/(grid->Nk[i]-2*Nk1);
+    for(k=grid->Nk[i]-Nk1;k<grid->Nk[i];k++)
+      grid->dzz[i][k]=(grid->dv[i]-h1-eta-delta/2)/Nk1;
+    for(k=0;k<grid->Nk[i];k++)
       grid->dzzold[i][k]=grid->dzz[i][k];
-    }
   }
 }
 
@@ -128,13 +148,6 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k,sum=0;
-  //for(k=0;k<10;k++)
-    //vert->dsigma[k]=8.5/300;
-  //for(k=10;k<30;k++)
-    //vert->dsigma[k]=1.5/300;
-  //for(k=30;k<grid->Nkmax;k++)
-    //vert->dsigma[k]=9.25/300;
-  
   for(i=0;i<grid->Nc;i++)
   {
   	for(k=grid->ctop[i];k<grid->Nk[i];k++)
@@ -207,10 +220,9 @@ void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int 
 void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
   int i,k,j,nf,neigh,ne,kk,nc1,nc2;
-  REAL normal,alpha_H=1, alphaH=1, alphaV=5, minM=0.15, maxM=100,max,tmp;
+  REAL normal,alpha_H=0, alphaH=0, alphaV=10, minM=0.15, maxM=100000,max,tmp;
   REAL max_gradient_v,max_gradient_h=0,max_gradient_h_global,H1,H2,rho1,rho2;
   // initialize everything zero
-
   for(i=0;i<grid->Nc;i++)
     for(k=0;k<grid->Nk[i];k++)
       vert->Mc[i][k]=0;

@@ -712,9 +712,6 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc)
   REAL z,def1,def2,Dj;
   for(i=0;i<grid->Nc;i++)
   {
-    if(!index)
-      for(k=0;k<grid->Nk[i];k++)
-        vert->zcold[i][k]=vert->zc[i][k];
     z=-grid->dv[i];
     vert->zc[i][grid->Nk[i]-1]=z+grid->dzz[i][grid->Nk[i]-1]/2;
     for(k=grid->Nk[i]-2;k>=grid->ctop[i];k--){
@@ -724,6 +721,14 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc)
       for(k=0;k<grid->Nk[i];k++)
         vert->zcold[i][k]=vert->zc[i][k];
  
+    if(!index){
+      z=-grid->dv[i];
+      vert->zcold[i][grid->Nk[i]-1]=z+grid->dzzold[i][grid->Nk[i]-1]/2;
+      for(k=grid->Nk[i]-2;k>=grid->ctop[i];k--){
+        vert->zcold[i][k]=vert->zcold[i][k+1]+grid->dzzold[i][k+1]/2+grid->dzzold[i][k]/2;
+      }      
+    }
+
     vert->zl[i][grid->Nk[i]]=-grid->dv[i];
     for(k=grid->Nk[i]-1;k>=grid->ctop[i];k--)
       vert->zl[i][k]=vert->zl[i][k+1]+grid->dzz[i][k];
@@ -1005,13 +1010,59 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
   InitializeLayerThickness(grid, prop, phys,myproc);
 
   // compute zc
-  ComputeZc(grid,prop,phys,0,myproc);
+  ComputeZc(grid,prop,phys,1,myproc);
 
   // compute normal vector
   ComputeNormalVector(grid,phys,myproc);
 
   ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
   ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc);
+}
+
+/*
+ * Function: VertCoordinateBasicRestart
+ * Setup the basics and initial condition for the vertical coordinate
+ * for restarting run
+ * ----------------------------------------------------
+ * 
+ */
+void VertCoordinateBasicRestart(gridT *grid, propT *prop, physT *phys, int myproc)
+{
+  int i,k,j;
+  // allocate subgrid struture first
+  vert=(vertT *)SunMalloc(sizeof(vertT),"VertCoordinateBasic");
+
+  // allocate necessary variable
+  AllocateandInitializeVertCoordinate(grid,prop, myproc);
+
+  // output 
+  OpenVertCoordinateFiles(grid,prop->mergeArrays,myproc);
+
+  // compute zc
+  ComputeZc(grid,prop,phys,0,myproc);
+
+  // sigma coordinate need to recalculate dsigma for each layer
+  if(prop->vertcoord==3)
+    ComputeDSigma(grid,phys,myproc);
+
+  // compute normal vector
+  ComputeNormalVector(grid,phys,myproc);
+
+  ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
+  ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc);
+}
+
+
+/*
+ * Function: ComputeDSigma
+ * based on the dzz to calculate dsigma for restart function
+ * ----------------------------------------------------
+ * dsigma[k]=dzz[k]/(h+d)
+ */
+void ComputeDSigma(gridT *grid, physT *phys, int myproc){
+  int i=0,k;
+  for(k=0;k<grid->Nk[i];k++)
+    vert->dsigma[k]=grid->dzz[i][k]/(phys->h[i]+grid->dv[i]);
 }
 
 /*

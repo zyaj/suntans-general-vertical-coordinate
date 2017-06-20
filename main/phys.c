@@ -583,7 +583,7 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
   int Nci, Nki, T0;
 
   prop->nstart=0;
-  
+  prop->n=prop->nstart;
   // Initialise the netcdf time
   prop->toffSet = getToffSet(prop->basetime,prop->starttime);
   prop->nctime = prop->toffSet*86400.0 + prop->nstart*prop->dt;
