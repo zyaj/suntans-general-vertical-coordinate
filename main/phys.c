@@ -1528,7 +1528,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       UPredictor(grid,phys,prop,myproc,numprocs,comm);
       ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
       ISendRecvCellData2D(phys->h,grid,myproc,comm);
-      
+
       t_predictor+=Timer()-t0;
       t0=Timer();
       blowup = CheckDZ(grid,phys,prop,myproc,numprocs,comm);
@@ -1667,8 +1667,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         // Predicted vertical velocity field is in phys->w
         WPredictor(grid,phys,prop,myproc,numprocs,comm);
 
-
-         // Wpredictor calculate w^*
+        // Wpredictor calculate w^*
         // now calculate omega^* for the new generalized vertical coordinate
         if(prop->vertcoord!=1){
           // recalculate uc and vc for the predictor velocity field
@@ -1693,6 +1692,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         // phys->stmp contains the source term
         // phys->stmp3 is used for temporary storage
         CGSolveQ(phys->qc,phys->stmp,phys->stmp3,grid,phys,prop,myproc,numprocs,comm);
+
+
 
         // Correct the nonhydrostatic velocity field with the nonhydrostatic pressure
         // correction field phys->stmp2/qc.  This will correct phys->u so that it is now

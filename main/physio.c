@@ -431,6 +431,12 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
         fwrite(vert->omega_old2[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
       for(i=0;i<grid->Nc;i++) 
         fwrite(vert->omega_im[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+      for(i=0;i<grid->Nc;i++) 
+        fwrite(vert->U3[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+      for(i=0;i<grid->Nc;i++) 
+        fwrite(vert->U3_old[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
+      for(i=0;i<grid->Nc;i++) 
+        fwrite(vert->U3_old2[i],sizeof(REAL),grid->Nk[i]+1,prop->StoreFID);
     }  
     fclose(prop->StoreFID);
   }
@@ -543,7 +549,7 @@ void ReadPhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MP
     if(fread(phys->s0[i],sizeof(REAL),grid->Nk[i],prop->StartFID) != grid->Nk[i])
       printf("Error reading phys->s0[i]\n");
 
-  //UpdateDZ(grid,phys,prop, 0);
+  UpdateDZ(grid,phys,prop, 0);
 
   for(i=0;i<grid->Nc;i++) 
     if(fread(grid->dzz[i],sizeof(REAL),grid->Nk[i],prop->StartFID) != grid->Nk[i])
@@ -567,6 +573,15 @@ void ReadPhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MP
     for(i=0;i<grid->Nc;i++) 
       if(fread(vert->omega_im[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
         printf("Error reading vert->omega_im[i]\n");    
+    for(i=0;i<grid->Nc;i++) 
+      if(fread(vert->U3[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+        printf("Error reading vert->U3[i]\n");
+    for(i=0;i<grid->Nc;i++) 
+      if(fread(vert->U3_old[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+        printf("Error reading vert->U3_old[i]\n");
+    for(i=0;i<grid->Nc;i++) 
+      if(fread(vert->U3_old2[i],sizeof(REAL),grid->Nk[i]+1,prop->StartFID) != grid->Nk[i]+1)
+        printf("Error reading vert->U3_old2[i]\n");
   }
   fclose(prop->StartFID);
 
