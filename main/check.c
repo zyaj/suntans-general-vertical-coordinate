@@ -301,8 +301,8 @@ void Progress(propT *prop, int myproc, int numprocs)
 
   if(myproc==0) {
     fid = fopen(filename,"w");
-    fprintf(fid,"On %d of %d, t=%.2f (%d%% Complete, %d output)",
-        prop->n,prop->nstart+prop->nsteps,prop->rtime,100*(prop->n-prop->nstart)/prop->nsteps,
+    fprintf(fid,"From %d On %d of %d, t=%.2f (%d%% Complete, %d output)",
+        prop->nstart,prop->n,prop->nstart+prop->nsteps,prop->rtime,100*(prop->n-prop->nstart)/prop->nsteps,
         1+(prop->n-prop->nstart)/prop->ntout);      
     fclose(fid);
   }

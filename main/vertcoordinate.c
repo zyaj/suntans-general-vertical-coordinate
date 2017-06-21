@@ -717,7 +717,7 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc)
     for(k=grid->Nk[i]-2;k>=grid->ctop[i];k--){
       vert->zc[i][k]=vert->zc[i][k+1]+grid->dzz[i][k+1]/2+grid->dzz[i][k]/2;
     }
-    if(prop->n==0)
+    if(prop->n==prop->nstart)
       for(k=0;k<grid->Nk[i];k++)
         vert->zcold[i][k]=vert->zc[i][k];
  

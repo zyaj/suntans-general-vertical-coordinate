@@ -1693,8 +1693,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         // phys->stmp3 is used for temporary storage
         CGSolveQ(phys->qc,phys->stmp,phys->stmp3,grid,phys,prop,myproc,numprocs,comm);
 
-
-
         // Correct the nonhydrostatic velocity field with the nonhydrostatic pressure
         // correction field phys->stmp2/qc.  This will correct phys->u so that it is now
         // the volume-conserving horizontal velocity field.  

@@ -189,7 +189,7 @@ typedef struct {
   int *sliceInd;
   int *sliceProc;
 
-  int *Ne, *Nc, Np, Nkmax, nsteps, numprocs, Nslice, noutput, ntout, maxfaces,sedinum,sediplotnum;
+  int *Ne, *Nc, Np, Nkmax, nsteps, numprocs, Nslice, noutput,nstart, ntout, maxfaces,sedinum,sediplotnum;
   int timestep, klevel, sedi, Nsize;
   float z0b,z0t;
   int marshmodel,wavemodel,Intz0B,Intz0T,fetchmodel,constantwind;
@@ -2403,7 +2403,7 @@ void DrawControls(dataT *data, int procnum, int numprocs) {
     DrawButton(controlButtons[buttonnum].butwin,controlButtons[buttonnum].string,bcolor);
   }
   
-  sprintf(str,"Step: %d of %d (max %d)",n,data->noutput,data->nsteps);
+  sprintf(str,"Step: %d of %d (max %d)",n+data->nstart,data->noutput+data->nstart,data->nsteps);
   DrawHeader(controlButtons[prevwin].butwin,controlButtons[nextwin].butwin,str);
 
   sprintf(str,"Level: %d of %d",k+1,data->Nkmax);
@@ -3280,7 +3280,7 @@ void ReadData(dataT *data, int nstep, int numprocs) {
   int i, j, ik, ik0, proc, status, ind, ind0, nf, count, nsteps, ntout, nk, turbmodel, kk, numcolumns, nosize, nosize_start, nosize_end;
   float xind, vel, ubar, vbar, dz, beta, dmax, fdepth,depthelev;
   double *dummy;
-  char string[BUFFERLENGTH];
+  char string[BUFFERLENGTH],str[BUFFERLENGTH];
   FILE *fid;
 
   GetFile(POINTSFILE,DATADIR,DATAFILE,"points",-1);
@@ -3330,6 +3330,14 @@ void ReadData(dataT *data, int nstep, int numprocs) {
     data->Nkmax=(int)GetValue(DATAFILE,"Nkmax",&status);
     nsteps=(int)GetValue(DATAFILE,"nsteps",&status);
     data->ntout = (int)GetValue(DATAFILE,"ntout",&status);
+    
+    sprintf(str,"%s/step.dat",DATADIR);
+    fid=fopen(str,"r");
+    if(fid) {
+      fscanf(fid,"%s %d",str,&data->nstart);
+      fclose(fid);
+    }
+    data->nstart/=data->ntout;
     if(data->ntout==1 || nsteps==1)
       data->nsteps=nsteps;
     else
@@ -4496,19 +4504,19 @@ void GetCAxes(REAL datamin, REAL datamax) {
 }
 
 int GetNumOutput(int ntout) {
-  int numoutput=0;
+  int numoutput=0,nstart=0;
   char str[BUFFERLENGTH], str2[BUFFERLENGTH];
   FILE *fid;
 
   sprintf(str2,"%s/step.dat",DATADIR);
   fid=fopen(str2,"r");
   if(fid) {
-    fscanf(fid,"%s %d",str,&numoutput);
+    fscanf(fid,"%s %d %s %d",str,&nstart,str2,&numoutput);
     fclose(fid);
   }
   
   if(numoutput) {
-    numoutput=(int)((float)numoutput/(float)ntout);
+    numoutput=(int)((float)(numoutput-nstart)/(float)ntout);
     if(numoutput==0)
       numoutput=1;
     if(numoutput%ntout>0)
