@@ -106,7 +106,7 @@ REAL ReturnSalinity(REAL x, REAL y, REAL z) {
   REAL a=15;
   REAL L0=381.3850*3,h1=50;
   REAL r,v_sech;
-  REAL alpha_s=0.99,delta=h1,s;
+  REAL alpha_s=0.99,delta=60,s;
   REAL rho_diff=0.01,beta=1e-3,eta;
   r=(x)/2/L0;
   v_sech=2/(exp(r)+exp(-r));
@@ -116,7 +116,7 @@ REAL ReturnSalinity(REAL x, REAL y, REAL z) {
     return -rho_diff/beta/2;
   if(z<(-delta/2+eta-h1))
     return rho_diff/beta/2;
-  s=-rho_diff/2/beta*(tanh(2*atanh(alpha_s)/delta*(z-eta+h1)));
+  s=-rho_diff/2/beta*tanh(2*atanh(alpha_s)/delta*(z-eta+h1));
   return s;
 }
 

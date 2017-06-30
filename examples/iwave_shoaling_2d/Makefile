@@ -19,7 +19,7 @@ LD = $(CC)
 CFLAGS = 
 MATHLIB = -lm
 
-EXEC = iwave_island
+EXEC = iwave_shoaling
 OBJS = 
 SUN = $(SUNTANSHOME)/sun
 INCLUDES = -I$(SUNTANSHOME) $(MPIINC) $(PARMETISINC)
@@ -44,6 +44,6 @@ clean:
 	rm -f *.o
 
 clobber: clean
-	rm -rf *~ \#*\# PI* $(EXEC) gmon.out data rundata/*~ r500 r125 r62.5* r100 r200
+	rm -rf *~ \#*\# PI* $(EXEC) gmon.out data rundata/*~ r500 r125 r62.5* r100 r200 L*
 
 sunplot: ./../../main/sunplot --datadir=r500

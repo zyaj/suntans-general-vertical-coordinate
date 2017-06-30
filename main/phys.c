@@ -1722,9 +1722,11 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         ISendRecvWData(phys->w,grid,myproc,comm);
       } else {
         // NOW vert->omega stores the omega^n+1 with nonhydrostatic pressure correction
-        LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
-        ISendRecvWData(vert->omega,grid,myproc,comm);
-
+        if(prop->vertcoord==5 && prop->nonhydrostatic)
+        {
+          LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
+          ISendRecvWData(vert->omega,grid,myproc,comm);
+        }
         // if nonhydrostatic=1, w is solved in the corrector function
         // no need to solve from omega
         // w is recalculated by omega only for hydrostatic case
@@ -1739,11 +1741,15 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           // zf is calculate in ComputeZc function
           ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
           ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
-
         }
-        // compute w from omega
-        ComputeOmega(grid, prop, phys,0, myproc);
-        ISendRecvWData(phys->w,grid,myproc,comm);
+
+        if(!prop->nonhydrostatic || prop->vertcoord==5)
+        {
+          // compute w from omega
+          ComputeOmega(grid, prop, phys,0, myproc);
+          ISendRecvWData(phys->w,grid,myproc,comm);
+        }
+        
         // update U3 with the new w
         ComputeOmega(grid, prop, phys,-1, myproc);
         ISendRecvWData(vert->U3,grid,myproc,comm);

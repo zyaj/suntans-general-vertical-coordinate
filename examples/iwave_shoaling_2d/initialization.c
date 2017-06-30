@@ -19,9 +19,17 @@ int GetDZ(REAL *dz, REAL depth, REAL localdepth, int Nkmax, int myproc) {
   REAL a0=120;
   if(dz!=NULL) {
     if(r==1){
-      for(k=0;k<Nkmax;k++)
-        dz[k]=depth/Nkmax;
-        
+      if(Nkmax<50)
+        for(k=0;k<Nkmax;k++)
+          dz[k]=depth/Nkmax;
+      else{
+        for(k=0;k<4;k++)
+          dz[k]=5.0;
+        for(k=4;k<34;k++)
+          dz[k]=3.0;
+        for(k=34;k<Nkmax;k++)
+          dz[k]=490.0/(Nkmax-34);
+      }  
     }else if(r>1 && r<=1.1) {    
       dz[0] = depth*(r-1)/(pow(r,Nkmax)-1);
       if(VERBOSE>2) printf("Minimum vertical grid spacing is %.2f\n",dz[0]);
@@ -67,7 +75,7 @@ REAL ReturnDepth(REAL x, REAL y) {
   REAL d;
   REAL dshallow=400,ddeep=2000,x_start=150000;
   d=(dshallow+ddeep)/2+(ddeep-dshallow)/2*tanh(3*(x-x_start)/100000);
-  d=2000;
+  d=600;
   return d;
 }
  
@@ -95,12 +103,18 @@ REAL ReturnFreeSurface(REAL x, REAL y, REAL d) {
  *
  */
 REAL ReturnSalinity(REAL x, REAL y, REAL z) {
-  REAL alpha_s=0.99,delta=200, a=250, h1=250,s;
-  REAL rho_diff=0.001,beta=1e-3, L1=300000;
-  REAL L_rho=15000, eta=-a*exp(-(x-L1)*(x-L1)/L_rho/L_rho);
+  REAL a=15;
+  REAL L0=381.3850*3,h1=50;
+  REAL r,v_sech;
+  REAL alpha_s=0.99,delta=60,s;
+  REAL rho_diff=0.01,beta=1e-3,eta;
+  r=(x)/2/L0;
+  v_sech=2/(exp(r)+exp(-r));
+  eta=-2*a*v_sech*v_sech;
+  //REAL L_rho=6000, eta=-a*exp(-(x-300000)*(x-3000000)/L_rho/L_rho);
   if(z>(delta/2+eta-h1))
     return -rho_diff/beta/2;
-  if(z<=(-delta/2+eta-h1))
+  if(z<(-delta/2+eta-h1))
     return rho_diff/beta/2;
   s=-rho_diff/2/beta*tanh(2*atanh(alpha_s)/delta*(z-eta+h1));
   return s;
@@ -116,7 +130,17 @@ REAL ReturnSalinity(REAL x, REAL y, REAL z) {
  *
  */
 REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) { 
-  return ReturnSalinity(x,y,z);
+  REAL a=15;
+  REAL L0=381.3850*3,h1=50;
+  REAL r,v_sech;
+  REAL alpha_s=0.99,delta=60,s;
+  REAL rho_diff=0.01,beta=1e-3,eta,zp; 
+  if(k<5)
+    return -5.0;
+  if(k>10)
+    return 5.0;
+  zp=-h1+delta/2-0.5*delta/6-(k-5)*delta/6;
+  return ReturnSalinity(300000,0,zp);
 }
 
 /*
@@ -129,7 +153,7 @@ REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) {
  *
  */
 REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth, int i, int k) {
-  return ReturnTemperature(x,y,z);
+  return ReturnTemperature(x,y,z,depth);
 }
 
 /*
@@ -305,33 +329,5 @@ REAL ReturnFluxHeight(REAL x1,REAL y1, REAL x2, REAL y2, REAL h)
  */
 REAL ReturnSubgridErosionParameterizationEpslon(REAL x, REAL y)
 {
-  return 0;
-}
-
-
-/*
- * Function: IsoReturnSalinity
- * Usage: grid->s[n]=ReturnSalinity(grid->xv[n],grid->yv[n],z);
- * ------------------------------------------------------------
- * Helper function to create an initial salinity field under iso 
- * pycnal coordinate. Used in phys.c in the 
- * InitializePhysicalVariables function.
- *
- */
-REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) {
-  return ReturnSalinity(x,y,z);
-}
-
-/*
- * Function: IsoReturnTemperature
- * Usage: grid->T[n]=ReturnTemperaturegrid->xv[n],grid->yv[n],z);
- * ------------------------------------------------------------
- * Helper function to create an initial temperature field under iso 
- * pycnal coordinate. Used in phys.c in the 
- * InitializePhysicalVariables function.
- *
- */
-REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth, int i, int k) {
-  REAL h;
   return 0;
 }

@@ -207,32 +207,24 @@ void InitBoundaryData(propT *prop, gridT *grid, int myproc, MPI_Comm comm){}
 void AllocateBoundaryData(propT *prop, gridT *grid, boundT **bound, int myproc, MPI_Comm comm){}
 void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
 {
-  int k,k1,k2,i,found=0;
-  REAL sum1=0,sum2=0,s1,s2;
+  int k,i;
+  REAL sum1=0,sum2=0,E_p=0,h1=50;
   for(i=0;i<grid->Nc;i++){
     sum1=0;
-    found=0;
-    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+    for(k=grid->ctop[i];k<grid->Nk[i]-1;k++)
     {
-      if(phys->s[i][k]<=0)
-        sum1+=grid->dzz[i][k];
-
-      if(k<grid->Nk[i]-1 && !found)
-        if(phys->s[i][k]<=0 && phys->s[i][k+1]>0)
-        {
-          found=1;
-          s1=phys->s[i][k];
-          s2=phys->s[i][k+1];
-          k1=k;
-          k2=k+1;
-        }
+      if(phys->s[i][k]<0 && phys->s[i][k+1]>=0)
+      { 
+        //sum1+=grid->dzz[i][k];
+        sum1=vert->zc[i][k+1]+phys->s[i][k+1]*(vert->zc[i][k]-vert->zc[i][k+1])/(phys->s[i][k+1]-phys->s[i][k]);   
+      }  
     }
-    if(found)
-    {
-      phys->user_def_nc[i]=250-(-s1*(grid->dzz[i][k1]+grid->dzz[i][k2])/2/(s2-s1)+sum1-grid->dzz[i][k1]/2);
-    } else
-      phys->user_def_nc[i]=250-sum1;
-    if(prop->vertcoord==2)
-      phys->user_def_nc[i]=250-sum1;
+    phys->user_def_nc[i]=h1+sum1;
+    if(prop->vertcoord==2){
+      sum1=0;
+      for(k=grid->ctop[i];k<8;k++)
+        sum1+=grid->dzz[i][k];
+      phys->user_def_nc[i]=h1-sum1;
+    }
   }
 }

@@ -74,13 +74,11 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k,Nkmax,Nk_noiso=2;  
-  REAL ratio=1.0/grid->Nkmax,a=250;
-  REAL L_rho=15000,eta,h1=250,L1=300000;
-  REAL alpha_s=0.99,delta=200;
-  REAL rho_diff=0.001,beta=1e-3,drho,rho;
-  REAL zbot,ztop;
-  drho=rho_diff/(grid->Nkmax-Nk_noiso);
-
+  REAL a=15;
+  REAL L0=381.3850*3,h1=50;
+  REAL r,v_sech;
+  REAL alpha_s=0.99,delta=60;
+  REAL rho_diff=0.01,beta=1e-3,eta;
 
   /*for(i=0;i<grid->Nc;i++)
   {
@@ -104,11 +102,18 @@ void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myp
 
   for(i=0;i<grid->Nc;i++)
   {
-    eta=-a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
-    for(k=grid->ctop[i];k<grid->Nk[i]/2;k++)   
-      grid->dzz[i][k]=(h1-eta)/grid->Nk[i]*2;
-    for(k=grid->Nk[i]/2;k<grid->Nk[i];k++)   
-      grid->dzz[i][k]=((grid->dv[i]+phys->h[i])-h1+eta)/grid->Nk[i]*2;
+    r=(grid->xv[i])/2/L0;
+    v_sech=2/(exp(r)+exp(-r));
+    eta=-2*a*v_sech*v_sech;
+    for(k=grid->ctop[i];k<5;k++)   
+      grid->dzz[i][k]=(h1-eta-delta/2)/5;
+    for(k=5;k<11;k++)   
+      grid->dzz[i][k]=(delta/6);
+    for(k=11;k<14;k++)
+      grid->dzz[i][k]=(grid->dv[i]-h1+eta-delta/2)/3;
+    //if(grid->xv[i]==50)
+      //for(k=0;k<grid->Nk[i];k++)
+        //printf("k %d dz %e\n",k,grid->dzz[i][k] );
     for(k=0;k<grid->Nk[i];k++)
       grid->dzzold[i][k]=grid->dzz[i][k];
   }
@@ -148,6 +153,13 @@ void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int m
 void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc)
 {
   int i,k,sum=0;
+  //for(k=0;k<10;k++)
+    //vert->dsigma[k]=8.5/300;
+  //for(k=10;k<30;k++)
+    //vert->dsigma[k]=1.5/300;
+  //for(k=30;k<grid->Nkmax;k++)
+    //vert->dsigma[k]=9.25/300;
+  
   for(i=0;i<grid->Nc;i++)
   {
   	for(k=grid->ctop[i];k<grid->Nk[i];k++)
