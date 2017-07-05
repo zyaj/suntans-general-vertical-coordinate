@@ -19,7 +19,7 @@ LD = $(CC)
 CFLAGS = 
 MATHLIB = -lm
 
-EXEC = iwave_island
+EXEC = iwave_overbump
 OBJS = 
 SUN = $(SUNTANSHOME)/sun
 INCLUDES = -I$(SUNTANSHOME) $(MPIINC) $(PARMETISINC)

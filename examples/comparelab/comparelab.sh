@@ -46,7 +46,7 @@ else
 fi
 
 echo Running suntans...
-$EXEC -s --datadir=$dir >&make-$dir.out&
+$EXEC -s -vv --datadir=$dir
 
 done
 

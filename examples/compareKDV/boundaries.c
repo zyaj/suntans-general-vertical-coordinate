@@ -237,12 +237,12 @@ void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
       phys->user_def_nc[i]=h1-sum1;
     }
   }
-  if(prop->n==3290)
+  /*if(prop->n==3290)
     for(i=0;i<grid->Nc;i++){
       sum1=0;
       for(k=0;k<grid->Nk[i]/2;k++)
         sum1+=grid->dzz[i][k];
       printf("%e\n", sum1);
     }
-
+  */
 }

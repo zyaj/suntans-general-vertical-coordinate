@@ -19,7 +19,7 @@ LD = $(CC)
 CFLAGS = 
 MATHLIB = -lm
 
-EXEC = iwave_island
+EXEC = compareKDV
 OBJS = 
 SUN = $(SUNTANSHOME)/sun
 INCLUDES = -I$(SUNTANSHOME) $(MPIINC) $(PARMETISINC)

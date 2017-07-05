@@ -221,6 +221,6 @@ void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
     sum1+=grid->dzz[16][k];
     sum2+=grid->dzz[0][k];
   }
-  printf("%e %e %e\n",sum1,sum2,phys->s[0][grid->Nk[0]/2]);
+  //printf("%e %e %e\n",sum1,sum2,phys->s[0][grid->Nk[0]/2]);
 
 }

@@ -218,6 +218,6 @@ void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
     if(grid->xv[i]==0.01 || grid->xv[i]==-0.01)
       sum+=phys->user_def_nc[i];
   }
-  if(prop->n%2==0) 
-    printf("%e\n", sum/2);
+  //if(prop->n%2==0) 
+    //printf("%e\n", sum/2);
 }
