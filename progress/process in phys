@@ -363,3 +363,10 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 4) add omega, omega_old, omega_old2, omega_im
 5) add dzz dzzold need to compute zc zcold done
 6) modify physio.c to adapt the restart with new generalized vertical coordinate
+
+07/24/2017
+1. add sediment model restart function
+2. output sediC for all sediment fraction
+3. output layerthickness for all sediment fraction
+4. read in all output data and setup preparation function
+5. modify physio.c to adapt the restart with sediment module

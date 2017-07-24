@@ -1654,7 +1654,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         // ComputeUC(phys->uc, phys->vc, phys,grid, myproc, prop->interp,prop->kinterp,prop->subgrid);
         ComputeSediments(grid,phys,prop,myproc,numprocs,blowup,comm);
         t_transport+=Timer()-t0;
-
       }
 
       // update subgrid->Acceff and subgrid->Acveff for non hydrostatic

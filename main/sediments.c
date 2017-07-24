@@ -28,10 +28,7 @@
 void ReadSediProperties(int myproc);
 void InitializeSediment(gridT *grid, physT *phys, propT *prop,int myproc);
 void AllocateSediment(gridT *grid, int myproc);
-void SettlingVelocity(gridT *grid, physT *phys, propT *prop, int myproc);
 void FreeSediment(gridT *grid, int myproc);
-void CalculateErosion(gridT *grid, physT *phys, propT *prop,  int myproc);
-void CalculateDeposition(gridT *grid, physT *phys, propT *prop, int myproc); //used by calculateerosion and Bedchange
 void BedChange(gridT *grid, physT *phys, propT *prop, int myproc);
 void SedimentSource(REAL **A, REAL **B, gridT *grid, physT *phys, propT *prop,int Nosize, REAL theta);
 void SedimentVerticalVelocity(gridT *grid, physT *phys,int Nosize,int symbol, int myproc);
@@ -41,6 +38,9 @@ void OpenSediFiles(propT *prop, int myproc);
 void OutputSediment(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, int blowup, MPI_Comm comm);
 void CalculateSediDiffusivity(gridT *grid, physT *phys,int Nosize,int myproc); 
 void ISendRecvSediBedData3D(REAL **celldata, gridT *grid, int nlayer, int myproc, MPI_Comm comm);
+void SettlingVelocity(gridT *grid, physT *phys, propT *prop, int myproc);
+void CalculateErosion(gridT *grid, physT *phys, propT *prop,  int myproc);
+void CalculateDeposition(gridT *grid, physT *phys, propT *prop, int myproc); //used by calculateerosion and Bedchange
 
 /*
  * Function: ReadSediProperties
@@ -1080,6 +1080,86 @@ void CalculateSedimentKb(gridT *grid, physT *phys, int myproc)
 
 }
 
+
+/*
+ * Function: ComputeSedimentsRestart
+ * Usage: ComputeSedimentsRestart(grid,phys,prop, myproc, numproc, blowup, comm);
+ * ----------------------------------------------------
+ * This function is the function to prepare for the restart run of SUNTANS
+ * It allocates and initializes all variables of sediment calculation
+ *
+*/
+void ComputeSedimentsRestart(gridT *grid, physT *phys, propT *prop, int myproc)
+{
+  int k,i;
+  // when computeSediments=2 means the suntans use restart run
+  sediments=(sedimentsT *)SunMalloc(sizeof(sedimentsT),"ComputeSedimentsRestart");
+  // allocate and initialize all the sediment variables
+  ReadSediProperties(myproc); 
+  OpenSediFiles(prop,myproc); 
+  AllocateSediment(grid,myproc);  
+  InitializeSediment(grid,phys,prop,myproc);
+  BoundarySediment(grid,phys,prop);   
+}
+
+/*
+ * Function: ComputeSedimentsBedRestart
+ * Usage: ComputeSedimentsBedRestart(grid,phys,prop, myproc, numproc, blowup, comm);
+ * ----------------------------------------------------
+ * This function is the function to prepare for the restart run of SUNTANS
+ * It calculates the preparation for bed model
+ *
+*/
+void ComputeSedimentsBedRestart(gridT *grid, physT *phys, propT *prop, int myproc)
+{
+  int k,i,j;
+
+  // set Sedic_old
+  for(j=0;j<sediments->Nsize;j++)
+    for(i=0;i<grid->Nc;i++)
+      for(k=0;k<grid->Nk[i];k++)
+        sediments->SediC_old[j][i][k]=sediments->SediC[j][i][k];
+
+  // compute bed layer model
+  // update Layertop, Thicknesslayer and Totalthickness
+  for(i=0;i<sediments->Nsize;i++)
+    for(j=0;j<grid->Nc;j++){
+      if(i==0)
+        sediments->Totalthickness[j]=0;
+      for(k=0;k<sediments->Nlayer;k++){
+          if(i==0)
+          sediments->Thicknesslayer[j][k]=0;
+        sediments->Thicknesslayer[j][k]+=sediments->Layerthickness[i][j][k];
+        if(i==sediments->Nsize-1)
+          sediments->Totalthickness[j]+=sediments->Thicknesslayer[j][k];
+      }
+      if(i==sediments->Nsize-1){
+        sediments->Layertop[j]=0;
+        while(sediments->Thicknesslayer[j][sediments->Layertop[j]]<=0 && sediments->Layertop[j]<sediments->Nlayer){
+          sediments->Layertop[j]++;
+        }
+      }
+    }
+
+  // update Toplayerratio
+  for(i=0;i<sediments->Nsize;i++)
+    for(j=0;j<grid->Nc;j++)
+      sediments->Toplayerratio[i][j]=sediments->Layerthickness[i][j][sediments->Layertop[j]]/sediments->Thicknesslayer[j][sediments->Layertop[j]];
+
+  // update Reposangle
+  for(i=0;i<sediments->Nsize;i++)
+    for(j=0;j<grid->Nc;j++)
+      sediments->Reposangle[j]+=sediments->Toplayerratio[i][j]*sediments->Anglerepos[i];          
+
+  // calculate settling velocity
+  if(sediments->WSconstant==0)
+    SettlingVelocity(grid,phys,prop,myproc);
+  // calculate initial erosion and deposition
+  CalculateErosion(grid,phys,prop,myproc);    
+  CalculateDeposition(grid,phys,prop,myproc);
+}
+
+
 /*
  * Function: ComputeSediments
  * Usage: ComputeSediments(grid,phys,prop, myproc, numproc, blowup, comm);
@@ -1093,7 +1173,8 @@ void ComputeSediments(gridT *grid, physT *phys, propT *prop, int myproc, int num
 {
   int k,i;
 
-  if(prop->n==1+prop->nstart){
+  // when computeSediments=2 means the suntans use restart run
+  if(prop->n==1+prop->nstart && prop->computeSediments!=2){
 
     sediments=(sedimentsT *)SunMalloc(sizeof(sedimentsT),"ComputeSediments");
     // allocate and initialize all the sediment variables

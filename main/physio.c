@@ -11,6 +11,7 @@
  */
 #include "physio.h"
 #include "vertcoordinate.h"
+#include "sediments.h"
 #include "merge.h"
 #include "mynetcdf.h"
 
@@ -420,6 +421,17 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
     for(i=0;i<grid->Nc;i++) 
       fwrite(grid->dzzold[i],sizeof(REAL),grid->Nk[i],prop->StoreFID); 
 
+    // add new part for sediment restart data
+    if(prop->computeSediments)
+    {
+      for(j=0;j<sediments->Nsize;j++)
+        for(i=0;i<grid->Nc;i++) 
+          fwrite(sediments->SediC[j][i],sizeof(REAL),grid->Nk[i],prop->StoreFID); 
+      for(j=0;j<sediments->Nsize;j++)
+        for(i=0;i<grid->Nc;i++) 
+          fwrite(sediments->Layerthickness[j][i],sizeof(REAL),sediments->Nlayer,prop->StoreFID);      
+    }
+
     // add new part for new vertical coordinate restart data
     if(prop->vertcoord!=1)
     {
@@ -454,7 +466,7 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
  */
 void ReadPhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MPI_Comm comm) {
 
-  int i, j;
+  int i, j,k;
 
   if(VERBOSE>1 && myproc==0) printf("Reading from rstore...\n");
   //fixdzz
@@ -558,6 +570,33 @@ void ReadPhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MP
     if(fread(grid->dzzold[i],sizeof(REAL),grid->Nk[i],prop->StartFID) != grid->Nk[i])
       printf("Error reading grid->dzzold[i]\n");
 
+  
+  // sediment transport part
+  if(prop->computeSediments==1){
+    prop->computeSediments=2;
+    printf("The computeSediments is set as 2 since the SUNTANS uses restart run.\n");
+  }
+  
+  if(prop->computeSediments==2)
+  {
+    // setup sediment part
+    ComputeSedimentsRestart(grid,phys,prop,myproc);
+    // read sediment concentration
+    for(j=0;j<sediments->Nsize;j++)
+      for(i=0;i<grid->Nc;i++) 
+        if(fread(sediments->SediC[j][i],sizeof(REAL),grid->Nk[i],prop->StartFID) != grid->Nk[i])
+          printf("Error reading sediments->SediC[i]\n");
+
+    // read layerthickness for each fraction
+    for(j=0;j<sediments->Nsize;j++)
+      for(i=0;i<grid->Nc;i++)      
+        if(fread(sediments->Layerthickness[j][i],sizeof(REAL),grid->Nc,prop->StartFID)!= sediments->Nlayer)
+          printf("Error reading sediments->Layerthickness[i]\n");
+    
+    // setup sediment bed model part
+    ComputeSedimentsBedRestart(grid,phys,prop,myproc);
+  }
+  
   if(prop->vertcoord!=1){
     // setup vertcoordinate part
     VertCoordinateBasicRestart(grid,prop,phys,myproc);

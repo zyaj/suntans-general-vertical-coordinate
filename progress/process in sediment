@@ -154,3 +154,9 @@ add support of subgrid module
 12/10/2016
 1. add sediC_old for store n-1 value for the update of Updatescalar function
 2. modify the SedimentWnewfunction to use w_im as the new Updatescalar function
+
+
+07/24/2017
+1. add Computesedimentsrestart for the restart function of suntans
+2. prop->computesediments==2 means restart, it will be automatically set as 2 when restart is turned on
+3. Two new functions: ComputeSedimentsRestart and ComputeSedimentsBedRestart for restart function

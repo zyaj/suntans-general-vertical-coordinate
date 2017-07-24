@@ -21,7 +21,7 @@ scaledepthfactor 	0 	# Depth scaling factor (to test deep grids with explicit me
 thetaramptime	        0  	# Timescale over which theta is ramped from 1 to theta (fs theta only)
 beta			1e-3	# Expansivity of salt 0.0007
 im                      1       #
-ex                      3       #
+ex                      1       #
 theta			0	# 0: fully explicit, 1: fully implicit
 thetaM                  1    #
 thetaS			0	# For scalar advection
@@ -135,7 +135,7 @@ culvert                 culvert.dat
 # General vertical coordinate data
 #
 ########################################################################
-vertcoord               2  #
+vertcoord               1  #
 zcFile                  vert_zc.dat
 dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat

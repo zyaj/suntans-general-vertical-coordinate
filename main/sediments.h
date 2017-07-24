@@ -70,6 +70,7 @@ int *Layertop,  // store the first layer number for each cell [cell]
     ParabolKappa, // whether to use parabolic tubulent diffusivity
     bedInterval, // the interval steps to update bed change
     bedComplex,  // whether consider the possibility to flush away a whole layer
+    restart, // whether use restart
     readSediment; // if 1, we will read sediment file as the IC for sediment Concentration, Now just support Nsizemax=1
 FILE *LayerthickFID, **SedimentFID, *SeditbFID, *SeditbmaxFID;
 } sedimentsT;
@@ -78,7 +79,8 @@ FILE *LayerthickFID, **SedimentFID, *SeditbFID, *SeditbmaxFID;
 sedimentsT *sediments;
 
 void ComputeSediments(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, int blowup, MPI_Comm comm);
-
+void ComputeSedimentsRestart(gridT *grid, physT *phys, propT *prop, int myproc);
+void ComputeSedimentsBedRestart(gridT *grid, physT *phys, propT *prop, int myproc);
 #endif
 
 
