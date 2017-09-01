@@ -1,0 +1,23 @@
+South China Sea example, following:
+
+Z. Zhang, O. B. Fringer, and S. R. Ramp, 2011, "Three-dimensional,
+nonhydrostatic numerical simulation of nonlinear internal wave
+generation and propagation in the South China Sea", J. Geophys. Res.,
+116, C05022.
+
+The tidal boundary condition files are in tide_bc_files with either 1 or 
+15 processors.
+
+To run with a different number of processors, the files need to be recreated
+as follows:
+
+1) run the test case with "make test" 
+2) An error will result saying that the tidecomponent.dat.* files do not 
+exist.  
+3) To create these files: 
+3a) copy the tidexy.dat.* files to mfiles/data 
+3b) run the mfiles/tides.m mfile (Note that you must run "make -C mfiles" 
+in order to unzip the necessary files there and to run the mfile.)  
+3c) copy the mfiles/data/tidecomponents.dat.* files back to rundata/.
+
+
