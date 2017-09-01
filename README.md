@@ -21,3 +21,6 @@ Parallel: MPICH2+GCC4.9+Parmetis2.0+Triangle
 
 
 ## Related publications
+
+## Note
+1. The scs3D test case is still underway. Please try other test cases first.
