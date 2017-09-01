@@ -10,11 +10,11 @@ Time-steping schemes: theta method, AI2 and AM2 for implicit scheme, AB2, AX2 an
 Spacial schemes: 2nd-order central-difference scheme, and momentum advection with TVD schemes.
 
 ## New Modules
-Hybrid grid: Any arbitrary shape of grid cell or hybrid type of grid mesh.
-Vegetation drag parameteriztion: Parameterize the drag effects on momentum conservaton due to the existence of vegetation
-Subgrid bathymetry and related parameterization: Apply subgrid bathymetry method and Newton iteration to calculate free surface, resolve high-resolution bathymetry data and related parameterization for bottom drag and sediment transport.
-Culvert (pressurized flow): Apply the iterative solver of subgrid bathymetry method and integrate the pressurized flow (culvert flow) into one simulations.
-Generalized vertical coordinate: A hybrid/grid generalized vertical coordinate for unstructured-grid, nonhydrostatic ocean modeling (The current option is z-level, sigma, isopycnal, variational moving mesh and user-defined function).
+<br>Hybrid grid: Any arbitrary shape of grid cell or hybrid type of grid mesh.</br>
+<br>Vegetation drag parameteriztion: Parameterize the drag effects on momentum conservaton due to the existence of vegetation</br>
+<br>Subgrid bathymetry and related parameterization: Apply subgrid bathymetry method and Newton iteration to calculate free surface, resolve high-resolution bathymetry data and related parameterization for bottom drag and sediment transport.</br>
+<br>Culvert (pressurized flow): Apply the iterative solver of subgrid bathymetry method and integrate the pressurized flow (culvert flow) into one simulations.</br>
+<br>Generalized vertical coordinate: A hybrid/grid generalized vertical coordinate for unstructured-grid, nonhydrostatic ocean modeling (The current option is z-level, sigma, isopycnal, variational moving mesh and user-defined function).</br>
 
 ## Installation suggestion
 Parallel: MPICH2+GCC4.9+Parmetis2.0+Triangle
