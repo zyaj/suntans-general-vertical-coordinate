@@ -1357,8 +1357,8 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   if(prop->subgrid)
   {
     SubgridBasic(grid,phys,prop,myproc,numprocs,comm);
-    UpdateSubgridFluxHeight(grid, phys, prop, myproc);
     UpdateSubgridVeff(grid, phys, prop, myproc);
+    UpdateSubgridFluxHeight(grid, phys, prop, myproc);
     UpdateSubgridAceff(grid, phys, prop, myproc);
     UpdateSubgridHeff(grid,phys,prop,myproc);
     UpdateSubgridVerticalAceff(grid, phys, prop, 0, myproc);

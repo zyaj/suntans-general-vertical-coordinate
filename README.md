@@ -24,3 +24,5 @@ Parallel: MPICH2+GCC4.9+Parmetis2.0+Triangle
 
 ## Note
 1. The scs3D test case is still underway. Please try other test cases first.
+2. The release notes can be found in the progress folder.
+

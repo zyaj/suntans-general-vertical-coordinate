@@ -893,6 +893,12 @@ void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL 
     }
 }*/
 
+/*
+ * Function: ComputeNormalVector
+ * Compute the outpointing normalized vector from cell center to each face center
+ * ----------------------------------------------------
+ * n1 is the x-component and n2 is y-component
+ */
 void ComputeNormalVector(gridT *grid, physT *phys, int myproc)
 { 
   int i,nf,ne, p1,p2;

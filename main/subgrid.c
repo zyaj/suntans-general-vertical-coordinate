@@ -1012,7 +1012,7 @@ void InterpolateSubgridDepth(gridT *grid, physT *phys, propT *prop, int myproc,i
     fclose(ifile);
     // interpolate subcell depth
     ncount=grid->Nc*(grid->maxfaces-2)*(subgrid->segN+1)*(subgrid->segN+2)/2;
-    Interp(xd,yd,d,Nd,&(subgrid->xp[0]), &(subgrid->yp[0]),&(subgrid->dp[0]),ncount,3);
+    Interp(xd,yd,d,Nd,&(subgrid->xp[0]), &(subgrid->yp[0]),&(subgrid->dp[0]),ncount,grid->maxfaces);
 
     for(nc=0;nc<grid->Nc;nc++){
       ncount=(grid->nfaces[nc]-2)*(subgrid->segN+1)*(subgrid->segN+2)/2;
