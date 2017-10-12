@@ -263,7 +263,6 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
           phys->Ep-phys->Ep0,phys->Eflux1,phys->Eflux2,phys->Eflux3,phys->Eflux4);
   }
   if(!(prop->n%prop->ntout) || prop->n==1+prop->nstart || blowup) {
-
     if(myproc==0 && VERBOSE>1) 
       if(!blowup) 
       {  

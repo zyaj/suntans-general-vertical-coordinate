@@ -1076,7 +1076,7 @@ void InterpolateSubgridDepth(gridT *grid, physT *phys, propT *prop, int myproc,i
 
     // interpolate subedge depth
     ncount=grid->Ne*(subgrid->segN+1);
-    Interp(xd,yd,d,Nd,&(subgrid->xpe[0]), &(subgrid->ype[0]),&(subgrid->dpe[0]),ncount,3);
+    Interp(xd,yd,d,Nd,&(subgrid->xpe[0]), &(subgrid->ype[0]),&(subgrid->dpe[0]),ncount,grid->maxfaces);
 
     for(n=0;n<ncount;n++)
     {

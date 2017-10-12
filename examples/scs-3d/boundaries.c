@@ -6,6 +6,9 @@
 #include "fileio.h"
 #include "tides.h"
 #include "sediments.h"
+#include "wave.h"
+#include "subgrid.h"
+#include "vertcoordinate.h"
 
 static void GetBoundaryVelocity(REAL *ub, int *forced, REAL x, REAL y, REAL t, REAL h, REAL d, REAL omega, REAL amp,
 				propT *prop, physT *phys, REAL n1, REAL n2, REAL boundary_u, REAL boundary_v);
@@ -122,6 +125,25 @@ void WindStress(gridT *grid, physT *phys, propT *prop, metT *met, int myproc) {
   }
 }
 
-void InitBoundaryData(propT *prop, gridT *grid, int myproc){}
-void AllocateBoundaryData(propT *prop, gridT *grid, boundT **bound, int myproc){}
+void InitBoundaryData(propT *prop, gridT *grid, int myproc, MPI_Comm comm){}
+void AllocateBoundaryData(propT *prop, gridT *grid, boundT **bound, int myproc, MPI_Comm comm){}
 void BoundarySediment(gridT *grid, physT *phys, propT *prop) {}
+/*
+ * Function: WindSpeedandDirection
+ * usage: calculate Wind field when Wind is not constant
+ * -------------------------------------------------
+ * calculate Uwind and Winddir
+ *
+ */
+void FetchWindSpeedandDirection(gridT *grid, propT *prop, int myproc){
+}
+
+
+/*
+ * Function: UserDefineFunction
+ * usage: Define user function to output results we want
+ * -------------------------------------------------
+ *
+ */
+
+void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc){}

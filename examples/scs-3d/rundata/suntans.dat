@@ -3,7 +3,7 @@
 #  Input file for SUNTANS.
 #
 ########################################################################
-Nkmax			100	# Number of cells in the vertical
+Nkmax			1	# Number of cells in the vertical
 stairstep		0	# 1 if stair-stepping, 0 if partial-stepping
 rstretch		1.025	# Stretching factor for vertical grid (1<=rstretch<1.1)
 CorrectVoronoi		-1	# Whether or not to correct Voronoi points

@@ -1,4 +1,4 @@
-SUNTANSHOME=/Users/fringer/suntans/main
+SUNTANSHOME=../../main
 include $(SUNTANSHOME)/Makefile.in
 
 ifneq ($(MPIHOME),)
@@ -25,6 +25,7 @@ SUN = $(SUNTANSHOME)/sun
 INCLUDES = -I$(SUNTANSHOME) $(MPIINC) $(PARMETISINC)
 DEFS = $(MPIDEF)
 NUMPROCS = 1
+
 
 all:	data
 

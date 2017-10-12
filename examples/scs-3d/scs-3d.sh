@@ -5,7 +5,7 @@
 #
 ########################################################################
 
-SUNTANSHOME=/Users/fringer/suntans/main
+SUNTANSHOME=../../main
 SUN=$SUNTANSHOME/sun
 SUNPLOT=$SUNTANSHOME/sunplot
 

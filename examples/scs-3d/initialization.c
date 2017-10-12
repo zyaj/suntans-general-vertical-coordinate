@@ -117,3 +117,142 @@ REAL ReturnHorizontalVelocity(REAL x, REAL y, REAL n1, REAL n2, REAL z) {
 
 REAL ReturnSediment(REAL x, REAL y, REAL z, int sizeno) {}
 REAL ReturnBedSedimentRatio(REAL x, REAL y, int layer, int sizeno,int nsize) {}
+REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) { 
+  return ReturnSalinity(x,y,z);
+}
+
+/*
+ * Function: IsoReturnTemperature
+ * Usage: grid->T[n]=IsoReturnTemperature(grid->xv[n],grid->yv[n],z);
+ * ------------------------------------------------------------
+ * Helper function to create an initial temperature field under iso 
+ * pycnal coordinate. Used in phys.c in the 
+ * InitializePhysicalVariables function.
+ *
+ */
+REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth, int i, int k) {
+  return ReturnTemperature(x,y,z,depth);
+}
+
+/*
+ * Function: ReturnSubgridPointDepth
+ * Usage: Subgrid->dp[n]=ReturnSubgridPointDepth(subgrid->xp[n],subgrid->yp[n]);
+ * ------------------------------------------------------------
+ * Helper function to give the depth of each point at subcell for subgrid method
+ *
+ */
+REAL ReturnSubgridPointDepth(REAL x, REAL y,REAL xv,REAL yv)
+{
+  return 0;
+}
+
+/*
+ * Function: ReturnSubgridPointeDepth
+ * Usage: Subgrid->dp[n]=ReturnSubgridPointDepth(subgrid->xp[n],subgrid->yp[n]);
+ * ------------------------------------------------------------
+ * Helper function to give the depth of each point at subedge for subgrid method
+ *
+ */
+REAL ReturnSubgridPointeDepth(REAL x, REAL y)
+{
+  return 0;
+}
+
+/*
+ * Function: ReturnSubgridErosionParameterizationEpslon
+ * Usage: Subgrid->dp[n]=ReturnSubgridPointDepth(subgrid->xp[n],subgrid->yp[n]);
+ * ------------------------------------------------------------
+ * give the value of epslon when erosion parameterization is on
+ *
+ */
+REAL ReturnSubgridErosionParameterizationEpslon(REAL x, REAL y)
+{
+  return 0;
+}
+
+
+
+/*
+ * Function: ReturnSubCellArea
+ * Usage: calculate area for each subcell for each cell 
+ * ------------------------------------------------------------
+ * Helper function to give the area of each subcell for subgrid method
+ *
+ */
+REAL ReturnSubCellArea(REAL x1, REAL y1, REAL x2, REAL y2, REAL x3, REAL y3, REAL h)
+{
+  return 0;
+}
+
+/*
+ * Function: ReturnFluxHeight
+ * Usage: calculate flux height for each subedge 
+ * ------------------------------------------------------------
+ * Helper function to give flux height of each subedge for subgrid method
+ *
+ */
+REAL ReturnFluxHeight(REAL x1,REAL y1, REAL x2, REAL y2, REAL h)
+{
+  return 0;
+}
+
+/*
+ * Function: ReturnMarshHeight
+ * Usage: hmarsh[n]=ReturnMarshHeight(grid->xe[n],grid->ye[n]);
+ * ------------------------------------------------------------
+ * Helper function to create an initial hmarsh field.  Used
+ * in marsh.c Interpmarsh
+ *
+ */
+REAL ReturnMarshHeight(REAL x, REAL y)
+{
+  return 0;
+}
+/*
+ * Function: ReturnMarshDragCoefficient
+ * Usage: CdV[n]=ReturnMarshDragCoefficient(grid->xe[n],grid->ye[n]);
+ * ------------------------------------------------------------
+ * Helper function to create an initial CdV field.  Used
+ * in marsh.c Interpmarsh
+ *
+ */
+REAL ReturnMarshDragCoefficient(REAL x, REAL y)
+{
+  return 0;
+}
+
+/*
+ * Function: ReturnCulvertTop
+ * usage: Culvertheight[i]=ReturnCulvertTop(grid->xv[i],grid->yv[i],myproc);
+ * -------------------------------------------------------------------------------
+ * provide the culvert size for culvert cell, for non culvert cell, assume Culvertheight[i]=EMPTY
+ *
+ */
+REAL ReturnCulvertTop(REAL x, REAL y, REAL d)
+{
+  return EMPTY; // for non culvert cell return EMPTY
+}
+
+/*
+ * Function: ReturnWindSpeed 
+ * Usage: Uwind[n]=ReturnWindSpeed(grid->xv[n],grid->yv[n]);
+ * ------------------------------------------------------------
+ * Helper function to create an initial wind velocity field.  Used
+ * in wave.c InitializeWave
+ *
+ */
+REAL ReturnWindSpeed(REAL x, REAL y) {
+  return 0;
+}
+
+/*
+ * Function: ReturnWindDirection
+ * Usage: Winddir[n]=ReturnWindDirection(grid->xv[n],grid->yv[n]);
+ * ------------------------------------------------------------
+ * Helper function to create an initial wind velocity field.  Used
+ * in wave.c InitializeWave
+ *
+ */
+REAL ReturnWindDirection(REAL x, REAL y) {
+  return 0;
+}

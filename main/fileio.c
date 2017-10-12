@@ -505,6 +505,10 @@ double GetDefaultValue(char *str, int *status) {
     
     return dzfmeth_DEFAULT;
  
+ } else if(!strcmp(str,"depthelev")){
+    
+    return depthelev_DEFAULT;
+ 
  } else {
     *status=0;
     return 0;

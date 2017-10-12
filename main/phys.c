@@ -1523,7 +1523,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // to the neighboring processors.
       // The predicted horizontal velocity is now in phys->u
       t0=Timer();
-  
+
       // compute U^* and h^* (Eqn 40 and Eqn 31)
       UPredictor(grid,phys,prop,myproc,numprocs,comm);
       ISendRecvCellData2D(phys->h_old,grid,myproc,comm);
@@ -1659,7 +1659,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       // update subgrid->Acceff and subgrid->Acveff for non hydrostatic
       if(prop->subgrid)
         UpdateSubgridVerticalAceff(grid, phys, prop, 1, myproc);
-
       // Compute vertical momentum and the nonhydrostatic pressure
       if(prop->nonhydrostatic && !blowup) {
 
@@ -1721,11 +1720,9 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         ISendRecvWData(phys->w,grid,myproc,comm);
       } else {
         // NOW vert->omega stores the omega^n+1 with nonhydrostatic pressure correction
-        if(prop->vertcoord==5 && prop->nonhydrostatic)
-        {
-          LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
-          ISendRecvWData(vert->omega,grid,myproc,comm);
-        }
+        LayerAveragedContinuity(vert->omega,grid,prop,phys,myproc);
+        ISendRecvWData(vert->omega,grid,myproc,comm);
+
         // if nonhydrostatic=1, w is solved in the corrector function
         // no need to solve from omega
         // w is recalculated by omega only for hydrostatic case
@@ -1740,15 +1737,11 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
           // zf is calculate in ComputeZc function
           ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
           ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc); 
-        }
 
-        if(!prop->nonhydrostatic || prop->vertcoord==5)
-        {
-          // compute w from omega
-          ComputeOmega(grid, prop, phys,0, myproc);
-          ISendRecvWData(phys->w,grid,myproc,comm);
         }
-        
+        // compute w from omega
+        ComputeOmega(grid, prop, phys,0, myproc);
+        ISendRecvWData(phys->w,grid,myproc,comm);
         // update U3 with the new w
         ComputeOmega(grid, prop, phys,-1, myproc);
         ISendRecvWData(vert->U3,grid,myproc,comm);

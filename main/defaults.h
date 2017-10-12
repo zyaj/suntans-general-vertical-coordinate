@@ -297,3 +297,9 @@ const int vertdzmin_DEFAULT=1e-3;
   default upwind
 */
 const int dzfmeth_DEFAULT=1;
+
+/* depthelev
+  add constand depth for all grid cell
+  default value is set as 0
+*/
+const REAL depthelev_DEFAULT=0.0;

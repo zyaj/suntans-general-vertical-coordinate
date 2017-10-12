@@ -95,7 +95,6 @@ void SetTideComponents(gridT *grid, int myproc) {
     fread(&numtides,sizeof(int),1,ifid);
     // Read in number of edges in file
     fread(&numboundaryedges,sizeof(int),1,ifid);
-
     if(numboundaryedges!=grid->edgedist[3]-grid->edgedist[2]+grid->celldist[2]-grid->celldist[1]) {
       printf("Error reading %s.  Number of edges does not match current run!\n",istr);
 
