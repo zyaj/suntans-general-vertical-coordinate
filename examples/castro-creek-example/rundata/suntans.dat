@@ -1,0 +1,322 @@
+########################################################################
+#
+#  Input file for SUNTANS.
+#
+########################################################################
+mergeArrays             1      #
+Nkmax		        35	# Number of cells in the vertical
+maxFaces                4       # Max Number of edges for one element
+outvwgt                 0      #
+stairstep		0	# 1 if stair-stepping, 0 if partial-stepping
+rstretch		1.1	# Stretching factor for vertical grid (1<=rstretch<1.1)
+CorrectVoronoi		-1	# Whether or not to correct Voronoi points
+VoronoiRatio		85	# Adjust the voronoi points by this amount if 1 then = centroid.
+vertgridcorrect 	0 	# Correct vertical grid if Nkmax is too small
+IntDepth 	        2	# 1 if interpdepth, 0 otherwise
+kinterp                 0       # use O.Klepsova to calculate cellcenter velocity only works for perot interpolation 
+interp                  0       #
+dzsmall			0.01	# Smallest grid spacing ratio before correction
+depthelev               0       # increase the depth elevation, will decrease a same value in free surface
+scaledepth 		0 	# Scale the depth by scalefactor
+scaledepthfactor 	0 	# Depth scaling factor (to test deep grids with explicit methods)
+thetaramptime	        0  	# Timescale over which theta is ramped from 1 to theta (fs theta only)
+beta			0.0001	# Expansivity of salt 0.0007 0.001 for sum
+theta			0.55	# 0: fully explicit, 1: fully implicit
+thetaS			0.55	# For scalar advection
+thetaB			0.55	# For scalar advection
+kappa_s                 0.001       # Vertical mass diffusivity
+kappa_sH                0       # Horizontal mass diffusivity
+gamma 			0 	# 0.0001Coefficient of expansivity of temperature.
+kappa_T                 1e-4    # Vertical thermal diffusivity
+kappa_TH                1e-4    # Horizontal thermal diffusivity
+nu 			1e-6  	# Laminar viscosity of water (m^2 s^-1)
+nu_H 			0	# Horizontal laminar viscosity of water (m^2 s^-1)
+tau_T			0 	# Wind shear stress
+z0T	                0.0 	# Top roughness
+z0B	                0.00001	# Bottom roughness
+Intz0T                  0       # 2 read cellcenter data, 1 interpCdT, 0 otherwise
+Intz0B                  0       # 2 read cellcenter data, 1 interpCdB, 0 otherwise
+CdT	                0.0 	# Drag coefficient at surface
+CdB	                0.0	# Drag coefficient at bottom
+CdW			0.0	# Drag coefficient at sidewalls
+wavemodel               1      # if 1 consider wave model, 0 otherwise   
+marshmodel              1      # if 1 consider marsh effects, 0 otherwise
+culvertmodel            1       # if 1 consider culvert model, 0 otherwise
+computeSediments        1       # if 1 consider sediment model 0 otherwise
+turbmodel		1	# Turbulence model (0 for none, 1 for MY25)
+dt 			1	# Time step
+Cmax 			1000  	# Maximum permissible Courant number
+nsteps 			1728000  #1728000 # Number of steps
+ntout   		14400	# How often to output data
+ntprog   		5 	# How often to report progress (in %)
+ntconserve 		1	# How often to output conserved data
+nonhydrostatic		0	# 0 = hydrostatic, 1 = nonhydrostatic
+cgsolver		1	# 0 = GS, 1 = CG
+maxiters		1000	# Maximum number of CG iterations
+qmaxiters		2000	# Maximum number of CG iterations for nonhydrostatic pressure
+qprecond		2	# 1 = preconditioned, 0 = not preconditioned
+epsilon			1e-10 	# Tolerance for CG convergence
+qepsilon		1e-5	# Tolerance for CG convergence for nonhydrostatic pressure
+resnorm			0	# Normalized or non-normalized residual
+relax			1	# Relaxation parameter for GS solver.	
+amp 			1	# amplitude
+omega 			1e-3	# frequency
+flux 			0	# flux
+timescale		0	# timescale for open boundary condition
+volcheck		0	# Check for volume conservation
+masscheck		0	# Check for mass conservation
+nonlinear		0	# No momentum advection: 0, first-order upwind: 1, Central-differencing: 2
+newcells		0	# 1 if adjust momentum in surface cells as the volume changes, 0 otherwise
+wetdry			1       # 1 if wetting and drying, 0 otherwise
+Coriolis_f              0	# Coriolis frequency f=2*Omega*sin(phi)
+sponge_distance	        0 	# Decay distance scale for sponge layer
+sponge_decay	        0	# Decay time scale for sponge layer
+readSalinity		0	# Whether or not to read initial salinity profile from file InitSalinityFile
+readTemperature		0	# Whether or not to read initial temperature profile from file InitTemperatureFile
+########################################################################
+#
+#  Grid Files
+#
+########################################################################
+pslg   twod.dat 	# Planar straight line graph (input)
+points points.dat	# Vertices file (input)
+edges edges.dat		# Edge file (input)
+cells cells.dat		# Cell centered file (input)
+depth depth.dat		# Depth file for interpolation (if INTERPDEPTH=1) (input)
+nodes nodes.dat   # Node topology information (output)
+celldata celldata.dat	# Cell-centered output (output)
+edgedata edgedata.dat	# Edge-centered output (output)
+vertspace vertspace.dat	# Vertical grid spacing (output)
+topology topology.dat	# Grid topology data
+vwgt  vwgt.dat      # 
+########################################################################
+#
+#  Output Data Files
+#
+########################################################################
+FreeSurfaceFile   	fs.dat
+z0TFile                 z0t.dat
+z0BFile                 z0b.dat
+HorizontalVelocityFile 	u.dat
+VerticalVelocityFile 	w.dat
+SalinityFile 		s.dat
+BGSalinityFile 		s0.dat
+TemperatureFile		T.dat
+PressureFile		q.dat
+VerticalGridFile 	g.dat
+ConserveFile		e.dat
+ProgressFile	        step.dat
+StoreFile		store.dat
+StartFile		start.dat
+EddyViscosityFile	nut.dat
+ScalarDiffusivityFile	kappat.dat
+ProfileVariables	husbtd          # Output u, s, s0, and h
+DataLocations	dataxy.dat      # dataxy.dat contains column x-y data
+ProfileDataFile	profdata.dat    # Information about profiles is in profdata.dat
+ntoutProfs		3600      # Output profile data every 10 time steps
+NkmaxProfs		32      # Only output the top 10 z-levels
+numInterpPoints  	1       # Output data at the three nearest neighbors to each input point.
+########################################################################
+#
+# Input Data Files
+#
+########################################################################
+InitSalinityFile	sinit.dat
+InitTemperatureFile	Tinit.dat
+Inputz0BFile            z0bint.dat
+Inputz0TFile            z0tint.dat
+sediment                sedi.dat
+marsh                   marsh.dat
+wave                    wave.dat
+culvert                 culvert.dat
+########################################################################
+#
+# File: sedi.dat
+# Author: Yun Zhang
+# Institution: Stanford University
+# --------------------------------
+# Input file for SUNTANS sediment module. Note that there can be no empty lines in
+# this file!
+# Only 3 kinds of sediment and 5 layers properties are given
+# If there is more needed, you have to use SetSediment function
+########################################################################
+Nlayer			1	# Number of bed layers (MAX = 5)
+Nsize                   1       # Number of sediment fractions (Max = 3)
+SETsediment             0       # When Nlayer>5 or Nsize>3, SETsediment=1 to use SetSediment 
+WSconstant              1       # if 1, ws for sediment = ws0
+readSediment            0       # if 1, read sediment concentration data as IC. only work with Nsize==1
+bedInterval             3600    # the interval steps to update bed change if bedInterval<0, layer change will be ignored
+bedComplex              0       # whether to consider the possibility to flush away a whole layer
+ParabolKappa            0       # whether to use parabolic tubulent diffusivity
+Ds50                    0.00008 #1
+Ds1                   0.000008    # sediment diameter for fraction No.1 (m)
+Ds2                   0.0002    # sediment diameter for fraction No.2                   
+Ds3                   0.0002    # sediment diameter for fraction No.3
+Ws01                  0.000057     # constant settling velocity for fraction No.1 (m/s)
+Ws02                  0.0002     # constant settling velocity for fraction No.2
+Ws03                  0.002    # constant settling velocity for fraction No.3
+Angle1                0.0005        # angle of repose for fraction No.1 (degree)
+Angle2                45        # angle of repose for fraction No.2 (degree)
+Angle3                45        # angle of repose for fraction No.3 (degree)
+Gsedi1                2.65      # relative density for fraction No.1
+Gsedi2                2.65      # relative density for fraction No.2
+Gsedi3                2.65      # relative density for fraction No.3
+Prt1                    1       # Prandtl Number for fraction No.1
+Prt2                    1       # Prandtl Number for fraction No.2
+Prt3                    1       # Prandtl Number for fraction No.3
+Consolid1             0.0002    # Consolidation rate (g/m^2/s) for layer No.1
+Consolid2             0.0002    # Consolidation rate (g/m^2/s) for layer No.2
+Consolid3             0.0001    # Consolidation rate (g/m^2/s) for layer No.3
+Consolid4             0.0001    # Consolidation rate (g/m^2/s) for layer No.4
+Consolid5             0.00005    # Consolidation rate (g/m^2/s) for layer No.5
+E11                   0.1     # Fraction No.1 Basic Erosion Rate Constant (g/m^2/s) for layer No.1
+E12                   0.1     # Fraction No.2 Basic Erosion Rate Constant (g/m^2/s) for layer No.1
+E13                   0.1     # Fraction No.3 Basic Erosion Rate Constant (g/m^2/s) for layer No.1
+E21                   0.01     # Fraction No.1 Basic Erosion Rate Constant (g/m^2/s) for layer No.2
+E22                   0.01     # Fraction No.2 Basic Erosion Rate Constant (g/m^2/s) for layer No.2
+E23                   0.01     # Fraction No.3 Basic Erosion Rate Constant (g/m^2/s) for layer No.2
+E31                   0.001     # Fraction No.1 Basic Erosion Rate Constant (g/m^2/s) for layer No.3
+E32                   0.001     # Fraction No.2 Basic Erosion Rate Constant (g/m^2/s) for layer No.3
+E33                   0.001     # Fraction No.3 Basic Erosion Rate Constant (g/m^2/s) for layer No.3
+Taue11                 0.1      # Fraction No.1 Erosion Critical Shear Stress (N/m^2) for layer No.1
+Taue12                 0.05      # Fraction No.2 Erosion Critical Shear Stress (N/m^2) for layer No.1
+Taue13                 0.05      # Fraction No.3 Erosion Critical Shear Stress (N/m^2) for layer No.1
+Taue21                 0.9      # Fraction No.1 Erosion Critical Shear Stress (N/m^2) for layer No.2
+Taue22                 0.9      # Fraction No.2 Erosion Critical Shear Stress (N/m^2) for layer No.2
+Taue23                 0.9      # Fraction No.3 Erosion Critical Shear Stress (N/m^2) for layer No.2
+Taue31                 1.4      # Fraction No.1 Erosion Critical Shear Stress (N/m^2) for layer No.3
+Taue32                 1.4      # Fraction No.2 Erosion Critical Shear Stress (N/m^2) for layer No.3
+Taue33                 1.4      # Fraction No.3 Erosion Critical Shear Stress (N/m^2) for layer No.3
+Taud11                 0.1       # Fraction No.1 Deposition Critical Shear Stress (N/m^2) for layer No.1
+Taud12                 0.1       # Fraction No.2 Deposition Critical Shear Stress (N/m^2) for layer No.1
+Taud13                 0.1       # Fraction No.3 Deposition Critical Shear Stress (N/m^2) for layer No.1
+Taud21                 0.1       # Fraction No.1 Deposition Critical Shear Stress (N/m^2) for layer No.2
+Taud22                 0.1       # Fraction No.2 Deposition Critical Shear Stress (N/m^2) for layer No.2
+Taud23                 0.1       # Fraction No.3 Deposition Critical Shear Stress (N/m^2) for layer No.2
+Taud31                 0.1       # Fraction No.1 Deposition Critical Shear Stress (N/m^2) for layer No.3
+Taud32                 0.1       # Fraction No.2 Deposition Critical Shear Stress (N/m^2) for layer No.3
+Taud33                 0.1       # Fraction No.3 Deposition Critical Shear Stress (N/m^2) for layer No.3
+Drydensity11           530000    # Fraction No.1 Dry density (g/m^3) for layer No.1
+Drydensity12           530000    # Fraction No.2 Dry density (g/m^3) for layer No.1
+Drydensity13           530000    # Fraction No.3 Dry density (g/m^3) for layer No.1
+Drydensity21           900000    # Fraction No.1 Dry density (g/m^3) for layer No.2
+Drydensity22           900000    # Fraction No.2 Dry density (g/m^3) for layer No.2
+Drydensity23           900000    # Fraction No.3 Dry density (g/m^3) for layer No.2
+Drydensity31           900000    # Fraction No.1 Dry density (g/m^3) for layer No.3
+Drydensity32           900000    # Fraction No.2 Dry density (g/m^3) for layer No.3
+Drydensity33           900000    # Fraction No.3 Dry density (g/m^3) for layer No.3
+Thickness1            10       # Thickness (m) for layer No.1
+Thickness2            5.0       # Thickness (m) for layer No.2
+Thickness3            5.0      # Thickness (m) for layer No.3
+Thickness4            5.0       # Thickness (m) for layer No.4
+Thickness5            5.0       # Thickness (m) for layer No.5
+softhard1             1         # 0 soft or hard for layer No.1 to decide how to calculate erosion
+softhard2             1         # 0 soft or hard for layer No.2 to decide how to calculate erosion
+softhard3             1         # 0 soft or hard for layer No.3 to decide how to calculate erosion
+softhard4             1         # 0 soft or hard for layer No.4 to decide how to calculate erosion
+softhard5             1         # 0 soft or hard for layer No.5 to decide how to calculate erosion
+Bedmudratio1          0.8       # Bed mud ratio for layer No.1
+Bedmudratio2          0.7       # Bed mud ratio for layer No.2
+Bedmudratio3          0.6       # Bed mud ratio for layer No.3
+Bedmudratio4          0.5       # Bed mud ratio for layer No.4
+Bedmudratio5          0.5       # Bed mud ratio for layer No.5  (not used now)
+Chind                 100000   # Concentration (in volumetric fraction) criterion for hindered settling velocity
+Cfloc                 10000    # Concentration (in volumetric fraction) criterion for flocculated settling velcoity
+kbed                   0.0001    # Constant coefficient for settling velocity as a function of conc.
+SSCvprof		1	#
+########################################################################
+#
+# Input Data Files
+#
+########################################################################
+InputSedimentFile            sediint.dat
+########################################################################
+#
+# Output Data Files
+#
+########################################################################
+Sediment1File           sedi1.dat
+Sediment2File           sedi2.dat
+Sediment3File           sedi3.dat
+Sediment4File           sedi4.dat
+Sediment5File           sedi5.dat
+LayerFile               sedilayer.dat
+tbFile                  celltb.dat
+tbmaxFile               celltbmax.dat
+########################################################################
+#
+# File: wave.dat
+# Author: Yun Zhang
+# Institution: Stanford University
+# --------------------------------
+# Input file for SUNTANS wave module. Note that there can be no empty lines in
+# this file!
+# including simple Fetch model and complex model(not finished)
+# only work when prop->wavemodel==1
+########################################################################
+fetchmodel              1              # whether to use simple fetchmodel to calculate hwsig and twsig
+constantwind            1              # whether wind is constant or not, 0 means need to calculate wind every time step, 1 means constant for all domain, 2 means constant but different in domain need to use initializewindfield function, 3 means constant you should have the wind input file
+uwind                   10             # constant wind speed when constantwind==1
+winddir                 0.7854            # constant wind direction when constantwind==1 1.5708
+########################################################################
+#
+# Input Data Files
+#
+########################################################################
+InitWindFile             windint.dat
+InputCoarseDomain        coarsedomain.dat 
+########################################################################
+#
+# Output Data Files
+#
+########################################################################
+HwsigFile           hwsig.dat
+TwsigFile           twsig.dat
+FetchFile           fetch.dat
+########################################################################
+#
+# File: marsh.dat
+# Author: Yun Zhang
+# Institution: Stanford University
+# --------------------------------
+# Input file for SUNTANS marsh module. Note that there can be no empty lines in
+# this file!
+########################################################################
+CdV                     1.5   # Drag coefficient due to marsh 
+IntCdV                  1       # 1 if interpCdV, 2 read file directly, 0 otherwise
+Inthmarsh               1       # 1 if interpCdV, 2 read file directly, 0 otherwise
+constantcdv             0       #
+constantmarsh          0       # 
+hmarsh                  1       # the height of marsh or vegetation in the domain
+Na                      20      #
+alphav                  1.57    # vegetationshapecoefficientsVv/Acv/rv,cylinder 1.57,rectangular 1.2~1.7
+rv                      0.01    # vegetation shape radius, r=sqrt(Av/pi)
+Dv                      0.4     # cross-section area of vegetation in the direction of flow/volume of total, about the density of vegetation
+########################################################################
+#
+#  Input Data Files
+#
+########################################################################
+InputCdVFile            cdvint.dat
+InputhmarshFile         hmarshint.dat
+########################################################################
+#
+#  Output Data Files
+#
+########################################################################
+CdVFile                 cdv.dat
+hmarshFile              hmarsh.dat
+########################################################################
+#
+# File: culvert.dat
+# Author: Yun Zhang
+# Institution: Stanford University
+# --------------------------------
+# Input file for SUNTANS culvert module. Note that there can be no empty lines in
+# this file!
+# only work when prop->culvertmodel==1
+########################################################################
+constantculvert      0      # whether there is constant culvert everywhere or different culvert height
+cdculvert            0.0025    # culvert friction coefficient
+culvertheight        1      # the culvert height 
+culverteps          0.001   #

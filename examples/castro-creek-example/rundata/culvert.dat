@@ -1,0 +1,13 @@
+########################################################################
+#
+# File: culvert.dat
+# Author: Yun Zhang
+# Institution: Stanford University
+# --------------------------------
+# Input file for SUNTANS culvert module. Note that there can be no empty lines in
+# this file!
+# only work when prop->culvertmodel==1
+########################################################################
+constantculvert      0      # whether there is constant culvert everywhere or different culvert height
+cdculvert            0.5    # culvert friction coefficient
+culvertheight        1      # the culvert height 
