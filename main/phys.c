@@ -3352,7 +3352,7 @@ static void CGSolveQ(REAL **q, REAL **src, REAL **c, gridT *grid, physT *phys, p
  */
 static void EddyViscosity(gridT *grid, physT *phys, propT *prop, REAL **wnew, MPI_Comm comm, int myproc)
 {
-  if(prop->turbmodel==1) 
+  if(prop->turbmodel==1)
     my25(grid,phys,prop,wnew,phys->qT,phys->qT_old,phys->lT,phys->lT_old,phys->Cn_q,phys->Cn_l,phys->nu_tv,phys->kappa_tv,comm,myproc);
 }
 
@@ -3493,11 +3493,12 @@ static void UPredictor(gridT *grid, physT *phys,
 
       // Vertical eddy-viscosity interpolated to faces since it is stored
       // at cell-centers.
-      for(k=grid->etop[j]+1;k<grid->Nke[j];k++) 
+      for(k=grid->etop[j]+1;k<grid->Nke[j];k++){ 
         c[k]=0.25*(phys->nu_tv[nc1][k-1]+phys->nu_tv[nc2][k-1]+
             phys->nu_tv[nc1][k]+phys->nu_tv[nc2][k]+
             prop->laxWendroff_Vertical*(phys->nu_lax[nc1][k-1]+phys->nu_lax[nc2][k-1]+
               phys->nu_lax[nc1][k]+phys->nu_lax[nc2][k]));
+      }
 
       // Coefficients for the viscous terms.  Face heights are taken as
       // the average of the face heights on either side of the face (not upwinded).
