@@ -1,8 +1,0 @@
-1. for velocity profile:
-Nk=100, D=16, nstep=2000, dt=0.05, nout=2
-t=T/4 is nstep=82 for hydro nstep=132 for nonhydro
-
-2. for dispersion relation:
-L=10, 10:10:100;
-D=16, all 10
-Nstep=20000, dt=0.05, nout=200;
