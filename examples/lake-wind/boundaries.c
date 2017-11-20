@@ -146,7 +146,7 @@ void WindStress(gridT *grid, physT *phys, propT *prop, metT *met, int myproc) {
   REAL u_wind=1,Cd=0.0013,rho_air=1.22;
   for(jptr=grid->edgedist[0];jptr<grid->edgedist[5];jptr++) {
     j = grid->edgep[jptr];
-    phys->tau_T[j]=Cd*rho_air*fabs(u_wind-phys->u[j][grid->etop[j]])*(u_wind-phys->u[j][grid->etop[j]]);
+    phys->tau_T[j]=Cd*rho_air/1000*fabs(u_wind-phys->u[j][grid->etop[j]])*(u_wind-phys->u[j][grid->etop[j]]);
     //printf("n %d j %d u %e tau %e\n",prop->n,j,phys->u[j][grid->etop[j]],phys->tau_T[j] );
     phys->tau_B[j]=0;
   }
