@@ -1454,14 +1454,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         prop->theta=(1-exp(-prop->rtime/prop->thetaramptime))*prop->theta0+
           exp(-prop->rtime/prop->thetaramptime);
 
-      // Store the old velocity and scalar fields
-      // Store the old values of s, u, and w into stmp3, u_old, and w_old
-      StoreVariables(grid,phys);
-      
-      // store old omega for the new vertical coordinate
-      if(prop->vertcoord!=1)
-        StoreVertVariables(grid,phys);
-
       // Compute the horizontal source term phys->utmp which contains the explicit part
       // or the right hand side of the free-surface equation. 
       // begin the timer
@@ -1470,7 +1462,15 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
       if(prop->vertcoord!=1 && prop->vertcoord!=5)
         TvdFluxHeight(grid, phys, prop, vert->dzfmeth,comm, myproc);
       SetFluxHeight(grid,phys,prop);
+
+      // Store the old velocity and scalar fields
+      // Store the old values of s, u, and w into stmp3, u_old, and w_old
+      StoreVariables(grid,phys);
       
+      // store old omega for the new vertical coordinate
+      if(prop->vertcoord!=1)
+        StoreVertVariables(grid,phys);
+
       // find the bottom layer number which zfb>Bufferheight only works for new vertical coordinate
       if(prop->vertcoord!=1)
         FindBottomLayer(grid,prop,phys,myproc);
@@ -5984,6 +5984,7 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
     for(k=grid->etop[j];k<grid->Nke[j];k++)
       grid->hf[j]+=grid->dzf[j][k];
   } 
+
   //set minimum dzz
   if(grid->smoothbot && prop->vertcoord==1)
     for(i=0;i<grid->Nc;i++)
