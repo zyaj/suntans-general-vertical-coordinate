@@ -371,9 +371,10 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 4. read in all output data and setup preparation function
 5. modify physio.c to adapt the restart with sediment module
 
-
 10/24/2017
 1. modify the way to calculate relative vorticity and using the method to calculate the average of node vorticity not done
+1.1 remove all djdt method done
+1.2 change wdwdz as implicit method done
 
 2. modify the way to calculate the variational moving mesh, use central differencing in vertical discretization. done
 
