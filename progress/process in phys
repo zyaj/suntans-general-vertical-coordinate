@@ -375,4 +375,7 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 10/24/2017
 1. modify the way to calculate relative vorticity and using the method to calculate the average of node vorticity not done
 
-2. modify the way to calculate the variational moving mesh, use central differencing in vertical discretization. not done
+2. modify the way to calculate the variational moving mesh, use central differencing in vertical discretization. done
+
+12/13/2017
+1. update the dzf with the modified TVD scheme, done

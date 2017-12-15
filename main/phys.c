@@ -5945,9 +5945,9 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
       grid->dzf[j][k]=UpWind(phys->u[j][k],grid->dzz[nc1][k],grid->dzz[nc2][k]);
       if(prop->vertcoord!=1 && prop->vertcoord!=5){
         if(grid->mark[j]==0)
-          if(phys->u[j][k]>0)
+          if(phys->u[j][k]>0 && grid->dzz[nc2]>grid->dzz[nc1])
             grid->dzf[j][k]=phys->SfHp[j][k];
-          else
+          if(phys->u[j][k]<=0 && grid->dzz[nc1]>grid->dzz[nc2])
             grid->dzf[j][k]=phys->SfHm[j][k];
       }
     }
@@ -5956,10 +5956,9 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
     /* This works with Wet/dry but not with cylinder case...*/
     if(grid->etop[j]==k) {
         grid->dzf[j][k]=Max(0,UpWind(phys->u[j][k],phys->h[nc1],phys->h[nc2])+Min(grid->dv[nc1],grid->dv[nc2]));
-      // added part
-     if(grid->mark[j]==2 && grid->dzf[j][k]<=0.01)
-        grid->dzf[j][k]=0.01;
-        
+        // added part
+        if(grid->mark[j]==2 && grid->dzf[j][k]<=0.01)
+          grid->dzf[j][k]=0.01;
     }
     else{
       // this only works for the stair-like z-level coordinate

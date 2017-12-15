@@ -360,7 +360,7 @@ void VariationalVertCoordinateAverageMethod(gridT *grid, propT *prop, physT *phy
  * Function: VariationalVertCoordinate
  * use the variational moving mesh approach (Tang & Tang, 2003) and (Koltakov & Fringer, 2013)
  * ----------------------------------------------------
- * here not solve full elliptic equation but averaging in horizontal equation
+ * solve full elliptic equation for the idealized grid
  */
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
@@ -396,22 +396,22 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
            def1=sqrt(pow(grid->xv[i]-grid->xe[ne],2)+pow(grid->yv[i]-grid->ye[ne],2));
            def2=grid->dg[ne]-def1;
            for(k=grid->ctop[i]+1;k<grid->Nk[i];k++){
-             tmp=def2*0.5*(grid->dzzold[i][k]+grid->dzzold[i][k-1])+
-               def1*0.5*(grid->dzzold[neigh][k]+grid->dzzold[neigh][k-1]);
-             tmp/=grid->dg[ne];
+             //tmp=def2*0.5*(grid->dzzold[i][k]+grid->dzzold[i][k-1])+
+             //  def1*0.5*(grid->dzzold[neigh][k]+grid->dzzold[neigh][k-1]);
+             //tmp/=grid->dg[ne];
              b[k-grid->ctop[i]]+=0.5*(grid->dzzold[i][k]+grid->dzzold[i][k-1])*
-               tmp*grid->df[ne]/grid->Ac[i]*vert->Me_l[ne][k]/grid->dg[ne];
+               grid->df[ne]/grid->Ac[i]*vert->Me_l[ne][k]/grid->dg[ne];
              d[k-grid->ctop[i]]+=0.5*(grid->dzzold[i][k]+grid->dzzold[i][k-1])*
-               tmp*grid->df[ne]/grid->Ac[i]*vert->Me_l[ne][k]*(vert->zl[neigh][k])/grid->dg[ne];         
+               grid->df[ne]/grid->Ac[i]*vert->Me_l[ne][k]*(vert->zl[neigh][k])/grid->dg[ne];         
            }
          }         
        }
 
        for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
        {
-         b[k-grid->ctop[i]]+=(vert->Mc[i][k-1]+vert->Mc[i][k]);
-         a[k-grid->ctop[i]]=-vert->Mc[i][k-1];
-         c[k-grid->ctop[i]]=-vert->Mc[i][k];
+         b[k-grid->ctop[i]]+=(vert->Mc[i][k-1]/grid->dzzold[i][k-1]+vert->Mc[i][k]/grid->dzzold[i][k]);
+         a[k-grid->ctop[i]]=-vert->Mc[i][k-1]/grid->dzzold[i][k-1];
+         c[k-grid->ctop[i]]=-vert->Mc[i][k]/grid->dzzold[i][k];
          if(fabs(a[k-grid->ctop[i]])>max)
           max=fabs(a[k-grid->ctop[i]]);
          if(fabs(c[k-grid->ctop[i]])>max);
