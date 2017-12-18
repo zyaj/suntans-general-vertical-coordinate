@@ -139,7 +139,7 @@ dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat
 modifydzf               0 #
 dJdtmeth                1 #
-dzfmeth 		1 #
+dzfmeth 		4 #
 ########################################################################
 #
 # Subgrid data

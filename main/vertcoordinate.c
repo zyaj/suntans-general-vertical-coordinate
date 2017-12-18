@@ -29,7 +29,7 @@
  *
  */
 void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
-{ 
+{
   int i,j,k;
 
   // velocity field at layer center for each edge

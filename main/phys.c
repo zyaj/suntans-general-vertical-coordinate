@@ -2089,8 +2089,12 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
       if(prop->thetaM<0 && grid->Nke[j]-grid->etop[j]>1)
       {
         for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++){
-          phys->Cn_U[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])/2*
-                (def1+def2)*(phys->u[j][k-1]-phys->u[j][k+1]);
+          if(vert->omegaf[j][k]>0)
+            phys->Cn_U[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*
+                (def1+def2)*(phys->u[j][k]-phys->u[j][k+1]);
+          else
+            phys->Cn_U[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*
+                (def1+def2)*(phys->u[j][k-1]-phys->u[j][k+1]);            
         }
         // top and bottom layers
         k=grid->etop[j];
@@ -2841,7 +2845,10 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
                 InterpToLayerTopFace(i,k,phys->vc,grid)*InterpToLayerTopFace(i,k,vert->dwdy,grid));
         // add explicit vertical advection
         if(prop->thetaM<0)
-          phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k-1]-phys->w[i][k+1])/(grid->dzz[i][k]+grid->dzz[i][k-1]);
+          if(vert->omega_old[i][k]>0)
+            phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k]-phys->w[i][k+1])/(grid->dzz[i][k]);
+          else
+            phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k-1]-phys->w[i][k])/(grid->dzz[i][k-1]);
       }
 
       k=grid->ctop[i];
@@ -2918,11 +2925,18 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
       {
         for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
         {
-          phys->wtmp[i][k]-=prop->dt*vert->omega_old[i][k]*(fac2*phys->w_old[i][k-1]+fac3*phys->w_old2[i][k-1]-
-                fac2*phys->w_old[i][k+1]-fac3*phys->w_old2[i][k+1])/(grid->dzz[i][k]+grid->dzz[i][k-1]);
-          a[k]+=prop->dt*fac1*vert->omega_old[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1]);
-          b[k]-=prop->dt*fac1*vert->omega_old[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1]);    
-
+          if(vert->omega_old[i][k]>0)
+          {
+            phys->wtmp[i][k]-=prop->dt*vert->omega_old[i][k]*(fac2*phys->w_old[i][k]+fac3*phys->w_old2[i][k]-
+                fac2*phys->w_old[i][k+1]-fac3*phys->w_old2[i][k+1])/(grid->dzz[i][k]);
+            c[k]+=prop->dt*fac1*vert->omega_old[i][k]/(grid->dzz[i][k]);
+            b[k]-=prop->dt*fac1*vert->omega_old[i][k]/(grid->dzz[i][k]);  
+          } else {
+            phys->wtmp[i][k]-=prop->dt*vert->omega_old[i][k]*(fac2*phys->w_old[i][k-1]+fac3*phys->w_old2[i][k-1]-
+                fac2*phys->w_old[i][k]-fac3*phys->w_old2[i][k])/(grid->dzz[i][k-1]);
+            a[k]+=prop->dt*fac1*vert->omega_old[i][k]/(grid->dzz[i][k-1]);
+            c[k]-=prop->dt*fac1*vert->omega_old[i][k]/(grid->dzz[i][k-1]);              
+          }  
         }
         k=grid->ctop[i];
         phys->wtmp[i][k]-=prop->dt*vert->omega_old[i][k]*(fac2*phys->w_old[i][k]+fac3*phys->w_old2[i][k]-
@@ -3560,9 +3574,14 @@ static void UPredictor(gridT *grid, physT *phys,
       if(prop->vertcoord!=1 && prop->nonlinear && prop->thetaM>=0 && grid->Nke[j]-grid->etop[j]>1)
       {
         // conservative form part
-        for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++)
-          phys->utmp[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2)/2*
-                ((fac2*phys->u_old[j][k-1]+fac3*phys->u_old2[j][k-1])-(fac2*phys->u_old[j][k+1]+fac3*phys->u_old2[j][k+1]));
+        for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++){
+          if(vert->omegaf[j][k]>0)
+            phys->utmp[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2)*
+                ((fac2*phys->u_old[j][k]+fac3*phys->u_old2[j][k])-(fac2*phys->u_old[j][k+1]+fac3*phys->u_old2[j][k+1]));
+          else
+            phys->utmp[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2)*
+                ((fac2*phys->u_old[j][k-1]+fac3*phys->u_old2[j][k-1])-(fac2*phys->u_old[j][k]+fac3*phys->u_old2[j][k]));
+        }
         // Top boundary
         k=grid->etop[j];
         phys->utmp[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2)*
@@ -3729,8 +3748,14 @@ static void UPredictor(gridT *grid, physT *phys,
       if(prop->vertcoord!=1 && prop->nonlinear && prop->thetaM>=0 &&  grid->Nke[j]-grid->etop[j]>1) {
         // conservative part d(\omega u)dz
         for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++) {
-          a[k]+=prop->dt*fac1*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2)/2;
-          c[k]-=prop->dt*fac1*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2)/2;
+          if(vert->omegaf[j][k]>0)
+          {
+            b[k]+=prop->dt*fac1*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2);
+            c[k]-=prop->dt*fac1*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2);
+          } else {
+            a[k]+=prop->dt*fac1*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2);
+            b[k]-=prop->dt*fac1*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2);            
+          }
         }
         // Top boundary
         k=grid->etop[j];
