@@ -209,10 +209,10 @@ void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc)
 {
   int k,i;
   REAL sum1=0,sum2=0,E_p=0;
-  for(i=0;i<grid->Nc;i++)
+  /*for(i=0;i<grid->Nc;i++)
   {
     for(k=grid->ctop[i];k<grid->Nk[i];k++)
       E_p+=(vert->zc[i][k]+grid->dv[i])*phys->rho[i][k]*1000*grid->dzz[i][k]*grid->Ac[i]*9.81;
-  }
+  }*/
   //printf("%e\n",E_p);
 }

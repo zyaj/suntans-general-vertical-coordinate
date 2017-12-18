@@ -2080,17 +2080,18 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
       // Kinematic energy gradient for horizontal momentum advection
       for(k=grid->etop[j];k<grid->Nke[j];k++) 
       {  
-        Vm=def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k];
-        ke1=(phys->uc[nc1][k]*phys->uc[nc1][k]+phys->vc[nc1][k]*phys->vc[nc1][k])*grid->dzz[nc1][k]/2;
-        ke2=(phys->uc[nc2][k]*phys->uc[nc2][k]+phys->vc[nc2][k]*phys->vc[nc2][k])*grid->dzz[nc2][k]/2;
+        Vm=def1+def2;
+        ke1=(phys->uc[nc1][k]*phys->uc[nc1][k]+phys->vc[nc1][k]*phys->vc[nc1][k])/2;
+        ke2=(phys->uc[nc2][k]*phys->uc[nc2][k]+phys->vc[nc2][k]*phys->vc[nc2][k])/2;
         phys->Cn_U[j][k]-=prop->dt*(ke1-ke2)/Vm;
       }
       // explicit vertical momentum advection
       if(prop->thetaM<0 && grid->Nke[j]-grid->etop[j]>1)
       {
-        for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++)
+        for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++){
           phys->Cn_U[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])/2*
                 (def1+def2)*(phys->u[j][k-1]-phys->u[j][k+1]);
+        }
         // top and bottom layers
         k=grid->etop[j];
         phys->Cn_U[j][k]-=prop->dt*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*
@@ -2110,10 +2111,10 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     // Conservative method assumes ut is a flux
     if(prop->conserveMomentum)
       for(jptr=grid->edgedist[0];jptr<grid->edgedist[5];jptr++) {
-	j=grid->edgep[jptr];
-
-	for(k=grid->etop[j];k<grid->Nke[j];k++)
-	  phys->ut[j][k]*=grid->dzf[j][k];
+        j=grid->edgep[jptr];
+        
+        for(k=grid->etop[j];k<grid->Nke[j];k++)
+          phys->ut[j][k]*=grid->dzf[j][k];
       }
 
     // Now compute the cell-centered source terms and put them into stmp
@@ -2121,11 +2122,11 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
       i=grid->cellp[iptr];
       // Store dzz in a since for conservative scheme need to divide by depth (since ut is a flux)
       if(prop->conserveMomentum) {
-	for(k=grid->ctop[i];k<grid->Nk[i];k++)
-	  a[k]=grid->dzz[i][k];
+        for(k=grid->ctop[i];k<grid->Nk[i];k++)
+          a[k]=grid->dzz[i][k];
       } else {
-	for(k=grid->ctop[i];k<grid->Nk[i];k++)
-	  a[k]=1.0;
+        for(k=grid->ctop[i];k<grid->Nk[i];k++)
+          a[k]=1.0;
       }
 
       // for each face
@@ -2145,10 +2146,10 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
           phys->stmp[i][k]+=
             phys->ut[ne][k]*phys->u[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*Ac);         
         }  
-        
+
         // Top cell is filled with momentum from neighboring cells
-	if(prop->conserveMomentum)
-	  for(k=grid->etop[ne];k<grid->ctop[i];k++) 
+        if(prop->conserveMomentum)
+          for(k=grid->etop[ne];k<grid->ctop[i];k++) 
           {
             if(!prop->subgrid || prop->wetdry)
               Ac=grid->Ac[i];
@@ -2180,11 +2181,11 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
 
       // Store dzz in a since for conservative scheme need to divide by depth (since ut is a flux)
       if(prop->conserveMomentum) {
-	for(k=grid->ctop[i];k<grid->Nk[i];k++)
-	  a[k]=grid->dzz[i][k];
+        for(k=grid->ctop[i];k<grid->Nk[i];k++)
+          a[k]=grid->dzz[i][k];
       } else {
-	for(k=grid->ctop[i];k<grid->Nk[i];k++)
-	  a[k]=1.0;
+        for(k=grid->ctop[i];k<grid->Nk[i];k++)
+          a[k]=1.0;
       }
 
       for(nf=0;nf<grid->nfaces[i];nf++) {
@@ -2201,16 +2202,15 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
           phys->stmp2[i][k]+=
             phys->ut[ne][k]*phys->u[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*Ac);
         }
-        // Top cell is filled with momentum from neighboring cells
-	if(prop->conserveMomentum)
-	  for(k=grid->etop[ne];k<grid->ctop[i];k++) 
+        if(prop->conserveMomentum)
+          for(k=grid->etop[ne];k<grid->ctop[i];k++) 
           {
             if(!prop->subgrid || prop->wetdry)
               Ac=grid->Ac[i];
             else
               Ac=subgrid->Acceff[i][k];
-	    phys->stmp2[i][grid->ctop[i]]+=
-	      phys->ut[ne][k]*phys->u[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*Ac);
+            phys->stmp2[i][grid->ctop[i]]+=
+            phys->ut[ne][k]*phys->u[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*Ac);
           }
       }
     }
@@ -2225,64 +2225,60 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
     if(prop->thetaM<0) {
       // Now do vertical advection of momentum
       for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
-	i=grid->cellp[iptr];
-	switch(prop->nonlinear) {
+        i=grid->cellp[iptr];
+        switch(prop->nonlinear) {
       	  case 1:
           for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) {
             a[k] = 0.5*((phys->w[i][k]+fabs(phys->w[i][k]))*phys->uc[i][k]+
-			(phys->w[i][k]-fabs(phys->w[i][k]))*phys->uc[i][k-1]);
+              (phys->w[i][k]-fabs(phys->w[i][k]))*phys->uc[i][k-1]);
             b[k] = 0.5*((phys->w[i][k]+fabs(phys->w[i][k]))*phys->vc[i][k]+
-			(phys->w[i][k]-fabs(phys->w[i][k]))*phys->vc[i][k-1]);
+              (phys->w[i][k]-fabs(phys->w[i][k]))*phys->vc[i][k-1]);
           }
           break;
-        case 2: case 5:
+          case 2: case 5:
           for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) {
             a[k] = phys->w[i][k]*((grid->dzz[i][k-1]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->uc[i][k]+
-				   grid->dzz[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->uc[i][k-1]));
+              grid->dzz[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->uc[i][k-1]));
             b[k] = phys->w[i][k]*((grid->dzz[i][k-1]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->vc[i][k]+
-				   grid->dzz[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->vc[i][k-1]));
+              grid->dzz[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->vc[i][k-1]));
           }
           break;
         	case 4:
           for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) {
             Cz = 2.0*phys->w[i][k]*prop->dt/(grid->dzz[i][k]+grid->dzz[i][k-1]);
             a[k] = phys->w[i][k]*((grid->dzz[i][k-1]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->uc[i][k]+
-				   grid->dzz[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->uc[i][k-1])
-				  -0.5*Cz*(phys->uc[i][k-1]-phys->uc[i][k]));
+              grid->dzz[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->uc[i][k-1])-0.5*Cz*(phys->uc[i][k-1]-phys->uc[i][k]));
             b[k] = phys->w[i][k]*((grid->dzz[i][k-1]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->vc[i][k]+
-				   grid->dzz[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->vc[i][k-1])
-				  -0.5*Cz*(phys->vc[i][k-1]-phys->vc[i][k]));
+              grid->dzz[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1])*phys->vc[i][k-1])
+            -0.5*Cz*(phys->vc[i][k-1]-phys->vc[i][k]));
           }
           break;
         	default:
           for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) {
             a[k] = 0.5*((phys->w[i][k]+fabs(phys->w[i][k]))*phys->uc[i][k]+
-			(phys->w[i][k]-fabs(phys->w[i][k]))*phys->uc[i][k-1]);
+              (phys->w[i][k]-fabs(phys->w[i][k]))*phys->uc[i][k-1]);
             b[k] = 0.5*((phys->w[i][k]+fabs(phys->w[i][k]))*phys->vc[i][k]+
-			(phys->w[i][k]-fabs(phys->w[i][k]))*phys->vc[i][k-1]);
+              (phys->w[i][k]-fabs(phys->w[i][k]))*phys->vc[i][k-1]);
           }
           break;
-	}
-	
-	// Always do first-order upwind in bottom cell if partial stepping is on
-	if(prop->stairstep==0) {
-	  k = grid->Nk[i]-1;
-	  a[k] = 0.5*(
-		      (phys->w[i][k]+fabs(phys->w[i][k]))*phys->uc[i][k]+
-		      (phys->w[i][k]-fabs(phys->w[i][k]))*phys->uc[i][k-1]);
-	  b[k] = 0.5*(
-		      (phys->w[i][k]+fabs(phys->w[i][k]))*phys->vc[i][k]+
-		      (phys->w[i][k]-fabs(phys->w[i][k]))*phys->vc[i][k-1]);
-	}
-	
-	a[grid->ctop[i]]=phys->w[i][grid->ctop[i]]*phys->uc[i][grid->ctop[i]];
-	b[grid->ctop[i]]=phys->w[i][grid->ctop[i]]*phys->vc[i][grid->ctop[i]];
-	a[grid->Nk[i]]=0;
-	b[grid->Nk[i]]=0;
-	
-	for(k=grid->ctop[i];k<grid->Nk[i];k++) {
-	  if(prop->subgrid)
-	  {
+        }
+
+        // Always do first-order upwind in bottom cell if partial stepping is on
+        if(prop->stairstep==0) {
+          k = grid->Nk[i]-1;
+          a[k] = 0.5*((phys->w[i][k]+fabs(phys->w[i][k]))*phys->uc[i][k]+
+            (phys->w[i][k]-fabs(phys->w[i][k]))*phys->uc[i][k-1]);
+          b[k] = 0.5*(
+            (phys->w[i][k]+fabs(phys->w[i][k]))*phys->vc[i][k]+
+            (phys->w[i][k]-fabs(phys->w[i][k]))*phys->vc[i][k-1]);
+        }
+        a[grid->ctop[i]]=phys->w[i][grid->ctop[i]]*phys->uc[i][grid->ctop[i]];
+        b[grid->ctop[i]]=phys->w[i][grid->ctop[i]]*phys->vc[i][grid->ctop[i]];
+        a[grid->Nk[i]]=0;
+        b[grid->Nk[i]]=0;
+        for(k=grid->ctop[i];k<grid->Nk[i];k++) {
+          if(prop->subgrid)
+          {
             // if wetting and drying happens use Ac insteady of acceff
             if(!prop->wetdry){
               phys->stmp[i][k]+=(a[k]*subgrid->Acveff[i][k]-a[k+1]*subgrid->Acveff[i][k+1])/grid->dzz[i][k]/subgrid->Acceff[i][k];
@@ -2291,12 +2287,11 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
               phys->stmp[i][k]+=(a[k]*subgrid->Acveff[i][k]-a[k+1]*subgrid->Acveff[i][k+1])/grid->dzz[i][k]/grid->Ac[i];
               phys->stmp2[i][k]+=(b[k]*subgrid->Acveff[i][k]-b[k+1]*subgrid->Acveff[i][k+1])/grid->dzz[i][k]/grid->Ac[i];                  
             }
-
-	  } else {
-	    phys->stmp[i][k]+=(a[k]-a[k+1])/grid->dzz[i][k];
-	    phys->stmp2[i][k]+=(b[k]-b[k+1])/grid->dzz[i][k];
-	  }
-	}
+          } else {
+            phys->stmp[i][k]+=(a[k]-a[k+1])/grid->dzz[i][k];
+            phys->stmp2[i][k]+=(b[k]-b[k+1])/grid->dzz[i][k];
+          }
+        }
       }
     } 
   } // end of nonlinear computation
@@ -2679,7 +2674,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     // First compute w at the cell centers (since w is defined at the faces)
     for(i=0;i<grid->Nc;i++) {
       for(k=grid->ctop[i];k<grid->Nk[i];k++)
-	phys->wc[i][k]=0.5*(phys->w[i][k]+phys->w[i][k+1]);
+        phys->wc[i][k]=0.5*(phys->w[i][k]+phys->w[i][k+1]);
     }
 
     // Interpolate wc to faces and place into ut
@@ -2687,10 +2682,9 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     
     if(prop->conserveMomentum)
       for(jptr=grid->edgedist[0];jptr<grid->edgedist[5];jptr++) {
-	j=grid->edgep[jptr];
-
-	for(k=grid->etop[j];k<grid->Nke[j];k++)
-	  phys->ut[j][k]*=grid->dzf[j][k];
+        j=grid->edgep[jptr];
+        for(k=grid->etop[j];k<grid->Nke[j];k++)
+          phys->ut[j][k]*=grid->dzf[j][k];
       }
 
     for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
@@ -2698,11 +2692,11 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
 
       // For conservative scheme need to divide by depth (since ut is a flux)
       if(prop->conserveMomentum) {
-	for(k=grid->ctop[i];k<grid->Nk[i];k++)
-	  a[k]=grid->dzz[i][k];
+        for(k=grid->ctop[i];k<grid->Nk[i];k++)
+          a[k]=grid->dzz[i][k];
       } else {
-	for(k=grid->ctop[i];k<grid->Nk[i];k++)
-	  a[k]=1.0;
+        for(k=grid->ctop[i];k<grid->Nk[i];k++)
+          a[k]=1.0;
       }
 
       for(nf=0;nf<grid->nfaces[i];nf++) {
@@ -2715,12 +2709,12 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
             phys->stmp[i][k]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]); // consistent with dzz not dzzold
 
         // Top cell is filled with momentum from neighboring cells
-	if(prop->conserveMomentum)
-	  for(k=grid->etop[ne];k<grid->ctop[i];k++)
-            if(!prop->subgrid || prop->wetdry) 
-	      phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*grid->Ac[i]);
+          if(prop->conserveMomentum)
+            for(k=grid->etop[ne];k<grid->ctop[i];k++)
+              if(!prop->subgrid || prop->wetdry) 
+                phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*grid->Ac[i]);
             else
-	      phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]);
+              phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]);
       }
 
       // Vertical advection; note that in this formulation first-order upwinding is not implemented.
@@ -2839,6 +2833,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     // add the additional part for the new vertical coordinate
     // comment out since it is solved by implicit method for stability
     if(prop->vertcoord!=1 && prop->nonlinear)
+    {
       for(k=grid->ctop[i]+1;k<grid->Nk[i];k++){
         // subtract the addition part of horizontal advection
         phys->Cn_W[i][k]-=prop->dt*(InterpToLayerTopFace(i,k,phys->uc,grid)*
@@ -2857,22 +2852,17 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
       // can be comment out since omega_top=0
       if(prop->thetaM<0)
         phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k];         
+    }
   }
 
   // Vertical advection using Lax-Wendroff
   if(prop->nonlinear==4 && prop->vertcoord==1) 
     for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
       i = grid->cellp[iptr]; 
-      if(prop->vertcoord==1)
-        for(k=grid->ctop[i]+1;k<grid->Nk[i]+1;k++) {
-          Cz = 0.5*(phys->w[i][k-1]+phys->w[i][k])*prop->dt/grid->dzz[i][k-1];
-          a[k]=0.5*(phys->w[i][k-1]+phys->w[i][k])*(0.5*(phys->w[i][k-1]+phys->w[i][k])-0.5*Cz*(phys->w[i][k-1]-phys->w[i][k]));
-        }
-      else
-        for(k=grid->ctop[i]+1;k<grid->Nk[i]+1;k++) {
-          Cz = 0.5*(vert->omega_old[i][k-1]+vert->omega_old[i][k])*prop->dt/grid->dzz[i][k-1];
-          a[k]=0.5*(vert->omega_old[i][k-1]+vert->omega_old[i][k])*(0.5*(phys->w[i][k-1]+phys->w[i][k])-0.5*Cz*(phys->w[i][k-1]-phys->w[i][k]));
-        }        
+      for(k=grid->ctop[i]+1;k<grid->Nk[i]+1;k++) {
+        Cz = 0.5*(phys->w[i][k-1]+phys->w[i][k])*prop->dt/grid->dzz[i][k-1];
+        a[k]=0.5*(phys->w[i][k-1]+phys->w[i][k])*(0.5*(phys->w[i][k-1]+phys->w[i][k])-0.5*Cz*(phys->w[i][k-1]-phys->w[i][k]));
+      }      
       for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) {
         phys->Cn_W[i][k]-=2.0*prop->dt*(a[k]-a[k+1])/(grid->dzz[i][k]+grid->dzz[i][k+1]);
       }
@@ -3551,15 +3541,18 @@ static void UPredictor(gridT *grid, physT *phys,
           MarshExplicitTerm(grid,phys,prop,j,theta,dt,myproc);
 
       // add on explicit vertical momentum advection only if there is more than one vertical layer edge.
-      if(prop->vertcoord==1 && prop->nonlinear && prop->thetaM>=0 && grid->Nke[j]-grid->etop[j]>1) {
-	for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++)
+      if(prop->vertcoord==1 && prop->nonlinear && prop->thetaM>=0 && grid->Nke[j]-grid->etop[j]>1) 
+      {
+        for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++)
           phys->utmp[j][k]-=prop->dt*(1-prop->thetaM)*(a0[k]*phys->u[j][k-1]+b0[k]*phys->u[j][k]+c0[k]*phys->u[j][k+1]);
 	
       	// Top boundary
-	phys->utmp[j][grid->etop[j]]-=prop->dt*(1-prop->thetaM)*((a0[grid->etop[j]]+b0[grid->etop[j]])*phys->u[j][grid->etop[j]]+c0[grid->etop[j]]*phys->u[j][grid->etop[j]+1]);
+        phys->utmp[j][grid->etop[j]]-=prop->dt*(1-prop->thetaM)*((a0[grid->etop[j]]+b0[grid->etop[j]])*phys->u[j][grid->etop[j]]+
+          c0[grid->etop[j]]*phys->u[j][grid->etop[j]+1]);
 	
       	// Bottom boundary
-	phys->utmp[j][grid->Nke[j]-1]-=prop->dt*(1-prop->thetaM)*(a0[grid->Nke[j]-1]*phys->u[j][grid->Nke[j]-2]+(b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1])*phys->u[j][grid->Nke[j]-1]);
+        phys->utmp[j][grid->Nke[j]-1]-=prop->dt*(1-prop->thetaM)*(a0[grid->Nke[j]-1]*phys->u[j][grid->Nke[j]-2]+
+          (b0[grid->Nke[j]-1]+c0[grid->Nke[j]-1])*phys->u[j][grid->Nke[j]-1]);
       }
 
       // add new explicit vertical momentum advection for the general vertical coordinate
@@ -3733,7 +3726,7 @@ static void UPredictor(gridT *grid, physT *phys,
       }
 
       // add vertical momentum advection in the new general vertical coordinate
-      if(prop->vertcoord!=1 && prop->nonlinear && grid->Nke[j]-grid->etop[j]>1 && prop->thetaM>=0) {
+      if(prop->vertcoord!=1 && prop->nonlinear && prop->thetaM>=0 &&  grid->Nke[j]-grid->etop[j]>1) {
         // conservative part d(\omega u)dz
         for(k=grid->etop[j]+1;k<grid->Nke[j]-1;k++) {
           a[k]+=prop->dt*fac1*vert->omegaf[j][k]/(def1*grid->dzz[nc1][k]+def2*grid->dzz[nc2][k])*(def1+def2)/2;
