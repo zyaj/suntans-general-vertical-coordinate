@@ -94,7 +94,7 @@ const int ntoutStore_DEFAULT = 0;
 /* TVDmomentum
    TVD for advection of momentum, default is vanleer
 */
-const int TVDmomentum_DEFAULT = 4;
+const int TVDmomentum_DEFAULT = 3;
 
 /* conserveMomentum
    Use conservative momentum advection scheme by default.

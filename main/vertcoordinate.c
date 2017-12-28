@@ -29,7 +29,7 @@
  *
  */
 void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
-{
+{ 
   int i,j,k;
 
   // velocity field at layer center for each edge
@@ -417,7 +417,6 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
          if(fabs(c[k-grid->ctop[i]])>max);
           max=fabs(c[k-grid->ctop[i]]);
        }
-
        if(max==0)
         max=1.0;     
        // normalize all the vector
