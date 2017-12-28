@@ -51,8 +51,8 @@ hiter                   0       # if 1 consider iteration method to calculate h 
 turbmodel		0	# Turbulence model (0 for none, 1 for MY25)
 dt 			0.025	# Time step
 Cmax 			1  	# Maximum permissible Courant number
-nsteps 		        4000   # Number of steps 1728000
-ntout   		50	# How often to output data
+nsteps 		        2000   # Number of steps 1728000
+ntout   		20	# How often to output data
 ntprog   		5 	# How often to report progress (in %)
 ntconserve 		1	# How often to output conserved data
 nonhydrostatic		1	# 0 = hydrostatic, 1 = nonhydrostatic
@@ -70,7 +70,7 @@ flux 			0	# flux
 timescale		0	# timescale for open boundary condition
 volcheck		0	# Check for volume conservation
 masscheck		0	# Check for mass conservation
-nonlinear		1	# No momentum advection: 0, first-order upwind: 1, Central-differencing: 2
+nonlinear		5	# No momentum advection: 0, first-order upwind: 1, Central-differencing: 2
 newcells		0	# 1 if adjust momentum in surface cells as the volume changes, 0 otherwise
 wetdry			0       # 1 if wetting and drying, 0 otherwise
 Coriolis_f              0	# Coriolis frequency f=2*Omega*sin(phi)
@@ -139,7 +139,7 @@ dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat
 modifydzf               0 #
 dJdtmeth                1 #
-dzfmeth 		4 #
+dzfmeth 								1 #
 ########################################################################
 #
 # Subgrid data
