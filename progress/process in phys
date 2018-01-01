@@ -377,7 +377,7 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 1.2 change wdwdz as implicit method not done
 1.3 need to clarify the method to calculate the boundary not node
 
-2. modify the way to calculate the variational moving mesh, use central differencing in vertical discretization. not done
+2. modify the way to calculate the variational moving mesh, use central differencing in vertical discretization. done
 
 12/13/2017
 1. update the dzf with the modified TVD scheme, not done
@@ -385,3 +385,12 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 
 12/27/2017 
 1. clean the codes for the dent 
+
+
+01/01/2018
+1. wf is updated to the top for each edge layer
+2. dzf is applied with TVD scheme when the upwind dz is larger
+3. remove all djdt method and wetdry during nonlienar!=1
+4. change wdwdz as implicit method 
+5. phys_backup.c is the version with djdtmeth and wetdry
+6.

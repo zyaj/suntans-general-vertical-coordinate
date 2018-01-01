@@ -15,7 +15,8 @@
 #include "phys.h"
 
 typedef struct _vertT {
-REAL **uf,**wf,**vf, **qcf; // the u v w at the layer center of each edge [Nj][Nke]
+REAL **uf,**vf, **qcf; // the u v at the layer center of each edge [Nj][Nke]
+REAL **wf; // the w at the layer top of each edge [Nj][Nke], the bottom vertical velocity is assumed as 0.
 REAL **zf; // the current vertical location z of each edge layer center [Nj][Nke]
 REAL **omegaf; // the vertical contravariant flux at the face [Ne][Nke]
 REAL **ul,**vl; // the u v at the top and bottom face of each layer at each edge [Nc][Nk+1]

@@ -569,9 +569,17 @@ void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
       r2=(grid->dzz[nc2][k]*def2)/(grid->dzz[nc1][k]*def1+grid->dzz[nc2][k]*def2);
       vert->uf[j][k]=r2*phys->uc[nc1][k]+r1*phys->uc[nc2][k];
       vert->vf[j][k]=r2*phys->vc[nc1][k]+r1*phys->vc[nc2][k];
-      vert->wf[j][k]=InterpToFace(j,k,phys->wc,phys->u,grid);
+      vert->wf[j][k]=InterpToFace(j,k,phys->w,phys->u,grid);
       vert->qcf[j][k]=r2*phys->qc[nc1][k]+r1*phys->qc[nc2][k];
       vert->omegaf[j][k]=InterpToFace(j,k,vert->omegac,phys->u,grid);
+    }
+    // wf is for dwdx and dwdy which needs to cover the top of each cell layer 
+    if(grid->ctop[nc1]!=grid->ctop[nc2])
+    {
+      if(grid->ctop[nc1]>grid->ctop[nc2])
+        nc1=nc2;
+      for(k=grid->ctop[nc1];k<grid->etop[j];k++)
+        vert->wf[j][k]=0.5*phys->w[nc1][k];
     }
   }
 }

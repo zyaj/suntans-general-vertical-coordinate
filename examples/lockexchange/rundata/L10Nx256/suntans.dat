@@ -133,13 +133,13 @@ culvert                 culvert.dat
 # General vertical coordinate data
 #
 ########################################################################
-vertcoord               4  #
+vertcoord               4 #
 zcFile                  vert_zc.dat
 dzzFile                 vert_dzz.dat
 omegaFile               vert_omega.dat
 modifydzf               0 #
 dJdtmeth                1 #
-dzfmeth 								1 #
+dzfmeth 		1 #
 ########################################################################
 #
 # Subgrid data
