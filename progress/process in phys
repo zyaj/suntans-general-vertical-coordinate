@@ -393,4 +393,7 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 3. remove all djdt method and wetdry during nonlienar!=1
 4. change wdwdz as implicit method 
 5. phys_backup.c is the version with djdtmeth and wetdry
-6.
+
+02/01/2018
+1. recover phys.c as the old version with djdtmeth
+2. the relative vorticity is calculated at nodes for generalized vertical coordinate

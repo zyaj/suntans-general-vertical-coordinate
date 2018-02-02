@@ -120,3 +120,6 @@ the isopycnal layer needs addition treatment for wetting and drying :
 06/20/2017
 1. change the switch in computezc function
 now index=0 just use dzzold to compute vert->zcold
+
+02/01/2018
+1. add calculation of relative vorticity at edge center and nodal location.
