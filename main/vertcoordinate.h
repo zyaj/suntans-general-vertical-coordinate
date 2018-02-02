@@ -36,6 +36,12 @@ REAL *n2; // the y component of the outpointing vector from cell center to its f
 REAL **zc,**zcold; // the cell center vertical location in the Cartesian coordinate [Nc][Nk]
 REAL **zl; // the cell center vertical location of cell top face in the cartesian coordinate [Nc][Nk+1]
 REAL **f_r; // the cell center relative vorticity dvdx-dudy [Nc][Nk]
+REAL **f_re; // the edge center relative vorticity dvdx-dudy [Ne][Nke]
+REAL **f_rp; // the nodal relative vorticity dvdx-dudy [Np][Nkp]
+REAL *Ap; // the nodal area covered by node [Np]
+int *Nkpmin; // the minimum number of layers among the edges that include a specific node [Np]
+int *typep; // the type of a node, if all the edges include a node have mark=0 or 5, type=1, else -1
+REAL *CCNpe; // the inner product between nodal counter-clockwise diction to the positive velocity of a specific edge [2*Ne]
 REAL **dzdx, **dzdy, **dqdx, **dqdy; // the cell-centered averaged gradient of different variables
 REAL **dvdx, **dudy, **dvdy, **dudx, **dwdx, **dwdy;
 REAL *dsigma; // the dsigma for the sigma coordinate to define the vertical coordinate density [Nkmax]
@@ -76,4 +82,6 @@ void FindBottomLayer(gridT *grid, propT *prop, physT *phys, int myproc);
 void UpdateCellcenteredFreeSurface(gridT *grid, propT *prop, physT *phys, int myproc);
 void VerifyFluxHeight(gridT *grid, propT *prop, physT *phys, int myproc);
 void TvdFluxHeight(gridT *grid, physT *phys, propT *prop, int TVD, MPI_Comm comm, int myproc);
+void ComputeNodalData(gridT *grid,int myproc);
+void ComputeRelativeVorticity(gridT *grid, physT *phys, propT *prop, int myproc);
 #endif

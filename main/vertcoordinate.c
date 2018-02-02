@@ -47,15 +47,19 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
   vert->thetaT = MPI_GetValue(DATAFILE,"thetaT","AllocateVertCoordinate",myproc);
   vert->vertdzmin = MPI_GetValue(DATAFILE,"vertdzmin","AllocateVertCoordinate",myproc);
   vert->Me_l=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
-
+  vert->f_re=(REAL **)SunMalloc(grid->Ne*sizeof(REAL *),"AllocateVertCoordinate");
+  vert->CCNpe=(REAL *)SunMalloc(2*grid->Ne*sizeof(REAL),"AllocateVertCoordinate");
   for(j=0;j<grid->Ne;j++)
   {
     vert->Nkeb[j]=0;
     vert->zfb[j]=0.0;
+    vert->CCNpe[2*j]=0;
+    vert->CCNpe[2*j+1]=0;
     vert->qcf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->uf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->vf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->wf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
+    vert->f_re[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->omegaf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->zf[j]=(REAL *)SunMalloc(grid->Nkc[j]*sizeof(REAL),"AllocateVertCoordinate");
     vert->Me_l[j]=(REAL *)SunMalloc((grid->Nkc[j]+1)*sizeof(REAL),"AllocateVertCoordinate");
@@ -68,6 +72,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
       vert->wf[j][k]=0;
       vert->omegaf[j][k]=0;
       vert->Me_l[j][k]=0;
+      vert->f_re[j][k]=0;
     }
     vert->Me_l[j][grid->Nkc[j]]=0;
   }
@@ -175,6 +180,21 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
     }
     vert->zl[i][grid->Nk[i]]=0;
     vert->Msum[i]=0;
+  }
+
+  // nodal
+  vert->Ap=(REAL *)SunMalloc(grid->Np*sizeof(REAL),"AllocateVertCoordinate");
+  vert->Nkpmin=(int *)SunMalloc(grid->Np*sizeof(int),"AllocateVertCoordinate");
+  vert->typep=(int *)SunMalloc(grid->Np*sizeof(int),"AllocateVertCoordinate");
+  vert->f_rp=(REAL **)SunMalloc(grid->Np*sizeof(REAL *),"AllocateVertCoordinate");
+  for(i=0;i<grid->Np;i++)
+  {
+    vert->f_rp[i]=(REAL *)SunMalloc(grid->Nkp[i]*sizeof(REAL),"AllocateVertCoordinate"); 
+    for(k=0;k<grid->Nkp[i];k++)
+      vert->f_rp[i][k]=0.0;
+    vert->Ap[i]=0.0;
+    vert->Nkpmin[i]=grid->Nkp[i]; 
+    vert->typep[i]=1;  
   }
 
   // temporary array for output 
@@ -835,10 +855,9 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
      }
    }
    // 3. compute f_r
-   for(i=0;i<grid->Nc;i++)
-    for(k=0;k<grid->Nk[i];k++)
-      vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
+   ComputeRelativeVorticity(grid,phys,prop,myproc);
   
+   // 4. prepare for nonhydrostatic calculation
    if(prop->nonhydrostatic){
      ComputeCellAveragedHorizontalGradient(vert->dqdy, 1, vert->qcf, grid, prop, phys, myproc);
      ComputeCellAveragedHorizontalGradient(vert->dqdx, 0, vert->qcf, grid, prop, phys, myproc);     
@@ -848,6 +867,7 @@ void VertCoordinateHorizontalSource(gridT *grid, physT *phys, propT *prop,
      //ComputeCellAveragedHorizontalGradient(vert->dudx, 0, vert->uf, grid, prop, phys, myproc);
    }
 }
+
 /*
  * Function: ComputeCellAveragedGradient
  * Compute the cell averaged gradient for scalars
@@ -1029,6 +1049,10 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
 
   ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
   ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc);
+
+  // compute nodal information
+  // prepare for the calculation of nodal relative vorticity
+  ComputeNodalData(grid,myproc);
 }
 
 /*
@@ -1062,6 +1086,10 @@ void VertCoordinateBasicRestart(gridT *grid, propT *prop, physT *phys, int mypro
 
   ComputeCellAveragedHorizontalGradient(vert->dzdx, 0, vert->zf, grid, prop, phys, myproc);
   ComputeCellAveragedHorizontalGradient(vert->dzdy, 1, vert->zf, grid, prop, phys, myproc);
+
+  // compute nodal information
+  // prepare for the calculation of nodal relative vorticity
+  ComputeNodalData(grid,myproc);
 }
 
 
@@ -1205,3 +1233,134 @@ void TvdFluxHeight(gridT *grid, physT *phys, propT *prop, int TVD, MPI_Comm comm
   HorizontalFaceScalars(grid,phys,prop,grid->dzz,phys->boundary_tmp,vert->dzfmeth,comm,myproc);
 }
 
+/*
+ * Function: ComputeNodalData
+ * Usage: ComputeNodalData(gridT *grid,int myproc)
+ * ---------------------------------
+ * prepare for the calculation of nodal relative vorticity
+ * 1. get the type of each node vert->typep
+ * 2. get the Ap for each node (type=1)
+ * 3. get the Nccp for each edge
+ * 4. get the Nkpmin for each node
+ */
+void ComputeNodalData(gridT *grid,int myproc)
+{
+  int j,jptr,p1,p2,nc1,nc2,tmp;
+  
+  // node type
+  for(j=0;j<grid->Ne;j++)
+  {
+    p1=grid->edges[NUMEDGECOLUMNS*j];
+    p2=grid->edges[NUMEDGECOLUMNS*j+1];
+    // if not computational edge
+    if(grid->mark[j]!=0 && grid->mark[j]!=5)
+    {
+      vert->typep[p1]=-1;
+      vert->typep[p2]=-1;
+    }
+  }
+
+  // computational edge CCNpe
+  for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
+  {
+    j = grid->edgep[jptr];
+    nc1=grid->grad[2*j];
+    nc2=grid->grad[2*j+1];
+    p1=grid->edges[NUMEDGECOLUMNS*j];
+    p2=grid->edges[NUMEDGECOLUMNS*j+1];
+
+    // node p1
+    // the counter-clockwise direction of a node is (-(ye-yp),xe-xp)
+    // the positive direction of a normal velocity is (xc1-xc2,yc1-yc2)
+    // the inner production of p2 should be opposite to p1
+    tmp=-(grid->xv[nc1]-grid->xv[nc2])*(grid->ye[j]-grid->yp[p1])+
+    (grid->yv[nc1]-grid->yv[nc2])*(grid->xe[j]-grid->xp[p1]);
+    if(tmp>0){
+      vert->CCNpe[2*j]=1.0;
+      vert->CCNpe[2*j+1]=-1.0;
+    }
+    else{
+      vert->CCNpe[2*j]=-1.0;
+      vert->CCNpe[2*j+1]=1.0;
+    }
+  }
+
+  // node Ap and Nkpmin
+  for(j=0;j<grid->Ne;j++)
+  {
+    p1=grid->edges[NUMEDGECOLUMNS*j];
+    p2=grid->edges[NUMEDGECOLUMNS*j+1];
+    
+    if(vert->typep[p1]==1)
+    {
+      vert->Ap[p1]+=grid->dg[j]*grid->df[j]/4;
+      if(grid->Nke[j]<vert->Nkpmin[p1])
+        vert->Nkpmin[p1]=grid->Nke[j];
+    }
+    
+    if(vert->typep[p2]==1)
+    {
+      vert->Ap[p2]+=grid->dg[j]*grid->df[j]/4;
+      if(grid->Nke[j]<vert->Nkpmin[p2])
+        vert->Nkpmin[p2]=grid->Nke[j];
+    }
+  }
+}
+
+/*
+ * Function: ComputeRelativeVorticity
+ * Usage: ComputeRelativeVorticity(gridT *grid, physT *phys, propT *prop, int myproc)
+ * ---------------------------------
+ * compute all relative vorticity
+ * 1. cell-centered
+ * 2. nodal 
+ * 3. edge-center
+ */
+void ComputeRelativeVorticity(gridT *grid, physT *phys, propT *prop, int myproc)
+{
+  int i, j, k,p1,p2,Nkmin,jptr;
+
+  // cell centered relative vorticity
+  for(i=0;i<grid->Nc;i++)
+    for(k=0;k<grid->Nk[i];k++)
+      vert->f_r[i][k]=vert->dvdx[i][k]-vert->dudy[i][k];
+
+  // nodal relative vorticity
+  for(i=0;i<grid->Np;i++)
+    for(k=0;k<grid->Nkp[i];k++)
+      vert->f_rp[i][k]=0;
+
+  for(j=0;j<grid->Ne;j++)
+  {
+    p1=grid->edges[NUMEDGECOLUMNS*j];
+    p2=grid->edges[NUMEDGECOLUMNS*j+1];
+    
+    if(vert->typep[p1]==1)
+      for(k=0;k<vert->Nkpmin[p1];k++)
+        vert->f_rp[p1][k]+=grid->dg[j]*vert->CCNpe[2*j]*phys->u[j][k]/vert->Ap[p1];
+    
+    if(vert->typep[p2]==1)
+      for(k=0;k<vert->Nkpmin[p2];k++)
+        vert->f_rp[p2][k]+=grid->dg[j]*vert->CCNpe[2*j+1]*phys->u[j][k]/vert->Ap[p2];
+  }
+
+  // edge-centered velocity
+  for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
+  {
+    j = grid->edgep[jptr];
+    p1=grid->edges[NUMEDGECOLUMNS*j];
+    p2=grid->edges[NUMEDGECOLUMNS*j+1];
+    Nkmin=vert->Nkpmin[p1];
+    if(Nkmin>vert->Nkpmin[p2])
+      Nkmin=vert->Nkpmin[p2];
+
+    // cell center to edge center
+    for(k=grid->etop[j];k<grid->Nke[j];k++)
+      vert->f_re[j][k]=InterpToFace(j,k,vert->f_r,phys->u,grid);
+
+    // only use nodal for all nodes are type 1
+    if(vert->typep[p1]==1 && vert->typep[p2]==1)
+      for(k=grid->etop[j];k<Nkmin;k++)
+        vert->f_re[j][k]=0.5*(vert->f_rp[p1][k]+vert->f_rp[p2][k]);
+  }
+}
