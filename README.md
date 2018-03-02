@@ -17,6 +17,8 @@ Spacial schemes: 2nd-order central-difference scheme, and momentum advection wit
 <br>Generalized vertical coordinate: A hybrid/grid generalized vertical coordinate for unstructured-grid, nonhydrostatic ocean modeling (The current option is z-level, sigma, isopycnal, variational moving mesh and user-defined function).</br>
 
 ## Installation suggestion
+The following  combinations have been tested.
+
 Parallel: MPICH2+GCC4.9+Parmetis2.0+Triangle
 
 
@@ -25,4 +27,7 @@ Parallel: MPICH2+GCC4.9+Parmetis2.0+Triangle
 ## Note
 1. The scs3D test case is still underway. Please try other test cases first.
 2. The release notes can be found in the progress folder.
+
+## Quick Start
+Please check the Wiki page of this repository.
 
