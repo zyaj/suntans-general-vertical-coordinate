@@ -254,7 +254,5 @@ void FetchWindSpeedandDirection(gridT *grid, propT *prop, int myproc){
  */
 
 void UserDefinedFunction(gridT *grid, physT *phys, propT *prop,int myproc){}
-
-
 void InitBoundaryData(propT *prop, gridT *grid, int myproc,MPI_Comm comm){}
 void AllocateBoundaryData(propT *prop, gridT *grid, boundT **bound, int myproc,MPI_Comm comm){}

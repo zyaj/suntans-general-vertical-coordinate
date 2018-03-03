@@ -2367,17 +2367,11 @@ void UpdateSubgridFluxHeight(gridT *grid, physT *phys, propT *prop, int myproc)
     }
     
     // h is the free surface height used to calculate flux height can be upwind or central differencing
-    if(subgrid->dzfmeth==1)
-      h=UpWind(u,phys->h[nc1],phys->h[nc2]);
-    else if(subgrid->dzfmeth==2)
+    if(subgrid->dzfmeth==2)
       h=0.5*(phys->h[nc1]+phys->h[nc2]); 
     else
-    {
-       //if(u*grid->n1[ne]<0 && fabs(u)>0.001)
-         //h=0.5*(phys->h[nc1]+phys->h[nc2]);
-       //else
-         h=UpWind(u,phys->h[nc1],phys->h[nc2]);
-    }
+      h=UpWind(u,phys->h[nc1],phys->h[nc2]);
+
     
     if(prop->culvertmodel)
     {
