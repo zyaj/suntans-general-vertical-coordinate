@@ -303,3 +303,17 @@ const int dzfmeth_DEFAULT=1;
   default value is set as 0
 */
 const REAL depthelev_DEFAULT=0.0;
+
+/* SSCvprof
+  the method to estimate the ratio between bottom SSC and depth-average SSC 
+  to calculate deposition
+  1 Rouse profile, 2 user defined alpha
+*/
+const REAL SSCvprof_DEFAULT=0.0;
+
+/* sedilayerprop
+  whether the sediment layer properties are constant for all sediment classes
+  0 not constant, requires input values for each layer each sediment class
+  1 only need to provide values for each layer, the properties are constant for all other sediment classes
+*/
+const REAL sedilayerprop_DEFAULT=1;

@@ -5452,10 +5452,10 @@ void ComputeConservatives(gridT *grid, physT *phys, propT *prop, int myproc, int
       phys->Ep0 = phys->Ep;
     } else {
       if(fabs((phys->volume-phys->volume0)/phys->volume0)>CONSERVED && prop->volcheck)
-        printf("Warning! Not volume conservative! V(0)=%e, V(t)=%e\n",
+        printf("Warning! Not volume conservative at step %d! V(0)=%e, V(t)=%e\n",prop->n,
             phys->volume0,phys->volume);
       if(fabs((phys->mass-phys->mass0)/phys->volume0)>CONSERVED && prop->masscheck) 
-        printf("Warning! Not mass conservative! M(0)=%e, M(t)=%e\n",
+        printf("Warning! Not mass conservative at step %d! M(0)=%e, M(t)=%e\n", prop->n,
             phys->mass0,phys->mass);
     }
   }

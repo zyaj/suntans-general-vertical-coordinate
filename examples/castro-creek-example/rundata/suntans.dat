@@ -148,6 +148,7 @@ readSediment            0       # if 1, read sediment concentration data as IC. 
 bedInterval             3600    # the interval steps to update bed change if bedInterval<0, layer change will be ignored
 bedComplex              0       # whether to consider the possibility to flush away a whole layer
 ParabolKappa            0       # whether to use parabolic tubulent diffusivity
+sedilayerprop						0				#
 Ds50                    0.00008 #1
 Ds1                   0.000008    # sediment diameter for fraction No.1 (m)
 Ds2                   0.0002    # sediment diameter for fraction No.2                   

@@ -71,6 +71,7 @@ int *Layertop,  // store the first layer number for each cell [cell]
     bedInterval, // the interval steps to update bed change
     bedComplex,  // whether consider the possibility to flush away a whole layer
     restart, // whether use restart
+    layerprop, // whether the properies (E0,taue,taud,drydensity) of each layer is constant for all sediment classes
     readSediment; // if 1, we will read sediment file as the IC for sediment Concentration, Now just support Nsizemax=1
 FILE *LayerthickFID, **SedimentFID, *SeditbFID, *SeditbmaxFID;
 } sedimentsT;

@@ -509,6 +509,14 @@ double GetDefaultValue(char *str, int *status) {
     
     return depthelev_DEFAULT;
  
+ } else if(!strcmp(str,"sedilayerprop")){
+    
+    return sedilayerprop_DEFAULT;
+ 
+ } else if(!strcmp(str,"SSCvprof")){
+    
+    return SSCvprof_DEFAULT;
+ 
  } else {
     *status=0;
     return 0;

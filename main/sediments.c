@@ -61,6 +61,7 @@ void ReadSediProperties(int myproc) {
   sediments->bedInterval= MPI_GetValue(DATAFILE,"bedInterval","ReadSediProperties",myproc);
   sediments->bedComplex= MPI_GetValue(DATAFILE,"bedComplex","ReadSediProperties",myproc);
   sediments->ParabolKappa= MPI_GetValue(DATAFILE,"ParabolKappa","ReadSediProperties",myproc);
+  sediments->layerprop=MPI_GetValue(DATAFILE,"sedilayerprop","ReadSediProperties",myproc);
   if(sediments->bedComplex==1){
     printf("because bedComplex==1, so set bedInterval=1 automatically");
     sediments->bedInterval=1;
@@ -116,18 +117,32 @@ void ReadSediProperties(int myproc) {
     sprintf(str,"softhard%d",m);
     sediments->Softhard[m-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
   }
-  for(m=1;m<=sediments->Nsize;m++){
-    for(n=1;n<=sediments->Nlayer;n++){
-      sprintf(str,"E%d%d",n,m);
-      sediments->E0[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
-      sprintf(str,"Taue%d%d",n,m);
-      sediments->Taue[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
-      sprintf(str,"Taud%d%d",n,m);
-      sediments->Taud[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
-      sprintf(str,"Drydensity%d%d",n,m);
-      sediments->Drydensity[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+  if(!sediments->layerprop)
+    for(m=1;m<=sediments->Nsize;m++){
+      for(n=1;n<=sediments->Nlayer;n++){
+        sprintf(str,"E%d%d",n,m);
+        sediments->E0[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+        sprintf(str,"Taue%d%d",n,m);
+        sediments->Taue[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+        sprintf(str,"Taud%d%d",n,m);
+        sediments->Taud[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+        sprintf(str,"Drydensity%d%d",n,m);
+        sediments->Drydensity[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+      }
     }
-  }
+  else
+    for(m=1;m<=sediments->Nsize;m++){
+      for(n=1;n<=sediments->Nlayer;n++){
+        sprintf(str,"E0%d",n,m);
+        sediments->E0[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+        sprintf(str,"Taue%d",n,m);
+        sediments->Taue[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+        sprintf(str,"Taud%d",n,m);
+        sediments->Taud[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+        sprintf(str,"Drydensity%d",n,m);
+        sediments->Drydensity[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
+      }
+    }    
   sediments->Kbed=MPI_GetValue(DATAFILE,"kbed","ReadSediProperties",myproc);
   sediments->Chind=MPI_GetValue(DATAFILE,"Chind","ReadSediProperties",myproc);
   sediments->Cfloc=MPI_GetValue(DATAFILE,"Cfloc","ReadSediProperties",myproc);
