@@ -1277,7 +1277,7 @@ REAL DepthFromDZ(gridT *grid, physT *phys, int i, int kind) {
 void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm)
 {
 
-  int i, k,kk,j, n, blowup=0,ne,id,nc1,nc2,nf;
+  int i, k,j, n, blowup=0,ne,id,nc1,nc2,nf;
   REAL t0,sum1,v_average,flux,normal;
   metinT *metin;
   metT *met;
@@ -4328,6 +4328,28 @@ static void UPredictor(gridT *grid, physT *phys,
     }
   }
 
+  // Add back the implicit barotropic term to obtain the 
+  // hydrostatic horizontal velocity field.
+  for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
+    j = grid->edgep[jptr];
+
+    nc1 = grid->grad[2*j];
+    nc2 = grid->grad[2*j+1];
+
+    for(k=grid->etop[j];k<grid->Nke[j];k++) {
+      phys->u[j][k]=phys->utmp[j][k]-prop->grav*fac1*dt*E[j][k]*
+        (phys->h[nc1]-phys->h[nc2])/grid->dg[j];
+    }
+
+    // set dry cells (with zero height) to have zero velocity
+    // CHANGE
+    if(grid->etop[j]==grid->Nke[j]-1 && grid->dzz[nc1][grid->etop[j]]<=1*DRYCELLHEIGHT &&
+        grid->dzz[nc2][grid->etop[j]]<=1*DRYCELLHEIGHT)
+      phys->u[j][grid->etop[j]]=0;
+  }
+
+
+
   // correct cells drying below DRYCELLHEIGHT above the 
   // bathymetry
   // make sure Culvert height is much bigger than DRYCELLHEIGHT when culvertmodel==1 
@@ -4368,37 +4390,6 @@ static void UPredictor(gridT *grid, physT *phys,
     i = grid->cellp[iptr];
     phys->dhdt[i]=(phys->h[i]-phys->dhdt[i])/dt;
   }
-
-  // Add back the implicit barotropic term to obtain the 
-  // hydrostatic horizontal velocity field.
-  for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
-    j = grid->edgep[jptr];
-
-    nc1 = grid->grad[2*j];
-    nc2 = grid->grad[2*j+1];
-
-    for(k=grid->etop[j];k<grid->Nke[j];k++) {
-      phys->u[j][k]=phys->utmp[j][k]-prop->grav*fac1*dt*E[j][k]*
-        (phys->h[nc1]-phys->h[nc2])/grid->dg[j];
-    }
-
-    // set dry cells (with zero height) to have zero velocity
-    // CHANGE
-    if(grid->etop[j]==grid->Nke[j]-1 && grid->dzz[nc1][grid->etop[j]]<=1*DRYCELLHEIGHT &&
-        grid->dzz[nc2][grid->etop[j]]<=1*DRYCELLHEIGHT)
-      phys->u[j][grid->etop[j]]=0;
-  }
-
-   for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
-    j = grid->edgep[jptr];
-
-    nc1 = grid->grad[2*j];
-    nc2 = grid->grad[2*j+1];
-
-    // Add the explicit part of the free-surface to create U**.
-    // 5th term of Eqn 31
-
-   }
 
   // added culvert part
   if(prop->culvertmodel){

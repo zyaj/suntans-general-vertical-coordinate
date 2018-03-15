@@ -32,14 +32,14 @@ CdT	                0.0 	# Drag coefficient at surface
 CdB	                0.005	# Drag coefficient at bottom
 CdW			0.005	# Drag coefficient at sidewalls
 turbmodel		1	# Turbulence model (0 for none, 1 for MY25)
-AB          3
+AB          		3       #
 dt 			0.025	# Time step
 Cmax 			1 	# Maximum permissible Courant number
-nsteps 			2000    # Number of steps
-ntout   		50	# How often to output data
-ntprog   		5 	# How often to report progress (in %)
+nsteps 			1    # Number of steps
+ntout   		1	# How often to output data
+ntprog   		10 	# How often to report progress (in %)
 ntconserve 		1	# How often to output conserved data
-nonhydrostatic		0	# 0 = hydrostatic, 1 = nonhydrostatic
+nonhydrostatic		1	# 0 = hydrostatic, 1 = nonhydrostatic
 cgsolver		1	# 0 = GS, 1 = CG
 maxiters		1000	# Maximum number of CG iterations
 qmaxiters		2000	# Maximum number of CG iterations for nonhydrostatic pressure
