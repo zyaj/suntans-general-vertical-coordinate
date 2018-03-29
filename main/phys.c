@@ -1277,7 +1277,7 @@ REAL DepthFromDZ(gridT *grid, physT *phys, int i, int kind) {
 void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_Comm comm)
 {
 
-  int i, k,j, n, blowup=0,ne,id,nc1,nc2,nf;
+  int i,k,j, n, blowup=0,ne,id,nc1,nc2,nf;
   REAL t0,sum1,v_average,flux,normal;
   metinT *metin;
   metT *met;
@@ -1439,6 +1439,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   }
   // get the windstress (boundaries.c) - this needs to go after met data allocation -MR
   WindStress(grid,phys,prop,met,myproc);
+
   // main time loop
   for(n=prop->nstart+1;n<=prop->nsteps+prop->nstart;n++) {
     prop->n = n;
@@ -1666,7 +1667,6 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         UpdateSubgridVerticalAceff(grid, phys, prop, 1, myproc);
       // Compute vertical momentum and the nonhydrostatic pressure
       if(prop->nonhydrostatic && !blowup) {
-
         // Predicted vertical velocity field is in phys->w
         WPredictor(grid,phys,prop,myproc,numprocs,comm);
 
@@ -1932,7 +1932,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
   // Adams-Bashforth terms at time step n-1
 
  // Adams Bashforth coefficients
-  if(prop->n==1) {
+  if(prop->n==1 || prop->wetdry) {
     fab1=1;
     fab2=fab3=0;
 
@@ -1977,8 +1977,6 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
       phys->Cn_U2[j][k]=phys->Cn_U[j][k];
       phys->Cn_U[j][k]=0;
     }
-
-
   }
 
   // Add on explicit term to boundary edges (type 4 BCs)
@@ -2021,7 +2019,6 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
           InterpToFace(j,k,phys->uc,phys->u,grid)*grid->n2[j]);
     }
   }
-
 
   // Baroclinic term
   // over computational cells
@@ -2515,9 +2512,9 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
         phys->stmp2[nc2][k]+=
           prop->CdW*fabs(phys->vc[nc2][k])*phys->vc[nc2][k]*grid->df[j]*grid->dzf[j][k]/subgrid->Acceff[nc2][k]/grid->dzz[nc2][k];         
       }
-    } 
-  }
+    }
 
+  }
 
   // Check to make sure integrated fluxes are 0 for conservation
   // This will not be conservative if CdW or nu_H are nonzero!
@@ -2644,7 +2641,6 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
   }
 
   // note that we now basically have the term dt*F_j,k in Equation 33
-
   // update utmp 
   // this will complete the adams-bashforth time stepping
   for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
@@ -2939,7 +2935,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     i = grid->cellp[iptr]; 
 
     for(k=grid->ctop[i]+1;k<grid->Nk[i];k++) 
-      phys->Cn_W[i][k]-=prop->dt*(grid->dzz[i][k]*phys->stmp[i][k-1]+grid->dzz[i][k-1]*phys->stmp[i][k])/
+      phys->Cn_W[i][k]-=prop->dt*(grid->dzz[i][k-1]*phys->stmp[i][k-1]+grid->dzz[i][k]*phys->stmp[i][k])/
         (grid->dzz[i][k-1]+grid->dzz[i][k]);
 
     // Top flux advection consists only of top cell
@@ -3400,6 +3396,7 @@ static void UPredictor(gridT *grid, physT *phys,
   fac1=prop->imfac1;
   fac2=prop->imfac2;
   fac3=prop->imfac3;
+
   if(prop->n==1) {
     for(j=0;j<grid->Ne;j++)
       for(k=0;k<grid->Nke[j];k++){
@@ -3751,14 +3748,14 @@ static void UPredictor(gridT *grid, physT *phys,
         d[k]=phys->utmp[j][k];
       }
 
+
       if(grid->Nke[j]-grid->etop[j]>1) { // for more than one vertical layer
         // Top cells
         c[grid->etop[j]]=-theta*dt*b[grid->etop[j]];
         // account for no slip conditions which are assumed if CdT = -1 
         if(phys->CdT[j] == -1){ // no slip
           b[grid->etop[j]]=1.0+theta*dt*(a[grid->etop[j]]+a[grid->etop[j]+1]+b[grid->etop[j]]);
-        }
-        else{ // standard drag law
+        } else { // standard drag law
           b[grid->etop[j]]=1.0+theta*dt*(b[grid->etop[j]]+
               2.0*phys->CdT[j]*fabs(phys->u[j][grid->etop[j]])/
               (grid->dzz[nc1][grid->etop[j]]+
@@ -3771,8 +3768,7 @@ static void UPredictor(gridT *grid, physT *phys,
         // account for no slip conditions which are assumed if CdB = -1  
         if(phys->CdB[j] == -1){ // no slip
           b[grid->Nke[j]-1]=1.0+theta*dt*(a[grid->Nke[j]-1]+b[grid->Nke[j]-1]+b[grid->Nke[j]-2]);
-        }
-        else{ 
+        } else { 
           // standard drag law
           if(prop->vertcoord==1)
             if(!prop->subgrid)
@@ -3824,7 +3820,9 @@ static void UPredictor(gridT *grid, physT *phys,
             a[k]=-theta*dt*a[k];
           }            
         }
-      } else { // for a single vertical layer
+      } else {
+
+        // for a single vertical layer
         b[grid->etop[j]] = 1.0;
 
         // account for no slip conditions which are assumed if CdB = -1  
@@ -3842,7 +3840,6 @@ static void UPredictor(gridT *grid, physT *phys,
             b[grid->etop[j]]+=theta*dt*fabs(phys->utmp[j][grid->etop[j]])/
               subgrid->dzboteff[j]*(phys->CdB[j]); 
         }
-
 
         // account for no slip conditions which are assumed if CdT = -1 
         if(phys->CdT[j] == -1){
@@ -3958,7 +3955,6 @@ static void UPredictor(gridT *grid, physT *phys,
       // A^{-1}e1, where e1 = [1,1,1,1,1,...,1]^T 
       // Store the tridiagonals so they can be used twice (TriSolve alters the values
       // of the elements in the diagonals!!! 
-
       for(k=0;k<grid->Nke[j];k++) {
         a0[k]=a[k];
         b0[k]=b[k];
@@ -3974,6 +3970,7 @@ static void UPredictor(gridT *grid, physT *phys,
         phys->utmp[j][grid->etop[j]]/=b[grid->etop[j]];
         E[j][grid->etop[j]]=1.0/b[grid->etop[j]];
       }
+
       // Now vertically integrate E to create the vertically integrated flux-face
       // values that comprise the coefficients of the free-surface solver.  This
       // will create the D vector, where D=DZ^T E (which should be given by the
@@ -4348,8 +4345,6 @@ static void UPredictor(gridT *grid, physT *phys,
       phys->u[j][grid->etop[j]]=0;
   }
 
-
-
   // correct cells drying below DRYCELLHEIGHT above the 
   // bathymetry
   // make sure Culvert height is much bigger than DRYCELLHEIGHT when culvertmodel==1 
@@ -4373,6 +4368,7 @@ static void UPredictor(gridT *grid, physT *phys,
       phys->h[i]=-grid->dv[i]+DRYCELLHEIGHT;
       phys->active[i]=0;
       //phys->s[i][grid->Nk[i]-1]=0;
+      //phys->T[i][grid->Nk[i]-1]=0;
       //if(prop->computeSediments && prop->n>1+prop->nstart)
         //for(k=0;k<sediments->Nsize;k++)
           //sediments->SediC[k][i][grid->Nk[i]-1]=0;
@@ -4382,10 +4378,10 @@ static void UPredictor(gridT *grid, physT *phys,
       phys->active[i]=1;
     }
 
-    if(phys->h[i]<=(-grid->dv[i]+1e-3))
-      phys->active[i]=0;
+    //if(phys->h[i]<=(-grid->dv[i]+1e-3))
+      //phys->active[i]=0;
   }
-    
+
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
     i = grid->cellp[iptr];
     phys->dhdt[i]=(phys->h[i]-phys->dhdt[i])/dt;
@@ -4530,7 +4526,6 @@ static void UPredictor(gridT *grid, physT *phys,
   // update vertical ac for scalar transport
   if(prop->subgrid)
     UpdateSubgridVerticalAceff(grid, phys, prop, 0, myproc);
-
 }
 
 /*
@@ -5464,6 +5459,65 @@ void ComputeConservatives(gridT *grid, physT *phys, propT *prop, int myproc, int
  */
 static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp, int subgridmodel, gridT *grid) {
 
+  int k, n, ne, nf, iptr;
+  REAL sum;
+
+  // for each computational cell (non-stage defined)
+  for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
+    // get cell pointer transfering from boundary coordinates 
+    // to grid coordinates
+    n=grid->cellp[iptr];
+
+    // initialize over all depths
+    for(k=0;k<grid->Nk[n];k++) {
+      uc[n][k]=0;
+      vc[n][k]=0;
+    }
+    // over all interior cells
+    for(k=grid->ctop[n]+1;k<grid->Nk[n];k++) {
+      // over each face
+      for(nf=0;nf<grid->nfaces[n];nf++) {
+        ne = grid->face[n*grid->maxfaces+nf];
+        if(!(grid->smoothbot) || k<grid->Nke[ne]){
+          uc[n][k]+=u[ne][k]*grid->n1[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne]*grid->dzf[ne][k];
+          vc[n][k]+=u[ne][k]*grid->n2[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne]*grid->dzf[ne][k];
+        }else{ 
+          uc[n][k]+=u[ne][grid->Nke[ne]-1]*grid->n1[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne]*grid->dzf[ne][grid->Nke[ne]-1];
+          vc[n][k]+=u[ne][grid->Nke[ne]-1]*grid->n2[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne]*grid->dzf[ne][grid->Nke[ne]-1];
+        }
+      }
+
+      // In case of divide by zero (shouldn't happen)
+      if (grid->dzz[n][k] > DRYCELLHEIGHT) {
+          uc[n][k]/=(grid->Ac[n]*grid->dzz[n][k]);
+          vc[n][k]/=(grid->Ac[n]*grid->dzz[n][k]);
+      } else {
+          uc[n][k] = 0;
+          vc[n][k] = 0;
+      }
+    }
+
+    //top cell only - don't account for depth
+    k=grid->ctop[n];
+    // over each face
+    for(nf=0;nf<grid->nfaces[n];nf++) {
+      ne = grid->face[n*grid->maxfaces+nf];
+      if(!(grid->smoothbot) || k<grid->Nke[ne]){
+        uc[n][k]+=u[ne][k]*grid->n1[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne];
+        vc[n][k]+=u[ne][k]*grid->n2[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne];
+      }else{ 
+        uc[n][k]+=u[ne][grid->Nke[ne]-1]*grid->n1[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne];
+        vc[n][k]+=u[ne][grid->Nke[ne]-1]*grid->n2[ne]*grid->def[n*grid->maxfaces+nf]*grid->df[ne];       
+      }
+    }
+    uc[n][k]/=grid->Ac[n];
+    vc[n][k]/=grid->Ac[n];
+  }
+}
+
+
+/*static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp, int subgridmodel, gridT *grid) {
+
   int i,k, n, ne, nf, iptr,nc1,nc2,dry=1;
   REAL alpha,d,V;
   REAL sum;
@@ -5540,7 +5594,7 @@ static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp,
       vc[n][k]/=grid->Ac[n];
     }
   }
-}
+}*/
 
 /*
  * Function: ReadProperties

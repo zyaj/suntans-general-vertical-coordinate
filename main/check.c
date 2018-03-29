@@ -79,6 +79,17 @@ int Check(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_C
 
   CmaxU=0;
   for(i=0;i<Ne;i++) 
+    for(k=grid->etop[i];k<grid->Nke[i];k++) {
+      C = fabs(phys->u[i][k])*prop->dt/grid->dg[i];
+      if(C>CmaxU) {
+        icu = i;
+        kcu = k;
+        CmaxU = C;
+      }
+    }
+
+  /*CmaxU=0;
+  for(i=0;i<Ne;i++) 
   {
     dry=0;
     nc1=grid->grad[2*i];
@@ -97,17 +108,16 @@ int Check(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_C
         CmaxU = C;
       }
     }
-  }
-
+  }*/
 
   CmaxW=0;
   for(i=0;i<Nc;i++) 
     for(k=grid->ctop[i];k<grid->Nk[i];k++) {
       C = 0.5*fabs(phys->w[i][k]+phys->w[i][k+1])*prop->dt/grid->dzz[i][k];
       if(C>CmaxW && (grid->dv[i]+phys->h[i])>=BUFFERHEIGHT && grid->dzz[i][k]>=BUFFERHEIGHT) {
-	icw = i;
-	kcw = k;
-	CmaxW = C;
+        icw = i;
+        kcw = k;
+        CmaxW = C;
       }
     }
 
@@ -142,6 +152,7 @@ int Check(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_C
             DepthFromDZ(grid,phys,grid->grad[2*icu+1],kcu)));
       printf("  Free-surface heights (on either side): %.3e, %.3e\n",phys->h[nc1],phys->h[nc2]);
       printf("  Depths (on either side): %.3e, %.3e\n",grid->dv[nc1],grid->dv[nc2]);
+      printf("  Salinity (on either side): %.3e, %.3e\n",phys->s[nc1][kcu],phys->s[nc2][kcu]);
       printf("  Flux-face height = %.3e, CdB = %.3e\n",grid->dzf[icu][kcu],phys->CdB[icu]);
       printf("  Umax = %.3e\n",phys->u[icu][kcu]);
       printf("  Horizontal grid spacing grid->dg[%d] = %.3e\n",icu,grid->dg[icu]);

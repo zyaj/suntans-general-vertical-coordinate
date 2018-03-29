@@ -179,6 +179,7 @@ void GetGrid(gridT **localgrid, int myproc, int numprocs, MPI_Comm comm)
   //   maingrid->vwgt
   if(myproc==0 && VERBOSE>0) printf("Getting the depth for graph weights...\n");
   GetDepth(maingrid,myproc,numprocs,comm);
+
   // functions to set up parallelization of the code and compute geometrical 
   // information needed for grid computations
 
@@ -497,29 +498,29 @@ void GetDepth(gridT *grid, int myproc, int numprocs, MPI_Comm comm)
 
   GetDZ(dz,maxdepth,maxdepth,Nkmax,myproc);  
 
-  if(!stairstep && fixdzz && (vertcoord==1 || vertcoord==5)) 
-    FixDZZ(grid,maxdepth,Nkmax,fixdzz,myproc);
+  //if(!stairstep && fixdzz && (vertcoord==1 || vertcoord==5)) 
+    //FixDZZ(grid,maxdepth,Nkmax,fixdzz,myproc);
 
   if(minimum_depth!=0) {
     if(minimum_depth>0) {
       printf("Setting minimum depth to %f\n",minimum_depth);
       for(n=0;n<grid->Nc;n++) {
-	if(grid->dv[n]<minimum_depth) {
-	  grid->dv[n]=minimum_depth;
-	  kount++;
-	}
+        if(grid->dv[n]<minimum_depth) {
+          grid->dv[n]=minimum_depth;
+          kount++;
+        }
       }
       if(VERBOSE>0 && myproc==0 && kount>0) 
-	printf("Increased the depth to the minimum set value of %.2f %d times.\n",minimum_depth,kount);
+        printf("Increased the depth to the minimum set value of %.2f %d times.\n",minimum_depth,kount);
     } else if(minimum_depth<0) {
       for(n=0;n<grid->Nc;n++) {
-	if(grid->dv[n]<dz[0]) {
-	  grid->dv[n]=dz[0];
-	  kount++;
-	}
+        if(grid->dv[n]<dz[0]) {
+          grid->dv[n]=dz[0];
+          kount++;
+        }
       }
       if(VERBOSE>0 && myproc==0 && kount>0) 
-	printf("Increased the depth to the minimum set value of dz[0]=%.2f %d times.\n",dz[0],kount);
+        printf("Increased the depth to the minimum set value of dz[0]=%.2f %d times.\n",dz[0],kount);
     }
   }
   

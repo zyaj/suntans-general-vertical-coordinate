@@ -655,6 +655,7 @@ static void ReadCellCenteredData(char *filename, gridT *grid, int myproc) {
     grid->Ac[n]=getfield(ifile,str);
     grid->dv[n]=getfield(ifile,str);
     grid->Nk[n]=(int)getfield(ifile,str);
+
     for(nf=0;nf<grid->nfaces[n];nf++)
       grid->face[grid->maxfaces*n+nf]=(int)getfield(ifile,str);
     for(nf=0;nf<grid->nfaces[n];nf++)

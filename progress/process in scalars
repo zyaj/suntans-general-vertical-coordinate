@@ -17,3 +17,6 @@
 2017/02/01 
 1. fix a bug for the flux direction when tvd scheme is used 
 should use u_im not u_old (line 410)
+
+2018/03/16
+1. find a CWC bug for wetdry example needs to be fixed. The bug only happens when fac3!=0 and a new cell is developed (h increases to a new layer for z-level) not finished

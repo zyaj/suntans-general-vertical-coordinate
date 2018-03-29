@@ -397,3 +397,11 @@ if vertcoord!=1 && wedry: use ududx+vdudy+d(omega*u)dz-udomega/dz
 02/01/2018
 1. recover phys.c as the old version with djdtmeth
 2. the relative vorticity is calculated at nodes for generalized vertical coordinate
+
+03/17/2018
+1. The method to calculate CmaxU has been changed to the original way
+2. modify the calculation of uc and vc, consistent with the original suntans model
+
+03/26/2018
+1. the AB method for explicit term of momentum advection is set to forward euler when wetdry==1 
+which is consistent with the original suntans
