@@ -19,4 +19,4 @@
 should use u_im not u_old (line 410)
 
 2018/03/16
-1. find a CWC bug for wetdry example needs to be fixed. The bug only happens when fac3!=0 and a new cell is developed (h increases to a new layer for z-level) not finished
+1. find a CWC bug for wetdry example needs to be fixed. The bug only happens when fac3!=0 and a new cell is developed (h increases to a new layer for z-level) (fixed used fac1=prop->thetaS, fac2=1-prop->thetaS instead, which means we assume s^im=theta method)

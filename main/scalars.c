@@ -88,9 +88,9 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
       phys->stmp[i][k]=scal[i][k];
 
   // prop->im
-  fac1=prop->imfac1;
-  fac2=prop->imfac2;
-  fac3=prop->imfac3;
+  fac1=prop->thetaS;
+  fac2=1-prop->thetaS;
+  fac3=0;
   
   // Add on boundary fluxes, using stmp2 as the temporary storage
   // variable
@@ -398,7 +398,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
       if(!(prop->TVD && prop->horiTVD)) {
         for(k=0;k<grid->Nke[ne];k++) {
           
-          temp[k]=UpWind((fac2*phys->u_old[ne][k]+fac1*phys->u[ne][k]+fac3*phys->u_old2[ne][k]),phys->stmp[nc1][k],sp[k]);
+          temp[k]=UpWind((prop->imfac2*phys->u_old[ne][k]+prop->imfac1*phys->u[ne][k]+prop->imfac3*phys->u_old2[ne][k]),phys->stmp[nc1][k],sp[k]);
           // new edit
           if(k<grid->ctopold[nc1])
             temp[k]=sp[k];
@@ -408,7 +408,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
 
       } else {
         for(k=0;k<grid->Nke[ne];k++) {
-          if((fac2*phys->u_old[ne][k]+fac1*phys->u[ne][k]+fac3*phys->u_old2[ne][k])>0)
+          if((prop->imfac2*phys->u_old[ne][k]+prop->imfac1*phys->u[ne][k]+prop->imfac3*phys->u_old2[ne][k])>0)
             temp[k]=phys->SfHp[ne][k];
           else
             temp[k]=phys->SfHm[ne][k];
@@ -416,7 +416,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
       }
       // this part don't need to be changed
       for(k=0;k<grid->Nke[ne];k++)
-        ap[k]+= dt*df*normal/Ac*(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])
+        ap[k]+= dt*df*normal/Ac*(prop->imfac1*phys->u[ne][k]+prop->imfac2*phys->u_old[ne][k]+prop->imfac3*phys->u_old2[ne][k])
           *temp[k]*grid->dzf[ne][k];
     }
 
@@ -537,7 +537,7 @@ void UpdateScalars(gridT *grid, physT *phys, propT *prop, REAL **w_im, REAL **sc
           div_local=0;
           for(nf=0;nf<grid->nfaces[i];nf++) {
             ne=grid->face[i*grid->maxfaces+nf];
-            div_local+=(fac1*phys->u[ne][k]+fac2*phys->u_old[ne][k]+fac3*phys->u_old2[ne][k])
+            div_local+=(prop->imfac1*phys->u[ne][k]+prop->imfac2*phys->u_old[ne][k]+prop->imfac3*phys->u_old2[ne][k])
               *grid->dzf[ne][k]*grid->normal[i*grid->maxfaces+nf]*grid->df[ne];
           }
           div_da+=div_local;
