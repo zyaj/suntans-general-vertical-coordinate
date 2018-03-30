@@ -32,3 +32,9 @@ Parallel2: OpenMP+GCC4.9+Parmetis2.0+Triangle
 ## Quick Start
 Please check the Wiki page of this repository.
 
+## Latest Update (03/30/2018)
+1. The wetdry example has been added.
+2. A CWC bug in scalars.c has been fixed.
+3. All the codes have been cleaned up to remove warning and possible errors when compiling with the latest gcc.
+
+
