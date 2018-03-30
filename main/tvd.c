@@ -14,6 +14,7 @@
 #include "grid.h"
 #include "tvd.h"
 #include "util.h"
+#include "sendrecv.h"
 #include <math.h>
 
 // To prevent denominators from going to zero.

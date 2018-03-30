@@ -434,7 +434,7 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
          c[k-grid->ctop[i]]=-vert->Mc[i][k];
          if(fabs(a[k-grid->ctop[i]])>max)
           max=fabs(a[k-grid->ctop[i]]);
-         if(fabs(c[k-grid->ctop[i]])>max);
+         if(fabs(c[k-grid->ctop[i]])>max)
           max=fabs(c[k-grid->ctop[i]]);
        }
        if(max==0)

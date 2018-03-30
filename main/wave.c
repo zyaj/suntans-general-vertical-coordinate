@@ -23,6 +23,7 @@
 #include "suntans.h"
 #include "timer.h"
 #include "boundaries.h"
+#include "initialization.h"
 
 static REAL InnerProduct2(REAL *x, REAL *y, gridT *grid, int myproc, int numprocs, MPI_Comm comm);
 static REAL InterpCgToFace(int m, int n, int j, gridT *grid);
@@ -2256,6 +2257,7 @@ static void BiCGSolveN(int m0, int n0, gridT *grid, propT *prop, int myproc, int
   }
 
   if(myproc==0 && VERBOSE>3)
+  {
     if(eps0 < epsW)
       printf("Step %d, norm of action density (%d, %d) source at = %e is already small\n", prop->n, m0, n0, eps0);
     else
@@ -2263,7 +2265,8 @@ static void BiCGSolveN(int m0, int n0, gridT *grid, propT *prop, int myproc, int
 			   prop->n, m0, n0, n, eps, SMALL);
       else printf("Step %d, BiCGSolve action density (%d, %d) converged after %d iterations, rsdl = %e < %e\n",
 		  prop->n, m0, n0, n, eps, epsW);
-    
+  }  
+
   ISendRecvCellData2D(x, grid, myproc, comm);
 
   SunFree(z, grid->Nc*sizeof(REAL), "BiCGSolveN");

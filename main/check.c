@@ -340,23 +340,23 @@ void Progress(propT *prop, int myproc, int numprocs)
       printf("Average per time step: %.2e s\n",t_sim/prop->nsteps);
       printf("Timing Summary:\n");
       if(prop->nonhydrostatic)
-        printf("  Nonhydrostatic pressure: %.2f s (%.2f%)\n",t_nonhydro,
+        printf("  Nonhydrostatic pressure: %.2f s (%.2f%%)\n",t_nonhydro,
             100*t_nonhydro/t_sim);
-      printf("  Free surface and vertical friction: %.2f s (%.2f%)\n",t_predictor,
+      printf("  Free surface and vertical friction: %.2f s (%.2f%%)\n",t_predictor,
           100*t_predictor/t_sim);
-      printf("  Explicit terms: %.2f s (%.2f%)\n",t_source,
+      printf("  Explicit terms: %.2f s (%.2f%%)\n",t_source,
           100*t_source/t_sim);
       if(prop->beta || prop->gamma)
-        printf("  Scalar transport: %.2f s (%.2f%)\n",t_transport,
+        printf("  Scalar transport: %.2f s (%.2f%%)\n",t_transport,
             100*t_transport/t_sim);
       if(prop->turbmodel)
-        printf("  Turbulence: %.2f s (%.2f%)\n", t_turb,
+        printf("  Turbulence: %.2f s (%.2f%%)\n", t_turb,
             100*t_turb/t_sim);
-      printf("  Bounds checking: %.2f s (%.2f%)\n", t_check,
+      printf("  Bounds checking: %.2f s (%.2f%%)\n", t_check,
           100*t_check/t_sim);
-      printf("  I/O: %.2f s (%.2f%)\n", t_io,
+      printf("  I/O: %.2f s (%.2f%%)\n", t_io,
           100*t_io/t_sim);
-      printf("  Remainder: %.2f s (%.2f%)\n", t_rem,
+      printf("  Remainder: %.2f s (%.2f%%)\n", t_rem,
           100*t_rem/t_sim);
       if(numprocs>1) {
         printf("  Communication time: %.2e s\n",t_comm);

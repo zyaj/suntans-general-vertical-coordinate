@@ -35,7 +35,7 @@
 #include "culvert.h"
 #include "wave.h"
 #include "subgrid.h"
-
+#include "sendrecv.h"
 /*
  * Private Function declarations.
  *
@@ -65,8 +65,6 @@ static void GSSolve(gridT *grid, physT *phys, propT *prop,
     int myproc, int numprocs, MPI_Comm comm);
 static REAL InnerProduct(REAL *x, REAL *y, gridT *grid, int myproc, int numprocs, 
     MPI_Comm comm);
-static REAL FindMax(REAL *x, gridT *grid, int myproc, int numprocs, 
-    MPI_Comm comm);
 static REAL InnerProduct3(REAL **x, REAL **y, gridT *grid, int myproc, int numprocs, 
     MPI_Comm comm);
 static void OperatorH(REAL *x, REAL *y, REAL *coef, REAL *fcoef, gridT *grid, 
@@ -87,7 +85,7 @@ static void StoreVariables(gridT *grid, physT *phys);
 static void NewCells(gridT *grid, physT *phys, propT *prop);
 static void WPredictor(gridT *grid, physT *phys, propT *prop,
     int myproc, int numprocs, MPI_Comm comm);
-inline void ComputeUC(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc, interpolation interp, int kinterp, int subgridmodel);
+void ComputeUC(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc, interpolation interp, int kinterp, int subgridmodel);
 static void ComputeUCPerot(REAL **u, REAL **uc, REAL **vc, REAL *h, int kinterp, int subgridmodel, gridT *grid);
 static void ComputeUCLSQ(REAL **u, REAL **uc, REAL **vc, gridT *grid, physT *phys);
 static void ComputeUCRT(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc);
@@ -96,7 +94,7 @@ static void  ComputeTangentialVelocity(physT *phys, gridT *grid, interpolation n
 static void  ComputeQuadraticInterp(REAL x, REAL y, int ic, int ik, REAL **uc, 
     REAL **vc, physT *phys, gridT *grid, interpolation ninterp, 
     interpolation tinterp, int myproc);
-inline static void ComputeRT0Velocity(REAL* tempu, REAL* tempv, REAL e1n1, REAL e1n2, 
+static void ComputeRT0Velocity(REAL* tempu, REAL* tempv, REAL e1n1, REAL e1n2, 
     REAL e2n1, REAL e2n2, REAL Uj1, REAL Uj2);
 static void BarycentricCoordsFromCartesian(gridT *grid, int cell, 
     REAL x, REAL y, REAL* lambda);
@@ -2080,8 +2078,11 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
   // comment out since it is solved by implicit method, see function Upredictor
 
   if(prop->nonlinear && prop->vertcoord!=1)
-    if(!prop->wetdry){
+  {
+    if(!prop->wetdry)
+    {
       if(vert->dJdtmeth==1)
+      {
         for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
         {
            j = grid->edgep[jptr];
@@ -2094,16 +2095,8 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
              phys->Cn_U[j][k]-=phys->u[j][k]*
              (def2/dgf*(1-grid->dzzold[nc1][k]/grid->dzz[nc1][k])+def1/dgf*(1-grid->dzzold[nc2][k]/grid->dzz[nc2][k]));
         }
+      }
     } else {
-      /*for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
-        i=grid->cellp[iptr];
-        for(k=grid->ctop[i];k<grid->Nk[i];k++)
-        {
-          phys->stmp[i][k]+=phys->uc[i][k]*vert->dudx[i][k]+phys->vc[i][k]*vert->dudy[i][k];
-          phys->stmp2[i][k]+=phys->uc[i][k]*vert->dvdx[i][k]+phys->vc[i][k]*vert->dvdy[i][k];  
-        }
-      }*/
-
       for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) 
       {
         j = grid->edgep[jptr];
@@ -2120,7 +2113,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
         }  
       }
     }
-    
+  }  
   // Compute Eulerian advection of momentum (nonlinear!=0)
   if(prop->nonlinear && (prop->vertcoord==1 || (prop->vertcoord!=1 && !prop->wetdry))) 
   {
@@ -2813,12 +2806,13 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
             phys->stmp[i][k]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]); // consistent with dzz not dzzold
 
         // Top cell is filled with momentum from neighboring cells
-        if(prop->conserveMomentum)
+        if(prop->conserveMomentum){
           for(k=grid->etop[ne];k<grid->ctop[i];k++)
             if(!prop->subgrid || prop->wetdry) 
               phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*grid->Ac[i]);
             else
               phys->stmp[i][grid->ctop[i]]+=phys->ut[ne][k]*phys->u_old[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*subgrid->Acceff[i][k]);
+        }
       }
 
       // Vertical advection; note that in this formulation first-order upwinding is not implemented.
@@ -2829,16 +2823,18 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
           // explicit vertical advection, so use acceffold and acveffold, same as below.
           //????z
           if(prop->vertcoord==1)
+          {
             if(!prop->subgrid || prop->wetdry)
               phys->stmp[i][k]+=(pow(phys->w[i][k],2)-pow(phys->w[i][k+1],2))/grid->dzz[i][k];
             else
               phys->stmp[i][k]+=(pow(phys->w[i][k],2)*subgrid->Acveffold[i][k]-pow(phys->w[i][k+1],2)*subgrid->Acveffold[i][k+1])/grid->dzz[i][k]/subgrid->Acceff[i][k];            
-          else
+          }else{
             if(!prop->subgrid)
               phys->stmp[i][k]+=(vert->omega_old[i][k]*phys->w[i][k]-vert->omega_old[i][k+1]*phys->w[i][k+1])/grid->dzz[i][k];
             else
               phys->stmp[i][k]+=(vert->omega_old[i][k]*phys->w[i][k]*subgrid->Acveffold[i][k]-
                 vert->omega_old[i][k+1]*phys->w[i][k+1]*subgrid->Acveffold[i][k+1])/grid->dzz[i][k]/subgrid->Acceff[i][k];                 
+          }
         }
       }
     }
@@ -2945,6 +2941,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
     // add the additional part for the new vertical coordinate
     // comment out since it is solved by implicit method for stability
     if(prop->vertcoord!=1 && prop->nonlinear)
+    {
       if(!prop->wetdry){
         if(vert->dJdtmeth==1)
         {
@@ -2970,6 +2967,7 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
         // can be comment out since omega_top=0
         phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k];         
       }
+    }
   }
 
   // Vertical advection using Lax-Wendroff
@@ -3325,7 +3323,7 @@ static void CGSolveQ(REAL **q, REAL **src, REAL **c, gridT *grid, physT *phys, p
       break;
   }
 
-  if(myproc==0 && VERBOSE>2) 
+  if(myproc==0 && VERBOSE>2) {
     if(eps==0)
       printf("Warning...Time step %d, norm of pressure source is 0.\n",prop->n);
     else
@@ -3333,6 +3331,7 @@ static void CGSolveQ(REAL **q, REAL **src, REAL **c, gridT *grid, physT *phys, p
           prop->n,n,sqrt(eps/eps0),prop->qepsilon);
       else printf("Time step %d, CGSolve pressure converged after %d iterations, res=%e < %.2e\n",
           prop->n,n,sqrt(eps/eps0),prop->qepsilon);
+  }
 
   // Rescale the preconditioned solution 
   if(prop->qprecond==1) {
@@ -3692,12 +3691,13 @@ static void UPredictor(gridT *grid, physT *phys,
       }
 
       // add marsh explicit term
-      if(!prop->subgrid)
+      if(!prop->subgrid){
         if(prop->marshmodel)
           MarshExplicitTerm(grid,phys,prop,j,theta,dt,myproc);
-      else
+      }else{
         if(!subgrid->dragpara && prop->marshmodel)
           MarshExplicitTerm(grid,phys,prop,j,theta,dt,myproc);
+      }
 
       // add on explicit vertical momentum advection only if there is more than one vertical layer edge.
       if(prop->vertcoord==1 && prop->nonlinear && prop->thetaM>=0 && grid->Nke[j]-grid->etop[j]>1) {
@@ -3938,7 +3938,7 @@ static void UPredictor(gridT *grid, physT *phys,
 
         if(a[k]!=a[k]) printf("a[%d] problems, dzz[%d][%d]=%f\n",k,j,k,grid->dzz[j][k]);
         
-        if(b[k]!=b[k] || b[k]==0)
+        if(b[k]!=b[k] || b[k]==0){
           if(prop->subgrid)
             printf("proc %d n %d ne %d b[%d] problems, b=%f dzf %e nke %d etop %d Nk %d %d dv %e %e hmin %e %e Cd %e\n",myproc,prop->n,j, k,b[k],
               grid->dzf[j][k],grid->Nke[j],grid->etop[j],grid->Nk[grid->grad[2*j]],grid->Nk[grid->grad[2*j+1]],grid->dv[grid->grad[2*j]],grid->dv[grid->grad[2*j+1]],
@@ -3947,6 +3947,7 @@ static void UPredictor(gridT *grid, physT *phys,
             printf("proc %d n %d ne %d b[%d] problems, b=%f dzf %e nke %d etop %d Nk %d %d dv %e %e Cd %e\n",myproc,prop->n,j, k,b[k],
               grid->dzf[j][k],grid->Nke[j],grid->etop[j],grid->Nk[grid->grad[2*j]],grid->Nk[grid->grad[2*j+1]],grid->dv[grid->grad[2*j]],grid->dv[grid->grad[2*j+1]]
               ,phys->CdB[j]);                
+        }
 
         if(c[k]!=c[k]) printf("c[%d] problems\n",k);
       }
@@ -4139,11 +4140,12 @@ static void UPredictor(gridT *grid, physT *phys,
       ISendRecvCellData2D(subgrid->residual,grid,myproc,comm);
       sum=InnerProduct(subgrid->residual,subgrid->residual,grid,myproc,numprocs,comm);
 
-      if(nf==0)
+      if(nf==0){
         if(sum>1)
           sum0=sum;
         else
           sum0=1;
+      }
 
       if(prop->subgrid)
         UpdateSubgridAceff(grid, phys, prop, myproc);
@@ -4228,11 +4230,12 @@ static void UPredictor(gridT *grid, physT *phys,
         culvert->sum=InnerProduct(culvert->condition,culvert->condition,grid,myproc,numprocs,comm);
 
         // infinity norm
-        if(nf1==0)
+        if(nf1==0){
           if(culvert->sum>1)
             sum0=culvert->sum;
           else
             sum0=1;
+        }
 
         if(sqrt(culvert->sum)<culvert->eps)
           break;
@@ -4251,6 +4254,7 @@ static void UPredictor(gridT *grid, physT *phys,
 
           if(fabs(sqrt(culvert->sum/sum0)-min)<1e-3)
             break;
+
           if(nf1>50){
             printf("iteration for subgrid is more than 50 times. stop program\n");
             exit(1);
@@ -4279,11 +4283,12 @@ static void UPredictor(gridT *grid, physT *phys,
       // the total residual
       culvert->sum=InnerProduct(culvert->condition2,culvert->condition2,grid,myproc,numprocs,comm);
       
-      if(nf==0)
+      if(nf==0){
         if(culvert->sum>1)
           sum=culvert->sum;
         else
           sum=1;
+      }
       nf++;
 
       if(sqrt(culvert->sum)<culvert->eps)
@@ -4659,15 +4664,16 @@ static void CGSolve(gridT *grid, physT *phys, propT *prop, int myproc, int numpr
     if(sqrt(eps/eps0)<prop->epsilon) 
       break;
   }
-  if(myproc==0 && VERBOSE>2) 
-    if(eps==0)
+  if(myproc==0 && VERBOSE>2){
+    if(eps==0){
       printf("Warning...Time step %d, norm of free-surface source is 0.\n",prop->n);
-    else
+    } else {
       if(n==niters)  printf("Warning... Time step %d, Free-surface iteration not converging after %d steps! RES=%e > %.2e\n",
           prop->n,n,sqrt(eps/eps0),prop->qepsilon);
       else printf("Time step %d, CGSolve free-surface converged after %d iterations, res=%e < %.2e\n",
           prop->n,n,sqrt(eps/eps0),prop->epsilon);
-
+    }
+  }
   // Send the solution to the neighboring processors
   ISendRecvCellData2D(x,grid,myproc,comm);
 }
@@ -4740,44 +4746,6 @@ static void HCoefficients(REAL *coef, REAL *fcoef, gridT *grid, physT *phys, pro
     }
   }
 
-}
-
-/*
- *
- * Function: FindMax
- * Usage: FindMax(x,grid,myproc,numprocs,comm);
- * ---------------------------------------------------
- * Get the max element in x
- *
- */
-static REAL FindMax(REAL *x, gridT *grid, int myproc, int numprocs, 
-    MPI_Comm comm)
-{
-  int i,iptr,proc;
-  REAL mymax, max;
-  MPI_Status status;
-
-  for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
-    i = grid->cellp[iptr];
-    if(iptr==grid->celldist[0])
-      mymax=fabs(x[i]);
-    else{
-      if(x[i]>mymax)
-        mymax=fabs(x[i]);
-    }
-  }
-  if(myproc==0)
-  {
-     max=mymax;
-     for(proc=1;proc<numprocs;proc++){
-       MPI_Recv(&mymax,1,MPI_DOUBLE,MPI_ANY_SOURCE,1,comm,&status);    
-       if(mymax>max)
-         max=mymax; 
-     }
-  }else
-    MPI_Send(&mymax,1,MPI_DOUBLE,0,1,comm); 
-  MPI_Bcast(&max,1,MPI_DOUBLE,0,comm);
-  return max;
 }
 
 /*
@@ -6001,10 +5969,12 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
       grid->dzf[j][k]=UpWind(phys->u[j][k],grid->dzz[nc1][k],grid->dzz[nc2][k]);
       if(prop->vertcoord!=1 && prop->vertcoord!=5){
         if(grid->mark[j]==0)
+        {
           if(phys->u[j][k]>0)
             grid->dzf[j][k]=phys->SfHp[j][k];
           else
             grid->dzf[j][k]=phys->SfHm[j][k];
+        }
       }
     }
     k=grid->Nke[j]-1;
@@ -6016,8 +5986,7 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
      if(grid->mark[j]==2 && grid->dzf[j][k]<=0.01)
         grid->dzf[j][k]=0.01;
         
-    }
-    else{
+    } else{
       // this only works for the stair-like z-level coordinate
       if(prop->vertcoord==1 || prop->vertcoord==5)
         grid->dzf[j][k]=Min(grid->dzz[nc1][k],grid->dzz[nc2][k]);
@@ -6056,7 +6025,7 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
  *
  */
 //inline static void ComputeUC(physT *phys, gridT *grid, int myproc) {
-inline void ComputeUC(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc, interpolation interp,int kinterp, int subgridmodel) {
+void ComputeUC(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc, interpolation interp,int kinterp, int subgridmodel) {
 
   switch(interp) {
     case QUAD:
@@ -6068,6 +6037,8 @@ inline void ComputeUC(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc
       break;
     case LSQ:
       ComputeUCLSQ(phys->u,ui,vi,grid,phys);
+      break;
+    default:
       break;
   }
 
@@ -6082,7 +6053,7 @@ inline void ComputeUC(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc
  * methods outlined in Wang et al, 2011
  *
  */
-inline static void ComputeUCRT(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc) {
+static void ComputeUCRT(REAL **ui, REAL **vi, physT *phys, gridT *grid, int myproc) {
 
   int k, n, ne, nf, iptr;
   REAL sum;
@@ -6487,7 +6458,7 @@ static void ComputeNodalVelocity(physT *phys, gridT *grid, interpolation interp,
  * Compute the nodal velocity using RT0 basis functions (Appendix B, Wang et al 2011)
  *
  */
-inline static void ComputeRT0Velocity(REAL *tempu, REAL *tempv, REAL e1n1, REAL e1n2, 
+static void ComputeRT0Velocity(REAL *tempu, REAL *tempv, REAL e1n1, REAL e1n2, 
     REAL e2n1, REAL e2n2, REAL Uj1, REAL Uj2) 
 {
   const REAL det = e1n1*e2n2 - e1n2*e2n1;

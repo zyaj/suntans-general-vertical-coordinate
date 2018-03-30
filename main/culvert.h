@@ -43,5 +43,6 @@ void CulvertIterationSource(gridT *grid, physT *phys,  propT *prop, REAL theta, 
 void CulvertInitIteration(gridT *grid, physT *phys, propT *prop, int no, int myproc);
 void UpdateCulvertQcoef(gridT *grid, propT *prop,int no, int myproc);
 void SetupCulvertmodel(gridT *grid, physT *phys, propT *prop, int myproc);
+void SetCulvertDragCoefficient(gridT *grid, physT *phys, int myproc);
 
 #endif

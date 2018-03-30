@@ -24,6 +24,7 @@
 #include "physio.h"
 #include "wave.h"
 #include "culvert.h"
+#include "timer.h"
  
 void ReadSediProperties(int myproc);
 void InitializeSediment(gridT *grid, physT *phys, propT *prop,int myproc);
@@ -69,7 +70,7 @@ void ReadSediProperties(int myproc) {
   
   // condition check
   if(sediments->readSediment==1 && sediments->Nsize>3){
-    printf("Nsize = %d>1, but readSediment==1 which means Nsize==1. You should set readSediment as 0 or Nsize==1.\n",sediments->Nsize,sediments->Nsize);
+    printf("Nsize = %d>1, but readSediment==1 which means Nsize==1. You should set readSediment as 0 or Nsize==1.\n",sediments->Nsize);
     MPI_Finalize();
     exit(EXIT_FAILURE);
   }
@@ -133,13 +134,13 @@ void ReadSediProperties(int myproc) {
   else
     for(m=1;m<=sediments->Nsize;m++){
       for(n=1;n<=sediments->Nlayer;n++){
-        sprintf(str,"E0%d",n,m);
+        sprintf(str,"E0%d",n);
         sediments->E0[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
-        sprintf(str,"Taue%d",n,m);
+        sprintf(str,"Taue%d",n);
         sediments->Taue[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
-        sprintf(str,"Taud%d",n,m);
+        sprintf(str,"Taud%d",n);
         sediments->Taud[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
-        sprintf(str,"Drydensity%d",n,m);
+        sprintf(str,"Drydensity%d",n);
         sediments->Drydensity[m-1][n-1]=MPI_GetValue(DATAFILE,str,"ReadSediProperties",myproc);
       }
     }    

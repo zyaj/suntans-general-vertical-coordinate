@@ -2078,6 +2078,7 @@ void UpdateSubgridFreeSurface(gridT *grid, physT *phys, propT *prop, int myproc)
     if(prop->culvertmodel){
       // compare to culvert pressure to ensure culvert pressure is larger than h
       if(culvert->top[nc]!=INFTY)
+      {
         if(culvert->pressure[nc]<phys->h[nc])
           phys->h[nc]=culvert->pressure[nc];
         else
@@ -2087,6 +2088,7 @@ void UpdateSubgridFreeSurface(gridT *grid, physT *phys, propT *prop, int myproc)
             culvert->pressure2[nc]=phys->h[nc];
           } else 
             phys->h[nc]=culvert->pressure[nc];
+      }
 
       if(phys->h[nc]>culvert->top[nc])
         phys->h[nc]=culvert->top[nc];

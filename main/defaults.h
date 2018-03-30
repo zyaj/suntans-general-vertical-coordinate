@@ -289,7 +289,7 @@ const int output_user_var_DEFAULT=0;
   the minimum layerthickness when the generalized
   vertical coordinate is applied
 */
-const int vertdzmin_DEFAULT=1e-3;
+const REAL vertdzmin_DEFAULT=1e-3;
 
 /* dzfmeth
   how to calculate flux height 1 upwind, 2 laxwendroff, 3 superbee, 4 van deer, 5 central differencing

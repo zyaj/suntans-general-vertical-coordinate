@@ -2427,7 +2427,7 @@ int IsNodeNeighborProc(int np, gridT *maingrid, gridT *localgrid,
 		       int myproc, int neighproc)
 {
   printf("Header for IsNodeNeighborProc.  Note implemented yet!!!\n");
-  
+  return -1;
 }
 
 /*

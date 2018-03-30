@@ -17,6 +17,7 @@
 #include "turbulence.h"
 #include "boundaries.h"
 #include "scalars.h"
+#include "sendrecv.h"
 
 // Local function
 static void StabilityFunctions(REAL *Sm, REAL *Sh, REAL Gh, REAL A1, REAL A2, REAL B1, REAL B2, REAL C1);

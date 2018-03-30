@@ -11,6 +11,7 @@
 #include "grid.h"
 #include "phys.h"
 #include "util.h"
+#include "sendrecv.h"
 //#include "mynetcdf.h"
 
 #define NTmet 3

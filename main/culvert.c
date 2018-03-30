@@ -381,11 +381,12 @@ void CulvertInitIteration(gridT *grid, physT *phys, propT *prop, int no, int myp
     // store each guess
     for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
       i = grid->cellp[iptr];
-      if(phys->h[i]>culvert->top[i]) 
+      if(phys->h[i]>culvert->top[i]){ 
         if(!prop->subgrid)
           phys->htmp[i]=phys->htmp[i]-culvert->toparea[i]*phys->h[i]+culvert->toparea[i]*culvert->top[i];
         else 
           phys->htmp[i]=phys->htmp[i];//-culvert->toparea[i]*(phys->h[i]-culvert->top[i]);
+      }
       culvert->source1[i]=phys->htmp[i];
       culvert->source2[i]=phys->hold[i];
       culvert->source3[i]=phys->htmp2[i];
