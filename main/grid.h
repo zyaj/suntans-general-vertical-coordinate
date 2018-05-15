@@ -150,6 +150,7 @@ typedef struct _gridT {
   int maxfaces;
   int stairstep;
   int fixdzz;
+  int periodicbc;
   REAL smoothbot;
 } gridT;
 

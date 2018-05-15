@@ -541,8 +541,7 @@ static void ReadPeriodicPointData(gridT *grid,int myproc){
   char filename[BUFFERLENGTH],str[BUFFERLENGTH];
   FILE *ifile;
 
-  periodicbc = MPI_GetValue(DATAFILE,"periodicbc","ReadPeriodicPointData",myproc); //check whether there is periodic bc
-  if(periodicbc){
+  if(grid->periodicbc){
     MPI_GetFile(filename,DATAFILE,"periodicbcfiles","ReadPeriodicPointData",myproc);
     ifile = MPI_FOpen(filename,"r","ReadPeriodicPointData",myproc);
     Npair = MPI_GetSize(filename,"ReadPeriodicPointData",myproc);
