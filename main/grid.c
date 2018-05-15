@@ -313,13 +313,17 @@ void Partition(gridT *maingrid, gridT **localgrid, MPI_Comm comm)
   // get vertical grid, notably Nke, Nkc to distinguish number of layers at edges, cells
   VertGrid(maingrid,localgrid,comm);
   
-  // replace points back periodic boundary into their paired values
+  // replace points back periodic boundary into their paired values at local grid
   if(maingrid->periodicbc)
     ReplacePeriodicBoundaryPair(maingrid,localgrid,0,myproc);
 
   if(myproc==0 && VERBOSE>1) 
     printf("\tComputing edge and voronoi distances and areas...\n");
   Geometry(maingrid,localgrid,myproc);
+
+  // replace points on periodic boundary into their paired values at local grid
+  if(maingrid->periodicbc)
+    ReplacePeriodicBoundaryPair(maingrid,localgrid,2,myproc);
 
   //if(myproc==0 && VERBOSE>2) printf("\tReordering...\n");
   // function to reorder the grid for increased computational efficiency, this 
@@ -3373,7 +3377,7 @@ static int IsNeighborGlobalByNode(int cell, gridT *maingrid,
 static void Geometry(gridT *maingrid, gridT **grid, int myproc)
 {
   int n, nf, npc, ne, k, j, Nc=(*grid)->Nc, Ne=(*grid)->Ne, Np=(*grid)->Np, p1, p2,grad1,grad2,enei;
-  REAL xt[(*grid)->maxfaces], yt[(*grid)->maxfaces], xc, yc, den, R0, tx, ty, tmag, xdott;
+  REAL xt[(*grid)->maxfaces], yt[(*grid)->maxfaces], xc, yc, den, R0, tx, ty, tmag, xdott,dist_x,dist_y;
   
   (*grid)->Ac = (REAL *)SunMalloc(Nc*sizeof(REAL),"Geometry");
   (*grid)->df = (REAL *)SunMalloc(Ne*sizeof(REAL),"Geometry");
@@ -3442,7 +3446,6 @@ static void Geometry(gridT *maingrid, gridT **grid, int myproc)
   for(n=0;n<Ne;n++) {
     p1 = (*grid)->edges[NUMEDGECOLUMNS*n];
     p2 = (*grid)->edges[NUMEDGECOLUMNS*n+1];
-
     tx = maingrid->xp[p2]-maingrid->xp[p1];
     ty = maingrid->yp[p2]-maingrid->yp[p1];
     tmag = sqrt(tx*tx+ty*ty);
@@ -3480,8 +3483,27 @@ static void Geometry(gridT *maingrid, gridT **grid, int myproc)
   for(n=0;n<Ne;n++) {
     // if both cells are not ghost cells 
     if((*grid)->grad[2*n]!=-1 && (*grid)->grad[2*n+1]!=-1) {
+      p1 = (*grid)->edges[NUMEDGECOLUMNS*n];
+      p2 = (*grid)->edges[NUMEDGECOLUMNS*n+1];
+      if((*grid)->periodicbc)
+      {
+        if((*grid)->periodic_point_re[p1]!=-1 && (*grid)->periodic_point_re[p2]!=-1)
+        {
+          dist_x=(*grid)->xp[p1]-(*grid)->xp[(*grid)->periodic_point_re[p1]];
+          dist_x+=(*grid)->xp[p2]-(*grid)->xp[(*grid)->periodic_point_re[p2]];
+          dist_x*=0.5;
+          dist_y=(*grid)->yp[p1]-(*grid)->yp[(*grid)->periodic_point_re[p1]];
+          dist_y+=(*grid)->yp[p2]-(*grid)->yp[(*grid)->periodic_point_re[p2]];
+          dist_y*=0.5;
+        }
+      }
       (*grid)->n1[n] = (*grid)->xv[(*grid)->grad[2*n]]-(*grid)->xv[(*grid)->grad[2*n+1]];
       (*grid)->n2[n] = (*grid)->yv[(*grid)->grad[2*n]]-(*grid)->yv[(*grid)->grad[2*n+1]];
+      if((*grid)->periodicbc)
+      {
+        (*grid)->n1[n]+=dist_x;
+        (*grid)->n2[n]+=dist_y;
+      }
       (*grid)->dg[n] = sqrt(pow((*grid)->n1[n],2)+pow((*grid)->n2[n],2));
       (*grid)->n1[n] = (*grid)->n1[n]/(*grid)->dg[n];
       (*grid)->n2[n] = (*grid)->n2[n]/(*grid)->dg[n];
@@ -3527,18 +3549,38 @@ static void Geometry(gridT *maingrid, gridT **grid, int myproc)
   for(n=0;n<Nc;n++) {
     for(nf=0;nf<(*grid)->nfaces[n];nf++) {
       ne = (*grid)->face[n*(*grid)->maxfaces+nf];
+      p1 = (*grid)->edges[NUMEDGECOLUMNS*ne];
+      p2 = (*grid)->edges[NUMEDGECOLUMNS*ne+1];
+      dist_x=0;
+      dist_y=0;
+      if((*grid)->periodicbc)
+      {
+
+        if((*grid)->periodic_cell[n]==1){
+          if((*grid)->periodic_point_re[p1]!=-1 && (*grid)->periodic_point_re[p2]!=-1)
+          {
+            dist_x=(*grid)->xp[p1]-(*grid)->xp[(*grid)->periodic_point_re[p1]];
+            dist_x+=(*grid)->xp[p2]-(*grid)->xp[(*grid)->periodic_point_re[p2]];
+            dist_x*=0.5;
+            dist_y=(*grid)->yp[p1]-(*grid)->yp[(*grid)->periodic_point_re[p1]];
+            dist_y+=(*grid)->yp[p2]-(*grid)->yp[(*grid)->periodic_point_re[p2]];
+            dist_y*=0.5; 
+          }
+        } 
+      } 
+
       (*grid)->def[n*(*grid)->maxfaces+nf] = 
-        -(((*grid)->xv[n]-maingrid->xp[(*grid)->edges[ne*NUMEDGECOLUMNS]])*(*grid)->n1[ne]+
-	  ((*grid)->yv[n]-maingrid->yp[(*grid)->edges[ne*NUMEDGECOLUMNS]])*(*grid)->n2[ne])*
+        -(((*grid)->xv[n]-maingrid->xp[(*grid)->edges[ne*NUMEDGECOLUMNS]]+dist_x)*(*grid)->n1[ne]+
+      ((*grid)->yv[n]-maingrid->yp[(*grid)->edges[ne*NUMEDGECOLUMNS]]+dist_y)*(*grid)->n2[ne])*
         (*grid)->normal[n*(*grid)->maxfaces+nf];
-	//Check for nan
-	if((*grid)->def[n*(*grid)->maxfaces+nf] != (*grid)->def[n*(*grid)->maxfaces+nf])
+      //Check for nan
+      if((*grid)->def[n*(*grid)->maxfaces+nf] != (*grid)->def[n*(*grid)->maxfaces+nf])
 	     printf("Warning: nan computed for edge distance (def)\n");
 
       // Distance to the edge midpoint. Not used.
       /*
-	(*grid)->def[n*NFACES+nf]=sqrt(pow((*grid)->xv[n]-(*grid)->xe[ne],2)+
-	pow((*grid)->yv[n]-(*grid)->ye[ne],2));
+      (*grid)->def[n*NFACES+nf]=sqrt(pow((*grid)->xv[n]-(*grid)->xe[ne],2)+
+      pow((*grid)->yv[n]-(*grid)->ye[ne],2));
       */
     }
   }
@@ -4013,7 +4055,7 @@ static int GetNk(REAL *dz, REAL localdepth, int Nkmax) {
 static void ReplacePeriodicBoundaryPair(gridT *maingrid,gridT **grid,int option,int myproc)
 {
   int ne,nc,nf,p1,p2,cell_p;
-  if(option)
+  if(option==1)
   {
     // change edge data
     for(ne=0;ne<maingrid->Ne;ne++)
@@ -4042,7 +4084,7 @@ static void ReplacePeriodicBoundaryPair(gridT *maingrid,gridT **grid,int option,
         }
       }
     }    
-  } else {
+  } else if(option==0) {
 
     // change back edge data
     for(ne=0;ne<(*grid)->Ne;ne++)
@@ -4066,6 +4108,34 @@ static void ReplacePeriodicBoundaryPair(gridT *maingrid,gridT **grid,int option,
           if((*grid)->periodic_point_re[cell_p]!=-1)
             (*grid)->cells[nc*(*grid)->maxfaces+nf]=(*grid)->periodic_point_re[cell_p];
         }
+  } else {
+    // change edge data
+    for(ne=0;ne<(*grid)->Ne;ne++)
+    {
+      p1=(*grid)->edges[ne*NUMEDGECOLUMNS];
+      p2=(*grid)->edges[ne*NUMEDGECOLUMNS+1];
+      if((*grid)->periodic_point[p1]!=-1){
+        (*grid)->edges[ne*NUMEDGECOLUMNS]=(*grid)->periodic_point[p1];
+        (*grid)->periodic_edge[ne]=1;
+      }
+      if((*grid)->periodic_point[p2]!=-1){
+        (*grid)->edges[ne*NUMEDGECOLUMNS+1]=(*grid)->periodic_point[p2];
+        (*grid)->periodic_edge[ne]=1;
+      }
+    }
+
+    // change cells data
+    for(nc=0;nc<(*grid)->Nc;ne++)
+    {
+      for(nf=0;nf<(*grid)->nfaces[nc];nf++)
+      {
+        cell_p=(*grid)->cells[nc*(*grid)->maxfaces+nf];
+        if((*grid)->periodic_point[cell_p]!=-1){
+          (*grid)->cells[nc*(*grid)->maxfaces+nf]=(*grid)->periodic_point[cell_p];
+          (*grid)->periodic_cell[nc]=1;
+        }
+      }
+    }    
   }
 }
 
