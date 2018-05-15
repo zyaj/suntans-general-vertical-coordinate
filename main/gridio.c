@@ -268,7 +268,8 @@ void ReadMainGrid(gridT *grid, int myproc)
   if(VERBOSE>2 && myproc==0) printf("Reading %s for main grid...\n",POINTSFILE);
   ReadPointsData(POINTSFILE,grid,myproc);
 
-
+  if(VERBOSE>2 && myproc==0) printf("Reading periodic boundary condition files for main grid...\n");
+  ReadPeriodicPointData(grid,myproc);
 
   if(VERBOSE>2 && myproc==0) printf("Reading %s for main grid...\n",EDGEFILE);
   ReadEdgesData(EDGEFILE,grid,myproc);
@@ -524,8 +525,19 @@ static void WriteVertSpaceData(char *filename, gridT *grid, int myproc) {
   fclose(ofile);
 }
 
+/*
+ * Function: ReadPeriodicPointData
+ * Usage: ReadPeriodicPointData(gridT *grid,int myproc);
+ * ----------------------------------------------
+ * Load the points pair on periodic boundary condition
+ * e.g. the points of edge 1 are 0/1 and the points of edge 2
+ * are 2/3. Since edge 1 and 2 make a periodic boundary pair,
+ * we have point pair, 0->2, 1->3
+ * Yun Zhang @Stanford
+ * 05/14/2018
+ */
 static void ReadPeriodicPointData(gridT *grid,int myproc){
-  int periodicbc,n,Npair,point_on_periodicbc;
+  int periodicbc,n,Npair,p1,p2;
   char filename[BUFFERLENGTH],str[BUFFERLENGTH];
   FILE *ifile;
 
@@ -535,13 +547,26 @@ static void ReadPeriodicPointData(gridT *grid,int myproc){
     ifile = MPI_FOpen(filename,"r","ReadPeriodicPointData",myproc);
     Npair = MPI_GetSize(filename,"ReadPeriodicPointData",myproc);
 
+    // initialize all period bc variable
     for(n=0;n<grid->Np;n++) {
       grid->periodic_point[n]=-1;
+      grid->periodic_point_re[n]=-1;
     }
+
+    for(n=0;n<grid->Ne;n++) {
+      grid->periodic_edge[n]=-1;
+    }
+
+    for(n=0;n<grid->Nc;n++) {
+      grid->periodic_cell[n]=-1;
+    }
+
     for(n=0;n<Npair;n++)
     {
-      point_on_periodicbc=getfield(ifile,str);
-      grid->periodic_point[point_on_periodicbc]=getfield(ifile,str);
+      p1=getfield(ifile,str);
+      p2=getfield(ifile,str);
+      grid->periodic_point[p1]=p2;
+      grid->periodic_point_re[p2]=p1;
       getfield(ifile,str);
     }
     fclose(ifile);    

@@ -92,6 +92,7 @@ static void CreateMomentumCV(gridT *grid);
 static int CorrectVoronoi(gridT *grid, int myproc);
 static int CorrectAngles(gridT *grid, int myproc);
 static void VoronoiStats(gridT *grid);
+static void ReplacePeriodicBoundaryPair(gridT *grid,int option, int myproc);
 static void FixDZZ(gridT *grid, REAL maxdepth, int Nkmax, int fixdzz, int myproc);
 static int GetNk(REAL *dz, REAL localdepth, int Nkmax);
 
@@ -355,7 +356,12 @@ void InitMainGrid(gridT **grid, int Np, int Ne, int Nc, int myproc)
   // (x,y) coordinates of vertices
   (*grid)->xp = (REAL *)SunMalloc((*grid)->Np*sizeof(REAL),"InitMainGrid");
   (*grid)->yp = (REAL *)SunMalloc((*grid)->Np*sizeof(REAL),"InitMainGrid");
+
+  // periodic bc data
   (*grid)->periodic_point = (int *)SunMalloc((*grid)->Np*sizeof(int),"InitMainGrid");
+  (*grid)->periodic_point_re = (int *)SunMalloc((*grid)->Np*sizeof(int),"InitMainGrid");
+  (*grid)->periodic_edge = (int *)SunMalloc((*grid)->Ne*sizeof(int),"InitMainGrid");
+  (*grid)->periodic_cell = (int *)SunMalloc((*grid)->Nc*sizeof(int),"InitMainGrid");
 
   // (x,y) coordinates of voronoi points
   (*grid)->xv = (REAL *)SunMalloc((*grid)->Nc*sizeof(REAL),"InitMainGrid");
@@ -3970,3 +3976,72 @@ static int GetNk(REAL *dz, REAL localdepth, int Nkmax) {
   }
   return k;
 }
+
+/*
+ * Function: ReplacePeriodicBoundaryPair
+ * Usage: ReplacePeriodicBoundaryPair(grid,myproc);
+ * -------------------------------------------------
+ * option=1, replace the points to its pair
+ * option=0, reverse replacement
+ */
+static void ReplacePeriodicBoundaryPair(gridT *grid,int option,int myproc)
+{
+  int ne,nc,nf,p1,p2,cell_p;
+  if(option)
+  {
+    // change edge data
+    for(ne=0;ne<grid->Ne;ne++)
+    {
+      p1=grid->edges[ne*NUMEDGECOLUMNS];
+      p2=grid->edges[ne*NUMEDGECOLUMNS+1];
+      if(grid->periodic_point[p1]!=-1){
+        grid->edges[ne*NUMEDGECOLUMNS]=grid->periodic_point[p1];
+        grid->periodic_edge[ne]=1;
+      }
+      if(grid->periodic_point[p2]!=-1){
+        grid->edges[ne*NUMEDGECOLUMNS+1]=grid->periodic_point[p2];
+        grid->periodic_edge[ne]=1;
+      }
+    }
+
+    // change cells data
+    for(nc=0;nc<grid->Nc;ne++)
+    {
+      for(nf=0;nf<grid->nfaces[nc];nf++)
+      {
+        cell_p=grid->cells[nc*grid->maxfaces+nf];
+        if(grid->periodic_point[cell_p]!=-1){
+          grid->cells[nc*grid->maxfaces+nf]=grid->periodic_point[cell_p];
+          grid->periodic_cell[nc]=1;
+        }
+      }
+    }    
+  } else {
+
+    // change back edge data
+    for(ne=0;ne<grid->Ne;ne++)
+      if(grid->periodic_edge[ne]==1)
+      {
+        p1=grid->edges[ne*NUMEDGECOLUMNS];
+        p2=grid->edges[ne*NUMEDGECOLUMNS+1];
+        if(grid->periodic_point_re[p1]!=-1)
+          grid->edges[ne*NUMEDGECOLUMNS]=grid->periodic_point_re[p1];
+
+        if(grid->periodic_point_re[p2]!=-1)
+          grid->edges[ne*NUMEDGECOLUMNS+1]=grid->periodic_point_re[p2];
+      }  
+
+    // change back cell data
+    // change cells data
+    for(nc=0;nc<grid->Nc;ne++)
+      if(grid->periodic_cell[nc]==1)
+        for(nf=0;nf<grid->nfaces[nc];nf++)
+        {
+          cell_p=grid->cells[nc*grid->maxfaces+nf];
+          if(grid->periodic_point_re[cell_p]!=-1)
+            grid->cells[nc*grid->maxfaces+nf]=grid->periodic_point_re[cell_p];
+        }
+  }
+}
+
+

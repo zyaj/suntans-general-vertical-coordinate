@@ -33,6 +33,9 @@ typedef struct _gridT {
   REAL *xp;
   REAL *yp;
   int *periodic_point;
+  int *periodic_point_re;
+  int *periodic_edge;
+  int *periodic_cell;
   REAL *xv;
   REAL *yv;
   REAL *xe;
