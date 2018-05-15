@@ -35,7 +35,7 @@ static void WriteTopologyData(char *filename, gridT *grid, int myproc, int numpr
 static void CheckVertSpaceFile(char *filename, int myproc, int numprocs);
 static void ReadVertSpaceData(char *filename, gridT *grid, int myproc);
 static void WriteVertSpaceData(char *filename, gridT *grid, int myproc);
-
+static void ReadPeriodicPointData(gridT *grid,int myproc);
 /************************************************************************/
 /*                                                                      */
 /*                          Public functions.                           */
@@ -267,6 +267,8 @@ void ReadMainGrid(gridT *grid, int myproc)
 {
   if(VERBOSE>2 && myproc==0) printf("Reading %s for main grid...\n",POINTSFILE);
   ReadPointsData(POINTSFILE,grid,myproc);
+
+
 
   if(VERBOSE>2 && myproc==0) printf("Reading %s for main grid...\n",EDGEFILE);
   ReadEdgesData(EDGEFILE,grid,myproc);
@@ -520,6 +522,30 @@ static void WriteVertSpaceData(char *filename, gridT *grid, int myproc) {
   for(n=0;n<grid->Nkmax;n++)
     fprintf(ofile,"%e\n",grid->dz[n]);
   fclose(ofile);
+}
+
+static void ReadPeriodicPointData(gridT *grid,int myproc){
+  int periodicbc,n,Npair,point_on_periodicbc;
+  char filename[BUFFERLENGTH],str[BUFFERLENGTH];
+  FILE *ifile;
+
+  periodicbc = MPI_GetValue(DATAFILE,"periodicbc","ReadPeriodicPointData",myproc); //check whether there is periodic bc
+  if(periodicbc){
+    MPI_GetFile(filename,DATAFILE,"periodicbcfiles","ReadPeriodicPointData",myproc);
+    ifile = MPI_FOpen(filename,"r","ReadPeriodicPointData",myproc);
+    Npair = MPI_GetSize(filename,"ReadPeriodicPointData",myproc);
+
+    for(n=0;n<grid->Np;n++) {
+      grid->periodic_point[n]=-1;
+    }
+    for(n=0;n<Npair;n++)
+    {
+      point_on_periodicbc=getfield(ifile,str);
+      grid->periodic_point[point_on_periodicbc]=getfield(ifile,str);
+      getfield(ifile,str);
+    }
+    fclose(ifile);    
+  }
 }
 
 static void ReadPointsData(char *filename, gridT *grid, int myproc) {

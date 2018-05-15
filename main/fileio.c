@@ -517,6 +517,10 @@ double GetDefaultValue(char *str, int *status) {
     
     return SSCvprof_DEFAULT;
  
+ } else if(!strcmp(str,"periodicbc")){
+    
+    return periodicbc_DEFAULT;
+ 
  } else {
     *status=0;
     return 0;

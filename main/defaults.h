@@ -317,3 +317,11 @@ const REAL SSCvprof_DEFAULT=0.0;
   1 only need to provide values for each layer, the properties are constant for all other sediment classes
 */
 const REAL sedilayerprop_DEFAULT=1;
+
+
+/* periodicbc
+  whether there is periodic boundary condition in the simulation
+  1: there is otherwise 0. 
+  When periodicbc==1, there should be periodic_point.dat to store the pair between 
+*/
+const int periodicbc_DEFAULT=0;

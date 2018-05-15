@@ -194,6 +194,7 @@ void GetGrid(gridT **localgrid, int myproc, int numprocs, MPI_Comm comm)
   //   maingrid->peneighs
   //   maingrid->ppneighs
   //   maingrid->eneigh
+
   if(myproc==0 && VERBOSE>0) printf("Computing Connectivity...\n");
   Connectivity(maingrid,myproc);
   if(myproc==0 && VERBOSE>0) printf("Partitioning...\n");
@@ -354,6 +355,8 @@ void InitMainGrid(gridT **grid, int Np, int Ne, int Nc, int myproc)
   // (x,y) coordinates of vertices
   (*grid)->xp = (REAL *)SunMalloc((*grid)->Np*sizeof(REAL),"InitMainGrid");
   (*grid)->yp = (REAL *)SunMalloc((*grid)->Np*sizeof(REAL),"InitMainGrid");
+  (*grid)->periodic_point = (int *)SunMalloc((*grid)->Np*sizeof(int),"InitMainGrid");
+
   // (x,y) coordinates of voronoi points
   (*grid)->xv = (REAL *)SunMalloc((*grid)->Nc*sizeof(REAL),"InitMainGrid");
   (*grid)->yv = (REAL *)SunMalloc((*grid)->Nc*sizeof(REAL),"InitMainGrid");
@@ -1102,6 +1105,7 @@ void Connectivity(gridT *grid, int myproc)
   /* Create the face array, which contains indexes to the edges of
      each cell */
   if(myproc==0 && VERBOSE>2) printf("\tCreating face array and normals and nodal neighboors\n");
+
   // get pointers to the faces of each cell (grid->face[NFACES*Nc]) as well as 
   // pointers to the face number of given cell corresponding to given edge 
   // (grid->gradf[2*Ne])

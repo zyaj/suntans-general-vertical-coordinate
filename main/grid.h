@@ -32,6 +32,7 @@
 typedef struct _gridT {
   REAL *xp;
   REAL *yp;
+  int *periodic_point;
   REAL *xv;
   REAL *yv;
   REAL *xe;
