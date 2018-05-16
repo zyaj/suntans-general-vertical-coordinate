@@ -41,6 +41,7 @@ ntprog   		5 	# How often to report progress (in %)
 ntconserve 		1	# How often to output conserved data
 nonhydrostatic		0	# 0 = hydrostatic, 1 = nonhydrostatic
 cgsolver		1	# 0 = GS, 1 = CG
+periodicbc		1	# periodic bc
 maxiters		1000	# Maximum number of CG iterations
 qmaxiters		2000	# Maximum number of CG iterations for nonhydrostatic pressure
 qprecond		2	# 1 = preconditioned, 0 = not preconditioned
@@ -72,7 +73,8 @@ pslg   twod.dat 	# Planar straight line graph (input)
 points points.dat	# Vertices file (input)
 edges edges.dat		# Edge file (input)
 cells cells.dat		# Cell centered file (input)
-nodes nodes.dat
+nodes nodes.dat         # nodes files
+periodicbcfiles periodic_bc_point_pair.dat # periodic bc points pair
 depth depth.dat		# Depth file for interpolation (if INTERPDEPTH=1) (input)
 celldata celldata.dat	# Cell-centered output (output)
 edgedata edgedata.dat	# Edge-centered output (output)
