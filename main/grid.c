@@ -111,7 +111,7 @@ static int GetNk(REAL *dz, REAL localdepth, int Nkmax);
  */
 void GetGrid(gridT **localgrid, int myproc, int numprocs, MPI_Comm comm)
 {
-  int Np, Ne, Nc, numcorr, i;
+  int Np, Ne, Nc, numcorr, i,j;
   gridT *maingrid;
 
   // read in all the filenames from the suntans.dat file
@@ -199,7 +199,6 @@ void GetGrid(gridT **localgrid, int myproc, int numprocs, MPI_Comm comm)
   // replace points on periodic boundary into their paired values
   if(maingrid->periodicbc)
     ReplacePeriodicBoundaryPair(maingrid,localgrid,1,myproc);
-
   if(myproc==0 && VERBOSE>0) printf("Computing Connectivity...\n");
   Connectivity(maingrid,myproc);
   if(myproc==0 && VERBOSE>0) printf("Partitioning...\n");
@@ -3485,6 +3484,8 @@ static void Geometry(gridT *maingrid, gridT **grid, int myproc)
     if((*grid)->grad[2*n]!=-1 && (*grid)->grad[2*n+1]!=-1) {
       p1 = (*grid)->edges[NUMEDGECOLUMNS*n];
       p2 = (*grid)->edges[NUMEDGECOLUMNS*n+1];
+      dist_x=0;
+      dist_y=0;
       if((*grid)->periodicbc)
       {
         if((*grid)->periodic_point_re[p1]!=-1 && (*grid)->periodic_point_re[p2]!=-1)
@@ -3501,8 +3502,8 @@ static void Geometry(gridT *maingrid, gridT **grid, int myproc)
       (*grid)->n2[n] = (*grid)->yv[(*grid)->grad[2*n]]-(*grid)->yv[(*grid)->grad[2*n+1]];
       if((*grid)->periodicbc)
       {
-        (*grid)->n1[n]+=dist_x;
-        (*grid)->n2[n]+=dist_y;
+        (*grid)->n1[n]-=dist_x;
+        (*grid)->n2[n]-=dist_y;
       }
       (*grid)->dg[n] = sqrt(pow((*grid)->n1[n],2)+pow((*grid)->n2[n],2));
       (*grid)->n1[n] = (*grid)->n1[n]/(*grid)->dg[n];
@@ -4071,9 +4072,8 @@ static void ReplacePeriodicBoundaryPair(gridT *maingrid,gridT **grid,int option,
         maingrid->periodic_edge[ne]=1;
       }
     }
-
     // change cells data
-    for(nc=0;nc<maingrid->Nc;ne++)
+    for(nc=0;nc<maingrid->Nc;nc++)
     {
       for(nf=0;nf<maingrid->nfaces[nc];nf++)
       {
@@ -4100,7 +4100,7 @@ static void ReplacePeriodicBoundaryPair(gridT *maingrid,gridT **grid,int option,
 
     // change back cell data
     // change cells data
-    for(nc=0;nc<(*grid)->Nc;ne++)
+    for(nc=0;nc<(*grid)->Nc;nc++)
       if((*grid)->periodic_cell[nc]==1)
         for(nf=0;nf<(*grid)->nfaces[nc];nf++)
         {
@@ -4125,7 +4125,7 @@ static void ReplacePeriodicBoundaryPair(gridT *maingrid,gridT **grid,int option,
     }
 
     // change cells data
-    for(nc=0;nc<(*grid)->Nc;ne++)
+    for(nc=0;nc<(*grid)->Nc;nc++)
     {
       for(nf=0;nf<(*grid)->nfaces[nc];nf++)
       {

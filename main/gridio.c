@@ -562,11 +562,10 @@ static void ReadPeriodicPointData(gridT *grid,int myproc){
 
     for(n=0;n<Npair;n++)
     {
-      p1=getfield(ifile,str);
-      p2=getfield(ifile,str);
+      p1=(int)getfield(ifile,str);
+      p2=(int)getfield(ifile,str);
       grid->periodic_point[p1]=p2;
       grid->periodic_point_re[p2]=p1;
-      getfield(ifile,str);
     }
     fclose(ifile);    
   }

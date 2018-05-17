@@ -2127,8 +2127,9 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
       {
         j=grid->edgep[jptr];
 
-        for(k=grid->etop[j];k<grid->Nke[j];k++)
+        for(k=grid->etop[j];k<grid->Nke[j];k++){
           phys->ut[j][k]*=grid->dzf[j][k];
+        }
       }
 
     // Now compute the cell-centered source terms and put them into stmp
@@ -2160,7 +2161,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
           phys->stmp[i][k]+=
             phys->ut[ne][k]*phys->u[ne][k]*grid->df[ne]*grid->normal[i*grid->maxfaces+nf]/(a[k]*Ac);         
         }  
-        
+
         // Top cell is filled with momentum from neighboring cells
         if(prop->conserveMomentum)
           for(k=grid->etop[ne];k<grid->ctop[i];k++) 
@@ -3474,8 +3475,8 @@ static void UPredictor(gridT *grid, physT *phys,
     if(nc2==-1)
       nc2=nc1;
     
-    def1=sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+pow(grid->yv[nc1]-grid->ye[j],2));
-    def2=grid->dg[j]-def1;
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
 
     // Add the wind shear stress from the top cell
     phys->utmp[j][grid->etop[j]]+=2.0*dt*phys->tau_T[j]/
@@ -5810,10 +5811,9 @@ REAL InterpToFace(int j, int k, REAL **phi, REAL **u, gridT *grid) {
     nc2=nc1;
 
   Dj = grid->dg[j];
+  def1=grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+  def2=Dj-def1;
 
-  def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
-      pow(grid->yv[nc1]-grid->ye[j],2));
-  def2 = Dj-def1;
   if(def1==0 || def2==0) {
     return UpWind(u[j][k],phi[nc1][k],phi[nc2][k]);
   }
@@ -5840,9 +5840,8 @@ static REAL UFaceFlux(int j, int k, REAL **phi, REAL **u, gridT *grid, REAL dt, 
   if(nc1==-1) nc1=nc2;
   if(nc2==-1) nc2=nc1;
   Dj = grid->dg[j];
-  def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
-      pow(grid->yv[nc1]-grid->ye[j],2));
-  def2 = Dj-def1;
+  def1=grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+  def2=Dj-def1;
 
   if(method==4) C = u[j][k]*dt/Dj;
   if(method==2) C = 0;
@@ -6485,9 +6484,8 @@ static REAL HFaceFlux(int j, int k, REAL *phi, REAL **u, gridT *grid, REAL dt, i
   if(nc1==-1) nc1=nc2;
   if(nc2==-1) nc2=nc1;
   Dj = grid->dg[j];
-  def1 = sqrt(pow(grid->xv[nc1]-grid->xe[j],2)+
-      pow(grid->yv[nc1]-grid->ye[j],2));
-  def2 = Dj-def1;
+  def1=grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+  def2=Dj-def1;
 
   if(method==4) C = u[j][k]*dt/Dj;
 

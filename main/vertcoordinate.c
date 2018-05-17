@@ -413,7 +413,7 @@ void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
          neigh=grid->neigh[i*grid->maxfaces+nf];
          ne=grid->face[i*grid->maxfaces+nf];
          if(neigh!=-1){
-           def1=sqrt(pow(grid->xv[i]-grid->xe[ne],2)+pow(grid->yv[i]-grid->ye[ne],2));
+           def1=grid->def[i*grid->maxfaces+grid->gradf[2*ne]];
            def2=grid->dg[ne]-def1;
            for(k=grid->ctop[i]+1;k<grid->Nk[i];k++){
              tmp=def2*0.5*(grid->dzzold[i][k]+grid->dzzold[i][k-1])+
@@ -576,13 +576,12 @@ void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
   for(j=0;j<grid->Ne;j++){
     nc1=grid->grad[2*j];
     nc2=grid->grad[2*j+1];
-    def1=sqrt((grid->xe[j]-grid->xv[nc1])*(grid->xe[j]-grid->xv[nc1])+
-      (grid->ye[j]-grid->yv[nc1])*(grid->ye[j]-grid->yv[nc1]));
-    def2=grid->dg[j]-def1;
     if(nc1==-1)
       nc1=nc2;
     if(nc2==-1)
       nc2=nc1;
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2=grid->dg[j]-def1;
     for(k=grid->etop[j];k<grid->Nke[j];k++)
     {
       r1=(def1*grid->dzz[nc1][k])/(grid->dzz[nc1][k]*def1+grid->dzz[nc2][k]*def2);
@@ -778,7 +777,7 @@ void ComputeZc(gridT *grid, propT *prop, physT *phys, int index, int myproc)
     if(nc2==-1)
       nc2=nc1;
     Dj = grid->dg[j];
-    def1 = sqrt(pow((grid->xv[nc1]-grid->xe[j]),2)+pow((grid->yv[nc1]-grid->ye[j]),2));
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
     def2 = Dj-def1;
     for(k=0;k<grid->Nke[j];k++){
       vert->zf[j][k]=vert->zc[nc1][k]*def2/Dj+vert->zc[nc2][k]*def1/Dj;
