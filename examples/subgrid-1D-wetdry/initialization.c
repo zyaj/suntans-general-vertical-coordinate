@@ -189,7 +189,7 @@ REAL ReturnCulvertTop(REAL x, REAL y, REAL d)
  * in marsh.c Interpmarsh
  *
  */
-REAL ReturnMarshHeight(REAL x, REAL y){}
+REAL ReturnMarshHeight(REAL x, REAL y){return 0;}
 /*
  * Function: ReturnMarshHeight
  * Usage: CdV[n]=ReturnMarshDragCoefficient(grid->xe[n],grid->ye[n]);
@@ -198,7 +198,7 @@ REAL ReturnMarshHeight(REAL x, REAL y){}
  * in marsh.c Interpmarsh
  *
  */
-REAL ReturnMarshDragCoefficient(REAL x, REAL y){}
+REAL ReturnMarshDragCoefficient(REAL x, REAL y){return 0;}
 
 /*
  * Function: ReturnSubgridPointDepth
@@ -275,7 +275,7 @@ REAL ReturnFluxHeight(REAL x1,REAL y1, REAL x2, REAL y2, REAL h)
  * InitializePhysicalVariables function.
  *
  */
-REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) {}
+REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) {return 0;}
 
 /*
  * Function: IsoReturnTemperature
@@ -286,4 +286,4 @@ REAL IsoReturnSalinity(REAL x, REAL y, REAL z, int i,int k) {}
  * InitializePhysicalVariables function.
  *
  */
-REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth, int i, int k) {}
+REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth, int i, int k) {return 0;}

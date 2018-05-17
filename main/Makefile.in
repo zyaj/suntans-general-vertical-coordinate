@@ -16,9 +16,9 @@
 # Copyright (C) 2005-2006 The Board of Trustees of the Leland Stanford Junior 
 # University. All Rights Reserved.
 # usr/local/ParMetis-2.0
-MPIHOME=/usr/local/mpich2
-PARMETISHOME=/usr/local/Parmetis-2.0
-TRIANGLEHOME=/usr/local/triangle
-NETCDF4HOME=/opt/local
+MPIHOME=
+PARMETISHOME=
+TRIANGLEHOME=
+NETCDF4HOME=
 
 
