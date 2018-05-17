@@ -32,9 +32,10 @@ Parallel2: OpenMP+GCC4.9+Parmetis2.0+Triangle
 ## Quick Start
 Please check the Wiki page of this repository.
 
-## Latest Update (03/30/2018)
-1. The wetdry example has been added.
-2. A CWC bug in scalars.c has been fixed.
-3. All the codes have been cleaned up to remove warning and possible errors when compiling with the latest gcc.
+## Latest Update (05/17/2018)
+1. The prelimary periodic boundary condition has been deployed.
+2. More tests are still underway.
+3. New notes will be added to decribe how to use the periodic boundary condition.
+4. Please check the periodic_boundary_condition test case.
 
 
