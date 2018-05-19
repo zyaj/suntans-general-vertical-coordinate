@@ -119,14 +119,14 @@ REAL ReturnSediment(REAL x, REAL y, REAL z, int sizeno) {
 REAL ReturnBedSedimentRatio(REAL x, REAL y, int layer, int sizeno,int nsize) {
    return 0;
 }
-REAL IsoReturnSalinity(REAL x, REAL y, REAL z,int i,int k){}
-REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth,int i,int k){}
-REAL ReturnCulvertTop(REAL x, REAL y, REAL d){}
-REAL ReturnFluxHeight(REAL x1,REAL y1, REAL x2, REAL y2, REAL h){}   
-REAL ReturnMarshDragCoefficient(REAL x, REAL y){}
-REAL ReturnMarshHeight(REAL x, REAL y){}
-REAL ReturnSubCellArea(REAL x1, REAL y1, REAL x2, REAL y2, REAL x3, REAL y3, REAL h){}
-REAL ReturnSubgridPointDepth(REAL x, REAL y, REAL xv, REAL yv){}
-REAL ReturnSubgridPointeDepth(REAL x, REAL y){}
-REAL ReturnWindSpeed(REAL x, REAL y){}
-REAL ReturnWindDirection(REAL x, REAL y){}
+REAL IsoReturnSalinity(REAL x, REAL y, REAL z,int i,int k){return 0;}
+REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth,int i,int k){return 0;}
+REAL ReturnCulvertTop(REAL x, REAL y, REAL d){return 0;}
+REAL ReturnFluxHeight(REAL x1,REAL y1, REAL x2, REAL y2, REAL h){return 0;}   
+REAL ReturnMarshDragCoefficient(REAL x, REAL y){return 0;}
+REAL ReturnMarshHeight(REAL x, REAL y){return 0;}
+REAL ReturnSubCellArea(REAL x1, REAL y1, REAL x2, REAL y2, REAL x3, REAL y3, REAL h){return 0;}
+REAL ReturnSubgridPointDepth(REAL x, REAL y, REAL xv, REAL yv){return 0;}
+REAL ReturnSubgridPointeDepth(REAL x, REAL y){return 0;}
+REAL ReturnWindSpeed(REAL x, REAL y){return 0;}
+REAL ReturnWindDirection(REAL x, REAL y){return 0;}
