@@ -97,7 +97,7 @@ REAL ReturnSalinity(REAL x, REAL y, REAL z) {
  *
  */
 REAL ReturnTemperature(REAL x, REAL y, REAL z, REAL depth) {
-  return 0;
+  return 19.0+(depth+z)/depth;
 }
 
 /*

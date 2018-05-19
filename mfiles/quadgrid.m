@@ -270,8 +270,8 @@ if peri_east==1
     loc2=find(mod(edgeoutput(:,1),Nx+1)==0 & mod(edgeoutput(:,2),Nx+1)==0);
     % edge grad change
     edgeoutput(loc2,5)=edgeoutput(loc1,4);
-    edgeoutput(loc1,:)=[];
     edgeoutput(loc2,3)=0;
+    edgeoutput(loc1,:)=[];
     
     % change cell 
     loc1=find(celloutput(:,2)==dx/ampfacx/2);
