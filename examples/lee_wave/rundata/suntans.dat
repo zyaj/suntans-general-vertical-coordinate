@@ -37,9 +37,10 @@ CdW			0.0	# Drag coefficient at sidewalls
 computeSediments        0       # if 1 consider sediment model 0 otherwise
 subgrid                 1       #
 turbmodel		0	# Turbulence model (0 for none, 1 for MY25)
-dt 			  	1 0.25 1 2.5  0.1 1.875 .9375	# Time step
-Cmax 			10  	# Maximum permissible Courant number
-nsteps 			1e3 1e4 3.5e5 2e5 30000 36000 240000 480000    # Number of steps
+periodicbc		1	# periodic bc
+dt 			0.1 0.25 1 2.5  0.1 1.875 .9375	# Time step
+Cmax 			1  	# Maximum permissible Courant number
+nsteps 			1 1e3 1e4 3.5e5 2e5 30000 36000 240000 480000    # Number of steps
 ntout   		1e1 1e2 3500 1750 1000 300 3600 6000	# How often to output data
 ntprog   		5	# How often to report progress (in %)
 ntconserve 		1	# How often to output conserved data
@@ -81,6 +82,7 @@ cells cells.dat		# Cell centered file (input)
 nodes nodes.dat
 depth depth.dat		# Depth file for interpolation (if INTERPDEPTH=1) (input)
 celldata celldata.dat	# Cell-centered output (output)
+periodicbcfiles periodic_bc_point_pair.dat # periodic bc points pair
 edgedata edgedata.dat	# Edge-centered output (output)
 vertspace vertspace.dat	# Vertical grid spacing (output)
 topology topology.dat	# Grid topology data

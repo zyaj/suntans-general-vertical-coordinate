@@ -160,7 +160,7 @@ REAL ReturnHorizontalVelocity(REAL x, REAL y, REAL n1, REAL n2, REAL z) {
   REAL U=0.2, N=0.002, D=6911, Lx = 10000, h0=1, xc=40000/2, lambda = 10000, k = 2*PI/lambda;;
 
   // depth averaged uniform flow
-  // return U*D/ReturnDepth(x,y)*n1;
+  return U*D/ReturnDepth(x,y)*n1;
 
   //gill's sin solution added to depth averaged uniform flow
   // return (U*D/ReturnDepth(x,y) + U*h0*sqrt(N*N/U/U - k*k)*sin(k*x + sqrt(N*N/U/U - k*k)*(z+D)))*n1;
@@ -169,7 +169,7 @@ REAL ReturnHorizontalVelocity(REAL x, REAL y, REAL n1, REAL n2, REAL z) {
   // return (U*D/ReturnDepth(x,y) + N*h0*Lx/(Lx*Lx + (x-xc)*(x-xc))*(Lx*sin(N*(z+D+h0)/U) + (x-xc)*cos(N*(z+D+h0)/U)))*n1;
 
   // return U*n2; // periodic forcing via 3D coriolis
-  return 0;
+  //return 0;
 }
 
  
@@ -320,3 +320,6 @@ REAL ReturnFluxHeight(REAL x1,REAL y1, REAL x2, REAL y2, REAL h)
 {
   return 0;
 }
+
+REAL IsoReturnSalinity(REAL x, REAL y, REAL z,int i,int k){return 0;}
+REAL IsoReturnTemperature(REAL x, REAL y, REAL z, REAL depth,int i,int k){return 0;}

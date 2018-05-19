@@ -70,7 +70,7 @@ void InitializeMerging(gridT *grid, int mergeedges, int numprocs, int myproc, MP
       MPI_Recv(&(send3DSize[p]),1,MPI_INT,p,1,comm,&status);         
 
       if(Nc_all[p]>Nc_max)
-	Nc_max=Nc_all[p];
+        Nc_max=Nc_all[p];
 
       mergedGrid->Nc+=Nc_all[p];
 
@@ -92,7 +92,7 @@ void InitializeMerging(gridT *grid, int mergeedges, int numprocs, int myproc, MP
     for(p=0;p<numprocs;p++) {
       mnptr_all[p]=(int *)SunMalloc(Nc_all[p]*sizeof(int),"InitializeMerging");
       for(i=0;i<Nc_all[p];i++)
-	mnptr_all[p][i]=0;
+        mnptr_all[p][i]=0;
 
     }
 
@@ -120,7 +120,7 @@ void InitializeMerging(gridT *grid, int mergeedges, int numprocs, int myproc, MP
       MPI_Recv(mnptr_all[p],Nc_all[p],MPI_INT,p,1,comm,&status);         
       MPI_Recv(Nk_temp,Nc_all[p],MPI_INT,p,1,comm,&status);         
       for(i=0;i<Nc_all[p];i++){
-	mergedGrid->Nk[mnptr_all[p][i]]=Nk_temp[i];
+        mergedGrid->Nk[mnptr_all[p][i]]=Nk_temp[i];
       }
     }
   }
@@ -335,7 +335,7 @@ void MergeCellCentered3DArray(REAL **localArray, gridT *grid, int numprocs, int 
       i=grid->cellp[iptr];
 
       for(k=0;k<grid->Nk[i];k++) 
-	merged3DArray[grid->mnptr[i]][k]=localArray[i][k];
+        merged3DArray[grid->mnptr[i]][k]=localArray[i][k];
     }
 
     for(p=1;p<numprocs;p++) {
@@ -343,8 +343,8 @@ void MergeCellCentered3DArray(REAL **localArray, gridT *grid, int numprocs, int 
 
       m=0;
       for(i=0;i<Nc_all[p];i++) {
-	for(k=0;k<mergedGrid->Nk[mnptr_all[p][i]];k++)
-	  merged3DArray[mnptr_all[p][i]][k]=localTempMergeArray[m++];
+        for(k=0;k<mergedGrid->Nk[mnptr_all[p][i]];k++)
+          merged3DArray[mnptr_all[p][i]][k]=localTempMergeArray[m++];
       }
     }
   }
@@ -375,8 +375,8 @@ void MergeEdgeCentered3DArray(REAL **localArray, gridT *grid, int numprocs, int 
       MPI_Recv(&(localTempEMergeArray[0]),send3DESize[p],MPI_DOUBLE,p,1,comm,&status);      
       m=0;
       for(j=0;j<Ne_all[p];j++) {
-	for(k=0;k<mergedGrid->Nke[eptr_all[p][j]];k++)
-	  merged3DEArray[eptr_all[p][j]][k]=localTempEMergeArray[m++];
+        for(k=0;k<mergedGrid->Nke[eptr_all[p][j]];k++)
+          merged3DEArray[eptr_all[p][j]][k]=localTempEMergeArray[m++];
       }
     }
   }
@@ -501,7 +501,7 @@ static void MergeGridVariables(gridT *grid, int numprocs, int myproc, MPI_Comm c
     for(p=1;p<numprocs;p++) {
       MPI_Recv(Nc_real,Nc_all[p],MPI_DOUBLE,p,1,comm,&status);         
       for(i=0;i<Nc_all[p];i++)
-	mergedGrid->yv[mnptr_all[p][i]]=Nc_real[i];
+        mergedGrid->yv[mnptr_all[p][i]]=Nc_real[i];
     }
   }
 
@@ -889,10 +889,9 @@ void FreeMergingArrays(gridT *grid, int myproc) {
   // Space was allocated for temporary arrays used in merging
   // All processors needed a temporary array used to send data
   SunFree(localTempMergeArray,Nc_max*grid->Nkmax*sizeof(REAL *),"FreeMergingArrays");  
-
   // Only processor 0 needed the temporary array storing the entire grid
   if(myproc==0) {
-    for(i=0;i<grid->Nkmax;i++)
+    for(i=0;i<grid->Nc;i++)
       SunFree(merged3DArray[i],grid->Nkmax*sizeof(REAL),"FreeMergingArrays");
     SunFree(merged3DArray,mergedGrid->Nc*sizeof(REAL *),"FreeMergingArrays");
     SunFree(merged2DArray,mergedGrid->Nc*sizeof(REAL),"FreeMergingArrays");

@@ -1455,6 +1455,11 @@ static void FreeGrid(gridT *grid, int numprocs)
   SunFree(grid->Nk,grid->Nc*sizeof(int),"FreeGrid");
   SunFree(grid->nfaces,grid->Nc*sizeof(int),"FreeGrid");
 
+  // Periodic bc
+  SunFree(grid->periodic_point,grid->Np*sizeof(int),"FreeGrid");
+  SunFree(grid->periodic_edge,grid->Ne*sizeof(int),"FreeGrid");
+  SunFree(grid->periodic_cell,grid->Nc*sizeof(int),"FreeGrid");
+
   // NEED TO ADD NEW VARIABLES TO FREE UP MEMORY
   SunFree(grid->dz,grid->Nkmax*sizeof(REAL),"FreeGrid");
   SunFree(grid->face,grid->maxfaces*grid->Nc*sizeof(int),"FreeGrid");

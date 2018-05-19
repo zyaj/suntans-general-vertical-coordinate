@@ -73,7 +73,7 @@ pslg   twod.dat 	# Planar straight line graph (input)
 points points.dat	# Vertices file (input)
 edges edges.dat		# Edge file (input)
 cells cells.dat		# Cell centered file (input)
-nodes nodes.dat         # nodes files
+nodes nodes.dat   # nodes files
 periodicbcfiles periodic_bc_point_pair.dat # periodic bc points pair
 depth depth.dat		# Depth file for interpolation (if INTERPDEPTH=1) (input)
 celldata celldata.dat	# Cell-centered output (output)
