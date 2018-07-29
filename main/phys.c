@@ -2957,7 +2957,8 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
           // subtract the addition part of horizontal advection
           phys->Cn_W[i][k]-=prop->dt*(InterpToLayerTopFace(i,k,phys->uc,grid)*
                 vert->dwdx[i][k]+InterpToLayerTopFace(i,k,phys->vc,grid)*vert->dwdy[i][k]);
-    
+        // add explicit vertical advection
+        if(prop->thetaM<0)    
           phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k-1]-phys->w[i][k+1])/(grid->dzz[i][k]+grid->dzz[i][k-1]);
         }
 
@@ -2966,7 +2967,8 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
                   InterpToLayerTopFace(i,k,phys->vc,grid)*vert->dwdy[i][k]);
         // top omega*dwdz
         // can be comment out since omega_top=0
-        phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k];         
+        if(prop->thetaM<0)
+          phys->Cn_W[i][k]-=prop->dt*vert->omega_old[i][k]*(phys->w[i][k]-phys->w[i][k+1])/grid->dzz[i][k];         
       }
     }
   }
@@ -2989,8 +2991,6 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
         phys->Cn_W[i][k]-=2.0*prop->dt*(a[k]-a[k+1])/(grid->dzz[i][k]+grid->dzz[i][k+1]);
       }
     }
-
-  
 
   for(iptr=grid->celldist[0];iptr<grid->celldist[1];iptr++) {
     i = grid->cellp[iptr]; 
@@ -3053,6 +3053,23 @@ static void WPredictor(gridT *grid, physT *phys, propT *prop,
           c[k]+=1*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
           phys->wtmp[i][k]-=(0*phys->w_old[i][k]+0*phys->w_old2[i][k])*(1-grid->dzzold[i][k]/grid->dzz[i][k]);
         }
+
+      // implicit method for vertical advection under generalized vertical coordinate with wetdry=1
+      if(prop->nonlinear && prop->vertcoord!=1 && prop->wetdry && prop->thetaM>=0)
+      {
+        for(k=grid->ctop[i]+1;k<grid->Nk[i];k++)
+        {
+          phys->wtmp[i][k]-=prop->dt*vert->omega_old[i][k]*(fac2*phys->w_old[i][k-1]+fac3*phys->w_old2[i][k-1]-
+                fac2*phys->w_old[i][k+1]-fac3*phys->w_old2[i][k+1])/(grid->dzz[i][k]+grid->dzz[i][k-1]);
+          a[k]+=prop->dt*fac1*vert->omega_old[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1]);
+          b[k]-=prop->dt*fac1*vert->omega_old[i][k]/(grid->dzz[i][k]+grid->dzz[i][k-1]);    
+        }
+        k=grid->ctop[i];
+        phys->wtmp[i][k]-=prop->dt*vert->omega_old[i][k]*(fac2*phys->w_old[i][k]+fac3*phys->w_old2[i][k]-
+                fac2*phys->w_old[i][k+1]-fac3*phys->w_old2[i][k+1])/grid->dzz[i][k]; 
+        c[k]+=prop->dt*fac1*vert->omega_old[i][k]/grid->dzz[i][k];
+        b[k]-=prop->dt*fac1*vert->omega_old[i][k]/grid->dzz[i][k];
+      } 
 
       TriSolve(&(a[grid->ctop[i]]),&(c[grid->ctop[i]]),&(b[grid->ctop[i]]),
           &(phys->wtmp[i][grid->ctop[i]]),&(phys->w[i][grid->ctop[i]]),grid->Nk[i]-grid->ctop[i]);
