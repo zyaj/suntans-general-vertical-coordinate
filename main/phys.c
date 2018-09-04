@@ -5822,14 +5822,19 @@ REAL InterpToFace(int j, int k, REAL **phi, REAL **u, gridT *grid) {
   REAL def1, def2, Dj;
   nc1 = grid->grad[2*j];
   nc2 = grid->grad[2*j+1];
-  if(nc1==-1)
-    nc1=nc2;
-  if(nc2==-1)
-    nc2=nc1;
-
   Dj = grid->dg[j];
-  def1=grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
-  def2=Dj-def1;
+  if(nc1==-1){
+    nc1=nc2;
+    def2 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j+1]];
+    def1 = Dj-def2;
+  } else if(nc2==-1){
+    nc2=nc1;
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2 = Dj-def1;
+  } else {
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2 = Dj-def1;      
+  }
 
   if(def1==0 || def2==0) {
     return UpWind(u[j][k],phi[nc1][k],phi[nc2][k]);
@@ -5854,11 +5859,19 @@ static REAL UFaceFlux(int j, int k, REAL **phi, REAL **u, gridT *grid, REAL dt, 
   REAL def1, def2, Dj, C=0;
   nc1 = grid->grad[2*j];
   nc2 = grid->grad[2*j+1];
-  if(nc1==-1) nc1=nc2;
-  if(nc2==-1) nc2=nc1;
   Dj = grid->dg[j];
-  def1=grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
-  def2=Dj-def1;
+  if(nc1==-1){
+    nc1=nc2;
+    def2 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j+1]];
+    def1 = Dj-def2;
+  } else if(nc2==-1){
+    nc2=nc1;
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2 = Dj-def1;
+  } else {
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2 = Dj-def1;      
+  }
 
   if(method==4) C = u[j][k]*dt/Dj;
   if(method==2) C = 0;
@@ -6498,11 +6511,19 @@ static REAL HFaceFlux(int j, int k, REAL *phi, REAL **u, gridT *grid, REAL dt, i
   REAL def1, def2, Dj, C=0;
   nc1 = grid->grad[2*j];
   nc2 = grid->grad[2*j+1];
-  if(nc1==-1) nc1=nc2;
-  if(nc2==-1) nc2=nc1;
   Dj = grid->dg[j];
-  def1=grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
-  def2=Dj-def1;
+  if(nc1==-1){
+    nc1=nc2;
+    def2 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j+1]];
+    def1 = Dj-def2;
+  } else if(nc2==-1){
+    nc2=nc1;
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2 = Dj-def1;
+  } else {
+    def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+    def2 = Dj-def1;      
+  }
 
   if(method==4) C = u[j][k]*dt/Dj;
 
