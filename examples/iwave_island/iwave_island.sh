@@ -30,16 +30,16 @@ for dir in `echo $dirs` ; do
 if [ ! -d $dir ] ; then
     cp -r $maindatadir/$dir $dir
     echo Creating grid...
-    $EXEC --datadir=$dir
+    $EXEC -g --datadir=$dir
 else
     rm -rf $dir
     cp -r $maindatadir/$dir $dir.
     echo Creating grid...
-    $EXEC --datadir=$dir    
+    $EXEC -g --datadir=$dir    
 fi
 
 echo Running suntans...
-$EXEC -g -s -vv --datadir=$dir
+$EXEC -s -vv --datadir=$dir #>&make-$dir.out&
 
 done
 
