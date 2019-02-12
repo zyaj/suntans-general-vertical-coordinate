@@ -73,83 +73,49 @@ void InitializeVerticalCoordinate(gridT *grid, propT *prop, physT *phys,int mypr
  */
 void InitializeIsopycnalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
-
-  int i,k,k0,ktop,Nkmax=grid->Nkmax,Nk_noiso=2,Nk_mixed,Nk_pycnocline,Nk_lower;  
-  REAL a0=15, a;
-  REAL L0=381.3850*3,h1=75;
-  REAL r,v_sech;
-  REAL alpha_s=0.99,delta=75;
-  REAL rho_diff=0.01,beta=1e-3,eta,*zptr,z;
-  
-  // Mixed layer is 75-37.5 = 37.5 m
-  // Pycnocline is 75 m
-  Nk_mixed = 3;
-  Nk_pycnocline = 7;
-  Nk_lower = Nkmax-Nk_mixed-Nk_pycnocline;
-
-  a=a0;
-  for(i=-1;i<grid->Nc;i++) {
-    if(i==-1) {
-      zptr=grid->dz;
-      eta=0;
-      ktop=0;
-    } else {
-      zptr=grid->dzz[i];
-      eta=-2*a*pow(1/cosh(grid->xv[i]/2/L0),2);
-      ktop=grid->ctop[i];
-    }
-
-    for(k=ktop;k<Nk_mixed;k++) 
-      zptr[k]=(h1-eta-delta/2)/Nk_mixed;
-    for(k=Nk_mixed;k<Nk_mixed+Nk_pycnocline;k++) 
-      zptr[k]=delta/Nk_pycnocline;
-    for(k=Nk_mixed+Nk_pycnocline;k<Nkmax;k++) 
-      zptr[k]=(0*grid->dv[i]+600-h1+eta-delta/2)/Nk_lower;
-  }
-
-  for(i=0;i<grid->Nc;i++) {
-    z=0;
-    for(k=0;k<Nkmax;k++) {
-      z-=grid->dzz[i][k];
-      if(z<=-grid->dv[i]) {
-	grid->dzz[i][k]=z+grid->dzz[i][k]+grid->dv[i];
-	if(grid->dzz[i][k]<vert->vertdzmin)
-	  grid->dzz[i][k]=vert->vertdzmin;
-	break;
+  int i,k,Nktop=68,Nkbot=32;
+  REAL alpha_s=0.99,delta=0.02,a=0.1, h1=0.30,s;
+  REAL rho_diff=0.03,beta=1e-3;
+  REAL L_rho=0.7, eta,dztmp,dztmp1,dztmp2, h2=0.26;
+  for(i=0;i<grid->Nc;i++)
+  {
+    eta=a*exp(-grid->xv[i]*grid->xv[i]/L_rho/L_rho);
+    dztmp=(grid->dv[i]+phys->h[i])/grid->Nkmax;
+    dztmp1=(h1+eta+phys->h[i])/Nktop;
+    dztmp2=(grid->dv[i]-h1-eta)/Nkbot;
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+    {
+      if(dztmp2<dztmp){
+        grid->dzz[i][k]=1.0/grid->Nkmax*(grid->dv[i]+phys->h[i]);
+      }else{
+        if(k<Nktop)
+          grid->dzz[i][k]=dztmp1;
+        else
+          grid->dzz[i][k]=dztmp2;
       }
-    }
-    for(k0=k+1;k0<Nkmax;k0++)
-      grid->dzz[i][k0]=vert->vertdzmin;
-  }
-
-  for(i=0;i<grid->Nc;i++) {
-    for(k=0;k<grid->Nk[i];k++)
       grid->dzzold[i][k]=grid->dzz[i][k];
+    }
   }
 }
 
 /*
  * Function: InitializeVariationalCoordinate
  * Initialize dzz for variational vertical coordinate
- * ----------------------------------------------------
+ * --------zz--------------------------------------------
  */
 void InitializeVariationalCoordinate(gridT *grid, propT *prop, physT *phys,int myproc)
 {
   int i,k;
-  REAL ratio=1.0/grid->Nkmax,a=250;
-  REAL L_rho=15000,eta,h1=250,L1=300000,delta=0.000001,Nk1=2;
+  REAL ratio=1.0/grid->Nkmax,a=30;
+  REAL L_rho=1000,eta,h1=100;
 
   for(i=0;i<grid->Nc;i++)
   {
-    eta=a*exp(-(grid->xv[i]-L1)*(grid->xv[i]-L1)/L_rho/L_rho);
-    for(k=0;k<Nk1;k++)
-      grid->dzz[i][k]=(h1+eta-delta/2)/Nk1;
-    for(k=Nk1;k<grid->Nk[i]-Nk1;k++)
-      grid->dzz[i][k]=delta/(grid->Nk[i]-2*Nk1);
-    for(k=grid->Nk[i]-Nk1;k<grid->Nk[i];k++)
-      grid->dzz[i][k]=(grid->dv[i]-h1-eta-delta/2)/Nk1;
-    for(k=0;k<grid->Nk[i];k++)
+    for(k=grid->ctop[i];k<grid->Nk[i];k++)
+    {
+      grid->dzz[i][k]=1.0/grid->Nkmax*(grid->dv[i]+phys->h[i]);
       grid->dzzold[i][k]=grid->dzz[i][k];
+    }
   }
 }
 
@@ -189,6 +155,42 @@ void InitializeSigmaCoordinate(gridT *grid, propT *prop, physT *phys, int myproc
  */
 void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc)
 {
+   int i,k;
+   REAL alphaM=0,minM=0.15,max;
+   // nonlinear=1 or 5 stable with alpham=320
+   // nonlinear=2 stable with alpham=60
+   // nonlinear=4 stable with alpham=60
+ 
+   for(i=0;i<grid->Nc;i++)
+   {
+     max=0;
+     vert->Msum[i]=0;
+     for(k=grid->ctop[i]+1;k<grid->Nk[i]-1;k++){
+       vert->Mc[i][k]=1000*(phys->rho[i][k-1]-phys->rho[i][k+1])/(0.5*grid->dzz[i][k-1]+grid->dzz[i][k]+0.5*grid->dzz[i][k+1]);
+       if(fabs(vert->Mc[i][k])>max)
+         max=fabs(vert->Mc[i][k]);
+     }
+     
+     // top boundary
+     k=grid->ctop[i];
+     vert->Mc[i][k]=1000*(phys->rho[i][k]-phys->rho[i][k+1])/(0.5*grid->dzz[i][k]+0.5*grid->dzz[i][k+1]);
+     if(fabs(vert->Mc[i][k])>max)
+       max=fabs(vert->Mc[i][k]);   
+     // bottom boundary
+     k=grid->Nk[i]-1;
+     vert->Mc[i][k]=1000*(phys->rho[i][k-1]-phys->rho[i][k])/(0.5*grid->dzz[i][k-1]+0.5*grid->dzz[i][k]);
+     if(fabs(vert->Mc[i][k])>max)
+       max=fabs(vert->Mc[i][k]);   
+     if(max<1)
+       max=1;
+     
+     for(k=grid->ctop[i];k<grid->Nk[i];k++){ 
+       vert->Mc[i][k]=sqrt(1+alphaM*vert->Mc[i][k]/max*vert->Mc[i][k]/max);
+       if(vert->Mc[i][k]<minM)
+         vert->Mc[i][k]=minM;     
+       vert->Msum[i]+=1/vert->Mc[i][k];
+     }
+   }
 }
 
 /*
@@ -205,9 +207,10 @@ void MonitorFunctionForAverageMethod(gridT *grid, propT *prop, physT *phys, int 
 void MonitorFunctionForVariationalMethod(gridT *grid, propT *prop, physT *phys, int myproc, int numprocs, MPI_Comm comm)
 {
   int i,k,j,nf,neigh,ne,kk,nc1,nc2;
-  REAL normal,alpha_H=0, alphaH=0, alphaV=10, minM=0.15, maxM=100000,max,tmp;
+  REAL normal,alpha_H=1, alphaH=1, alphaV=5, minM=0.15, maxM=100,max,tmp;
   REAL max_gradient_v,max_gradient_h=0,max_gradient_h_global,H1,H2,rho1,rho2;
   // initialize everything zero
+
   for(i=0;i<grid->Nc;i++)
     for(k=0;k<grid->Nk[i];k++)
       vert->Mc[i][k]=0;

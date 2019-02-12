@@ -24,12 +24,15 @@ OBJS =
 SUN = $(SUNTANSHOME)/sun
 INCLUDES = -I$(SUNTANSHOME) $(MPIINC) $(PARMETISINC)
 DEFS = $(MPIDEF)
-NUMPROCS = 4
+NUMPROCS = 1
 
 all:	data
 
 test:	data
 	sh $(EXEC).sh $(NUMPROCS)
+
+debug:	data
+	$(MPIHOME)/bin/mpirun -np $(NUMPROCS) xterm -e gdb -command=gdbcommands.txt $(SUN)
 
 data: $(SUN)
 

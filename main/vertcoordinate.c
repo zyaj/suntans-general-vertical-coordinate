@@ -575,6 +575,9 @@ void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc)
   // uf vf and wf
   for(j=0;j<grid->Ne;j++){
     Dj = grid->dg[j];
+    nc1 = grid->grad[2*j];
+    nc2 = grid->grad[2*j+1];
+
     if(nc1==-1){
       nc1=nc2;
       def2 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j+1]];
