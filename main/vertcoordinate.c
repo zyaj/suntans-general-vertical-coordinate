@@ -214,7 +214,7 @@ void AllocateandInitializeVertCoordinate(gridT *grid, propT *prop, int myproc)
  * 0 for user defined, 1 for z level, 2 for isopycnal,3 for sigma
  * need to modify grid.c to make sure ctop=0 and Nk=Nkmax for all cells 
  */
-void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
+void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc, MPI_Comm comm)
 {
   int i,j,k;
   if(prop->vertcoord!=5){
@@ -237,7 +237,7 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc)
       InitializeVerticalCoordinate(grid,prop,phys,myproc);  
       break;    
     case 2:
-      InitializeIsopycnalCoordinate(grid,prop,phys,myproc);
+      InitializeIsopycnalCoordinate(grid,prop,phys,myproc,comm);
       break;
     case 3:
       InitializeSigmaCoordinate(grid, prop, phys, myproc);
@@ -1025,7 +1025,7 @@ void OutputVertCoordinate(gridT *grid, propT *prop, int myproc, int numprocs, MP
  * ----------------------------------------------------
  * 
  */
-void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
+void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc, MPI_Comm comm)
 {
   int i,k,j;
   // allocate subgrid struture first
@@ -1038,7 +1038,7 @@ void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc)
   OpenVertCoordinateFiles(grid,prop->mergeArrays,myproc);
 
   // if not z-level setup dzz
-  InitializeLayerThickness(grid, prop, phys,myproc);
+  InitializeLayerThickness(grid, prop, phys,myproc,comm);
 
   // compute zc
   ComputeZc(grid,prop,phys,1,myproc);

@@ -15,10 +15,14 @@
 #
 # Copyright (C) 2005-2006 The Board of Trustees of the Leland Stanford Junior 
 # University. All Rights Reserved.
-# usr/local/ParMetis-2.0
-MPIHOME=
-PARMETISHOME=
-TRIANGLEHOME=
-NETCDF4HOME=
+#
+MPIHOME=/home/suntans/.conda/envs/soda
+TRIANGLEHOME=/home/suntans/code/triangle
+NETCDF4HOME=/home/suntans/.conda/envs/soda
+#MPIHOME=
+PARMETISHOME=/home/suntans/code/parmetis/ParMetis-3.2.0
+#TRIANGLEHOME=
+#NETCDF4HOME=
+
 
 

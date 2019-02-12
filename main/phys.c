@@ -619,7 +619,7 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
   if(prop->vertcoord!=1){
    if(prop->vertcoord==5)
      UpdateDZ(grid,phys,prop, 1);
-   VertCoordinateBasic(grid,prop,phys,myproc);
+   VertCoordinateBasic(grid,prop,phys,myproc,comm);
   }
   else
    UpdateDZ(grid,phys,prop, 1);
@@ -1815,7 +1815,11 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
         OutputVertCoordinate(grid,prop,myproc,numprocs,comm);
     }else {
       // Output data to netcdf
-      WriteOutputNC(prop, grid, phys, met, blowup, myproc);
+        if(prop->mergeArrays){
+            WriteOutputNCmerge(prop, grid, phys, met, blowup,numprocs,myproc,comm);
+        }else{
+            WriteOutputNC(prop, grid, phys, met, blowup, myproc);
+        }
     }
 
     // Output the average arrays

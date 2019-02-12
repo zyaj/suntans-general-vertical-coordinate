@@ -14,9 +14,9 @@
 #include "grid.h"
 
 //Parmetis 2.0
-#include "parmetis.h"
+//#include "parmetis.h"
 //Parmetis 3.1
-//#include "parmetislib.h"
+#include "parmetislib.h"
 
 // Private function
 static void GetGraph(GraphType *graph, gridT *grid, MPI_Comm comm);

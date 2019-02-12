@@ -81,6 +81,34 @@ readTemperature		0	# Whether or not to read initial temperature profile from fil
 outputuservar       	1   	#
 ########################################################################
 #
+# NetCDF / Meteorological / Boundary parameters
+#
+########################################################################
+outputNetcdf	 	1	  # Output data to netcdf format (0 - binary, 1 - netcdf)
+mergeArrays         1     # Merge output arrays
+outputNetcdfFile IWave_Shoaling 	# Name of the output netcdf file
+metfile	windfile.nc # Input meteorological netcdf file
+starttime	20000101.120000   # Model start time string format yyyymmdd.HHMMSS
+basetime 	19900101.000000   #   Base time used for reference in netcdf files
+metmodel  		0  # 0 - no meteorological input; 1 - Wood et al heat flux, 2 - COARE3.0, short and longwave radiation calculated, 3 - constant flux coefficients, 4 - wind only
+varmodel  		1   	  # Kriging variogram model. 0 - use inverse distance weighting, 1 - spherical model
+range  			50000    # kriging range. Grid units
+nugget  		0.05   	  # kriging nugget parameter
+sill  			0.95       # kriging sill parameter
+Lsw			0.5	  # Solar radiation extinction depth [m] (the light extinction coefficient, k = 1/Lsw)
+Cda			0.0011    # Wind drag coefficient (metmodel=3 only)
+Ch			0.0011    # Stanton number / sensible heat flux coefficient (metmodel=3 only)
+Ce			0.0011	  # Dalton number / latent heat flux coefficient (metmodel=3 only)
+netcdfBdy		0	  # 1 - Read the open boundary data from a netcdf file
+netcdfBdyFile 		SFBay3D_BC.nc # Name of the boundary netcdf file
+readinitialnc		0	  # 1 - Read initial conditions from a netcdf file, 0 otherwise
+initialNCfile  		SFBay3D_IC.nc  # Initial condition netcdf file name
+calcage        		0   # Turn on the age calculation
+calcaverage		0	  # Calculate averages
+ntaverage		120	  # 
+averageNetcdfFile	cylinder_AVG.nc	#
+########################################################################
+#
 #  Grid Files
 #
 ########################################################################

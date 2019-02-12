@@ -30,7 +30,6 @@ fi
 
 dirs="L10Nx64 L10Nx64hydro" # L20Nx64 L30Nx64 L40Nx64 L50Nx64 L60Nx64 L70Nx64 L80Nx64 L90Nx64 L100Nx64 L1000Nx64"
 
-
 for dir in `echo $dirs` ; do
     echo On $dir...
 
@@ -46,8 +45,6 @@ else
 fi
 
 echo Running suntans...
-$EXEC -s --datadir=$dir >& make-$dir.out
+$EXEC -s --datadir=$dir 
 
 done
-
-

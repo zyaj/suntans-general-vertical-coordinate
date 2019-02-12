@@ -60,7 +60,7 @@ vertT *vert;
 
 void AllocateVertCoordinate(gridT *grid, propT *prop, int myproc);
 void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys,int index, int myproc,int numprocs, MPI_Comm comm);
-void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc);
+void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc, MPI_Comm comm);
 void ComputeUf(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeUl(gridT *grid, propT *prop, physT *phys, int myproc);
 void LayerAveragedContinuity(REAL **omega, gridT *grid, propT *prop, physT *phys, int myproc);
@@ -72,7 +72,7 @@ void ComputeCellAveragedHorizontalGradient(REAL **gradient, int direction, REAL 
 void VariationalVertCoordinate(gridT *grid, propT *prop, physT *phys, int myproc,int numprocs, MPI_Comm comm);
 void VariationalVertCoordinateAverageMethod(gridT *grid, propT *prop, physT *phys, int myproc);
 REAL InterpToLayerTopFace(int i, int k, REAL **phi, gridT *grid);
-void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc);
+void VertCoordinateBasic(gridT *grid, propT *prop, physT *phys, int myproc, MPI_Comm comm);
 void VertCoordinateBasicRestart(gridT *grid, propT *prop, physT *phys, int myproc);
 void ComputeNormalVector(gridT *grid, physT *phys, int myproc);
 void OpenVertCoordinateFiles(gridT *grid,int mergeArrays, int myproc);

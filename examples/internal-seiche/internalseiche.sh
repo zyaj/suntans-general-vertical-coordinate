@@ -48,5 +48,3 @@ echo Running suntans...
 $EXEC -s --datadir=$dir >& make-$dir.out
 
 done
-
-

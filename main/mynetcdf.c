@@ -494,6 +494,9 @@ void WriteOutputNCmerge(propT *prop, gridT *grid, physT *phys, metT *met, int bl
 	nc_write_3D_merge(ncid,prop->nctimectr,  age->agealpha, prop, grid, "agealpha",0, numprocs, myproc, comm);
     }
   
+    // Grid spacing
+	nc_write_3D_merge(ncid,prop->nctimectr,  grid->dzz, prop, grid, "dzz",0, numprocs, myproc, comm);
+
     // Vertical velocity 
     nc_write_3D_merge(ncid,prop->nctimectr,  phys->w, prop, grid, "w",1, numprocs, myproc, comm);
     
@@ -1129,7 +1132,17 @@ static void InitialiseOutputNCugridMerge(propT *prop, physT *phys, gridT *grid, 
    nc_addattr(ncid, varid,"mesh","suntans_mesh");
    nc_addattr(ncid, varid,"location","face");
    nc_addattr(ncid, varid,"coordinates","time yv xv");
-    
+
+    //dzz
+    if ((retval = nc_def_var(ncid,"dzz",NC_DOUBLE,3,dimidthree,&varid)))
+       ERR(retval);
+    if ((retval = nc_def_var_fill(ncid,varid,nofill,&FILLVALUE))) // Sets a _FillValue attribute
+       ERR(retval);
+    if ((retval = nc_def_var_deflate(ncid,varid,0,DEFLATE,DEFLATELEVEL))) // Compresses the variable
+       ERR(retval);
+    nc_addattr(ncid, varid,"long_name","z layer spacing at faces");
+    nc_addattr(ncid, varid,"units","m");
+
    //u
    if ((retval = nc_def_var(ncid,"uc",NC_DOUBLE,3,dimidthree,&varid)))
       ERR(retval);
