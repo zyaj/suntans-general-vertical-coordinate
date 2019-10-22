@@ -264,7 +264,7 @@ void InitializeLayerThickness(gridT *grid, propT *prop, physT *phys,int myproc, 
  */
 void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int myproc, int numprocs, MPI_Comm comm)
 {
-  int i,k,j,nf,ne,dry,max_ind;
+  int iptr,i,k,j,nf,ne,dry,max_ind;
   REAL fac1,fac2,fac3,Ac,sum,sum_old,maxdzz;
 
   fac1=prop->imfac1;
@@ -274,6 +274,9 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
   // ctop and etop is always 0 and Nke and Nk is always Nkmax
   if(!index)
     for(i=0;i<grid->Nc;i++) {
+    //for(iptr=grid->celldist[0];iptr<grid->celldist[2];iptr++) {
+    //  i=grid->cellp[iptr];
+
       for(k=grid->ctop[i];k<grid->Nk[i];k++){
         grid->dzzold[i][k]=grid->dzz[i][k];
         vert->zcold[i][k]=vert->zc[i][k];
@@ -286,8 +289,9 @@ void UpdateLayerThickness(gridT *grid, propT *prop, physT *phys, int index, int 
       UserDefinedVerticalCoordinate(grid,prop,phys,myproc);
       break;
     case 2:
-      for(i=0;i<grid->Nc;i++)
-      {
+      for(i=0;i<grid->Nc;i++){
+      //for(iptr=grid->celldist[0];iptr<grid->celldist[2];iptr++) {
+      //  i=grid->cellp[iptr];
         dry=0;
         sum=0;
         max_ind=grid->ctop[i];
@@ -1180,17 +1184,22 @@ void UpdateCellcenteredFreeSurface(gridT *grid, propT *prop, physT *phys, int my
  */
 void VerifyFluxHeight(gridT *grid, propT *prop, physT *phys, int myproc)
 {  
-  int i, j, k, nc1, nc2;
+  int i, j, jptr, k, nc1, nc2;
   REAL dz_bottom, dzsmall=grid->dzsmall,h_uw,utmp,tmp;
 
-  for(j=0;j<grid->Ne;j++) 
-  {
+  for(j=0;j<grid->Ne;j++) {
+  //for(jptr=grid->edgedist[2];jptr<grid->edgedist[4];jptr++) {
+  //  j = grid->edgep[jptr];
+
+  
     grid->hf[j]=0;
     //for(k=0; k<grid->Nkc[j];k++)
       //grid->dzf[j][k]=0;
   }
 
   for(j=0;j<grid->Ne;j++) {
+  //for(jptr=grid->edgedist[2];jptr<grid->edgedist[4];jptr++) {
+  //  j = grid->edgep[jptr];
     nc1 = grid->grad[2*j];
     nc2 = grid->grad[2*j+1];
     if(nc1==-1) nc1=nc2;

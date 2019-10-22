@@ -70,6 +70,8 @@ typedef struct _physT {
   REAL **s0;
   REAL **rho;
   REAL *h;
+  REAL *coriolis_f;
+  REAL *latv;
   REAL *hcorr;
   unsigned char *active;
   
@@ -200,7 +202,7 @@ typedef struct _propT {
        laxWendroff_Vertical, latitude,exfac1,exfac2,exfac3,imfac1,imfac2,imfac3;
   int ntout, ntoutStore, ntprog, nsteps, nstart, n, ntconserve, nonhydrostatic, cgsolver, maxiters, 
       qmaxiters, hprecond, qprecond, volcheck, masscheck, nonlinear,im, linearFS, newcells, wetdry, sponge_distance,subgrid,
-    sponge_decay, thetaramptime, readSalinity, readTemperature, turbmodel, 
+    sponge_decay, thetaramptime, readSalinity, readTemperature, turbmodel, betaplane,
     TVD, horiTVD, vertTVD, TVDsalt, TVDtemp, TVDturb, laxWendroff, stairstep, ex, TVDmomentum, conserveMomentum,
     mergeArrays, computeSediments,Intz0B, Intz0T, marshmodel,wavemodel,culvertmodel,vertcoord;
   FILE *CdBFID, *CdTFID, *FreeSurfaceFID, *HorizontalVelocityFID, *VerticalVelocityFID, *SalinityFID, *BGSalinityFID, 
@@ -215,7 +217,7 @@ typedef struct _propT {
   REAL nctime, toffSet, gmtoffset;
   int nctimectr, avgtimectr, avgctr, avgfilectr, ntaverage, nstepsperncfile, ncfilectr;
   REAL nugget, sill, range, Lsw, Cda, Ce, Ch;
-  char  starttime[15], basetime[15]; 
+  char  *starttime, *basetime; 
   char  INPUTZ0BFILE[BUFFERLENGTH], INPUTZ0TFILE[BUFFERLENGTH];
 } propT;
 

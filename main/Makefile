@@ -22,8 +22,8 @@ else
   MPIFILE = no-mpi.c
   MPIDEF = -DNOMPI
 endif
-#OPTFLAGS = -O2 -g 
-OPTFLAGS = -O0 -g
+OPTFLAGS = -O2 
+#OPTFLAGS = -O0 -g
 
 XLDFLAGS=-lX11 -lm
 XINC= -I/usr/X11/include -I/usr/include #-I/Library/Developer/CommandLineTools/usr/bin

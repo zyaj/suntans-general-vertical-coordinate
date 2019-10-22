@@ -127,6 +127,11 @@ typedef struct _boundT{
   REAL **T;
   REAL **S;
   REAL *h;
+
+  /*Relaxation BC variables*/
+  int *closest_type2;
+  REAL *rdist_type2; 
+
 } boundT;
 
 // Declare the boundary structure global

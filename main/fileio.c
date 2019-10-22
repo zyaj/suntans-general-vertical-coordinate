@@ -441,6 +441,10 @@ double GetDefaultValue(char *str, int *status) {
     
    return maxFaces_DEFAULT;   
 
+} else if(!strcmp(str,"betaplane")) {
+    
+   return betaplane_DEFAULT;   
+
 } else if(!strcmp(str,"Intz0B")){
     
     return Intz0B_DEFAULT;

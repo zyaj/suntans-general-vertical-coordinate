@@ -12,7 +12,7 @@
 * Private functions
 ***********************************************/
 
-const void* FillValue(int empty);
+void FillValue(int *empty);
 static void ravel(REAL **tmparray, REAL *tmpvec, gridT *grid);
 static void ravelW(REAL **tmparray, REAL *tmpvec,gridT *grid);
 static void ravelEdge(REAL **tmparray, REAL *tmpvec, gridT *grid);
@@ -260,20 +260,7 @@ void nc_write_doublevar(int ncid, char *vname, gridT *grid, REAL *tmparray, int 
 
 
 
-/*
-* Function: getTimeRec()
-* -----------------------------
-*  Retuns the index of the first preceding time step in the vector time
-*/
-int getTimeRec(REAL nctime, REAL *time, int nt){
-   int j;
-   
-   for(j=0;j<nt;j++){
-      if (time[j]>=nctime)
-	return j-1;
-   }
-   return nt;
-}
+
 
 /*
  * Function: nc_write_2D_merge()
@@ -489,6 +476,9 @@ void WriteOutputNCmerge(propT *prop, gridT *grid, physT *phys, metT *met, int bl
     if( (prop->gamma>0) || (prop->beta>0) ) 
 	nc_write_3D_merge(ncid,prop->nctimectr,  phys->rho, prop, grid, "rho",0, numprocs, myproc, comm);
 
+    if(prop->nonhydrostatic>0)
+	nc_write_3D_merge(ncid,prop->nctimectr,  phys->q, prop, grid, "q",0, numprocs, myproc, comm);
+
     if(prop->calcage){
 	nc_write_3D_merge(ncid,prop->nctimectr,  age->agec, prop, grid, "agec",0, numprocs, myproc, comm);
 	nc_write_3D_merge(ncid,prop->nctimectr,  age->agealpha, prop, grid, "agealpha",0, numprocs, myproc, comm);
@@ -600,6 +590,15 @@ void WriteOutputNC(propT *prop, gridT *grid, physT *phys, metT *met, int blowup,
 	if ((retval = nc_put_vara_double(ncid, varid, startthree, countthree, phys->tmpvar )))
 	  ERR(retval);
      }
+
+     if(prop->nonhydrostatic>0){
+	if ((retval = nc_inq_varid(ncid, "q", &varid)))
+	  ERR(retval);
+	ravel(phys->q, phys->tmpvar, grid);
+	if ((retval = nc_put_vara_double(ncid, varid, startthree, countthree, phys->tmpvar )))
+	  ERR(retval);
+     }
+
       
      if( (prop->gamma>0) || (prop->beta>0) ){ 
 	if ((retval = nc_inq_varid(ncid, "rho", &varid)))
@@ -1241,6 +1240,20 @@ static void InitialiseOutputNCugridMerge(propT *prop, physT *phys, gridT *grid, 
     nc_addattr(ncid, varid,"mesh","suntans_mesh");
     nc_addattr(ncid, varid,"location","face");
     nc_addattr(ncid, varid,"coordinates","time z_r yv xv");
+   }
+   //q (nonhydrostatic pressure)
+   if(prop->nonhydrostatic){
+      if ((retval = nc_def_var(ncid,"q",NC_DOUBLE,3,dimidthree,&varid)))
+        ERR(retval);
+      if ((retval = nc_def_var_fill(ncid,varid,nofill,&FILLVALUE))) // Sets a _FillValue attribute
+       ERR(retval);
+      if ((retval = nc_def_var_deflate(ncid,varid,0,DEFLATE,DEFLATELEVEL))) // Compresses the variable
+        ERR(retval);
+      nc_addattr(ncid, varid,"long_name","Nonhydrostatic pressure");
+      nc_addattr(ncid, varid,"units","N m-2");
+      nc_addattr(ncid, varid,"mesh","suntans_mesh");
+      nc_addattr(ncid, varid,"location","face");
+      nc_addattr(ncid, varid,"coordinates","time z_r yv xv");
    }
    
    //age
@@ -2054,7 +2067,22 @@ void InitialiseOutputNCugrid(propT *prop, gridT *grid, physT *phys, metT *met, i
     nc_addattr(ncid, varid,"location","face");
     nc_addattr(ncid, varid,"coordinates","time z_r yv xv");
    }
-   
+
+   //q (nonhydrostatic pressure)
+   if(prop->nonhydrostatic){
+      if ((retval = nc_def_var(ncid,"q",NC_DOUBLE,3,dimidthree,&varid)))
+        ERR(retval);
+      if ((retval = nc_def_var_fill(ncid,varid,nofill,&FILLVALUE))) // Sets a _FillValue attribute
+       ERR(retval);
+      if ((retval = nc_def_var_deflate(ncid,varid,0,DEFLATE,DEFLATELEVEL))) // Compresses the variable
+        ERR(retval);
+      nc_addattr(ncid, varid,"long_name","Nonhydrostatic pressure");
+      nc_addattr(ncid, varid,"units","N m-2");
+      nc_addattr(ncid, varid,"mesh","suntans_mesh");
+      nc_addattr(ncid, varid,"location","face");
+      nc_addattr(ncid, varid,"coordinates","time z_r yv xv");
+   }
+ 
    //age
    if(prop->calcage>0){
      if ((retval = nc_def_var(ncid,"agec",NC_DOUBLE,3,dimidthree,&varid)))
@@ -4437,9 +4465,9 @@ static void ravelEdge(REAL **tmparray, REAL *tmpvec,gridT *grid){
     }
   }
 }//End of function
-const void* FillValue(int empty){
+void FillValue(int *empty){
   /* Converts the EMPTY value expression type to match the type expected by nc_def_var_fill*/
-  empty = (REAL)empty;
+  *empty = (REAL)(*empty);
 }
  
 /*###############################################################
@@ -4466,7 +4494,12 @@ void ReadMetNC(propT *prop, gridT *grid, metinT *metin,int myproc){
 
     if(metin->t0==-1){
 	metin->t1 = getTimeRec(prop->nctime,metin->time,(int)metin->nt);
-	metin->t0 = metin->t1-1;
+        if(metin->t1==0){
+           metin->t0=0;
+        }else{
+           metin->t0=metin->t1-1;
+        }
+	//metin->t0 = metin->t1-1;
 	metin->t2 = metin->t1+1;
     }
     t0 = metin->t0;
@@ -4699,7 +4732,11 @@ void ReadBdyNC(propT *prop, gridT *grid, int myproc, MPI_Comm comm){
     //Find the time index of the middle time step (t1) 
     if(bound->t0==-1){
        bound->t1 = getTimeRecBnd(prop->nctime,bound->time,(int)bound->Nt); //this is in met.c
-       bound->t0=bound->t1-1;
+       if(bound->t1==0){
+           bound->t0=0;
+       }else{
+           bound->t0=bound->t1-1;
+       }
        bound->t2=bound->t1+1;
        printf("myproc: %d, bound->t0: %d, nctime: %f\n",myproc,bound->t0, prop->nctime);
     }
@@ -5033,6 +5070,38 @@ int getICtime(propT *prop, int Nt, int myproc){
 } // End function
 
 /*
+ * Function: ReturnLatitudeNC()
+ * -------------------------------
+ * Reads the latitude from the initial condition netcdf array
+ * (##This could be made more generic to read any grid variable##)
+ *
+ */
+void ReturnLatitudeNC(propT *prop, physT *phys, gridT *grid, REAL *htmp, int Nci, int myproc){
+   int i;
+   size_t start[] = {0};
+   size_t count[] = {Nci};
+   //REAL htmp[Nci];
+
+   int varid, retval;
+   int ncid = prop->initialNCfileID;
+
+   if(VERBOSE>1 && myproc==0) printf("Reading latitude from the initial condition from netcdf file...\n");
+   //printf("Initial condition file: T0 = %d, Nci = %d\n",T0,Nci);
+   //nc_read_2D(prop->initialNCfileID, "eta", start, count, htmp , myproc);
+    if ((retval = nc_inq_varid(ncid, "latv", &varid)))
+	ERR(retval);
+    if ((retval = nc_get_vara_double(ncid, varid, start, count, &htmp[0]))) 
+	ERR(retval); 
+
+   for(i=0;i<grid->Nc;i++) {
+     phys->latv[i]=htmp[grid->mnptr[i]];
+     //printf("latv[%d] = %3.6f\n",i,phys->latv[i]);
+
+  }
+} // End function
+
+
+/*
  * Function: ReturnFreeSurfaceNC()
  * -------------------------------
  * Reads the free surface from the initial condition netcdf array
@@ -5129,6 +5198,83 @@ void ReturnTemperatureNC(propT *prop, physT *phys, gridT *grid, REAL *htmp, int 
 } // End function
 
 /*
+ * Function: ReturnVelocityNC()
+ * -------------------------------
+ * Reads the u/v from the initial condition netcdf array
+ * Cell-centered velocities are read in (uc, vc) and then interpolated 
+ * onto the cell-edges
+ *
+ */
+void ReturnVelocityNC(propT *prop, physT *phys, gridT *grid, REAL *htmp, int Nci, int Nki, int T0, int myproc){
+   int i,k,ind;
+   int j, jptr, nc1, nc2;
+   REAL def1, def2, dgf;
+   size_t start[] = {T0, 0, 0};
+   size_t count[] = {1, Nki, Nci};
+   //REAL htmp[Nki][Nci];
+
+   int varid, retval;
+   int ncid = prop->initialNCfileID;
+
+   if(VERBOSE>1 && myproc==0) printf("Reading velocity initial condition from netcdf file...\n");
+   //uc
+   if ((retval = nc_inq_varid(ncid, "uc", &varid)))
+	ERR(retval);
+   if ((retval = nc_get_vara_double(ncid, varid, start, count, &htmp[0]))) 
+	ERR(retval); 
+
+   for(i=0;i<grid->Nc;i++) {
+      for(k=grid->ctop[i];k<grid->Nk[i];k++) {
+	 ind = k*Nci + grid->mnptr[i]; 
+	 phys->uc[i][k]=htmp[ind];
+	
+      }
+   }
+
+   //vc
+   if ((retval = nc_inq_varid(ncid, "vc", &varid)))
+	ERR(retval);
+   if ((retval = nc_get_vara_double(ncid, varid, start, count, &htmp[0]))) 
+	ERR(retval); 
+
+   for(i=0;i<grid->Nc;i++) {
+      for(k=grid->ctop[i];k<grid->Nk[i];k++) {
+	 ind = k*Nci + grid->mnptr[i]; 
+	 phys->vc[i][k]=htmp[ind];
+	
+      }
+   }
+
+   //Loop through edges and find the cell neighbours
+   // computational edges
+   for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
+       j = grid->edgep[jptr]; 
+
+       nc1 = grid->grad[2*j];
+       nc2 = grid->grad[2*j+1];
+       if(nc1==-1) nc1=nc2;
+       if(nc2==-1) nc2=nc1;
+
+       // Note that dgf==dg only when the cells are orthogonal!
+       def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+       def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+       dgf = def1+def2;
+
+       def1 /= dgf;
+       def2 /= dgf;
+       for(k=0;k<grid->Nkc[j];k++) {
+           phys->u[j][k]= (phys->uc[nc2][k]*def1 + phys->uc[nc1][k]*def2)
+               *grid->n1[j] + 
+           (phys->vc[nc2][k]*def1 + phys->vc[nc1][k]*def2)
+               *grid->n2[j];  
+       }
+    }
+
+
+} // End function
+
+
+/*
  * Function: ReturnAgeNC()
  * -------------------------------
  * Reads the age variables (agec & agealpha) from the initial condition netcdf array
@@ -5187,7 +5333,21 @@ void ReturnAgeNC(propT *prop, gridT *grid, REAL *htmp, int Nci, int Nki, int T0,
 
 } // End function
 
-
+/*
+* Function: getTimeRec()
+* -----------------------------
+*  Retuns the index of the first preceding time step in the vector time
+*/
+int getTimeRec(REAL nctime, REAL *time, int nt){
+   int j;
+   
+   for(j=0;j<nt;j++){
+      if (time[j]>=nctime)
+	//return j-1;
+	return j;
+   }
+   return nt;
+}
 /*
 * Function: GetTimeRecBnd()
 * ------------------

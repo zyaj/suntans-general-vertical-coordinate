@@ -13,6 +13,10 @@
 #include "grid.h"
 #include "util.h"
 
+#define _GNU_SOURCE
+#define __USE_XOPEN
+#include<time.h>
+
 void Sort(int *a, int *v, int N)
 {
   int i, j, temp, *tmp;
@@ -336,6 +340,7 @@ int max(int a, int b) {
 
 REAL QuadInterp(REAL x, REAL x0, REAL x1, REAL x2, REAL y0, REAL y1, REAL y2){
     REAL L0, L1, L2;
+    REAL result;
 
 //    printf("x: %f, x0: %f, x1: %f, x2: %f, y0: %f, y1: %f, y2: %f\n",x,x0,x1,x2,y0,y1,y2);
 
@@ -343,18 +348,31 @@ REAL QuadInterp(REAL x, REAL x0, REAL x1, REAL x2, REAL y0, REAL y1, REAL y2){
     L1 = (x-x0) * (x-x2) / ( (x1-x0)*(x1-x2) );
     L2 = (x-x0) * (x-x1) / ( (x2-x0)*(x2-x1) );
 
-    return y0*L0 + y1*L1 + y2*L2;
+    // Check for NaN (happens if two time(x) variables are equal)
+    if (L0!=L0 || L1!=L1 || L2!=L2){
+        L0=1;
+        L1=0.;
+        L2=0.;
+    }
+
+    result = y0*L0 + y1*L1 + y2*L2;
+    if(result!=result){
+        printf("Error in Quadratic interpolation (x, x0, x1, x2) = %3.6f, %3.6f, %3.6f, %3.6f\n", x, x0, x1, x2);
+        MPI_Finalize();
+        exit(EXIT_FAILURE);
+    }
+    return result;
 
 }//End Function
 
-/* Function getToffSet()
+/* Function get_time_offset()
  * ------------------
  * Returns the time offset in days between two time strings - starttime and basetime
  * 
  * The time string format is: yyyymmdd.HHMMSS (15 characters)
  * Uses the time.h libraries
  */
-REAL getToffSet(char basetime[15], char starttime[15]){
+REAL get_time_offset(char* basetime, char* starttime){
 	
     REAL t;
     //char *strptime(const char *buf, const char *format, struct tm *tm) 
@@ -425,6 +443,16 @@ void linsolve(REAL **A, REAL *b, int N){
     b[i] = (b[i] - sumi)/A[i][i];
   }  
 } // End of linsolve
+
+REAL Coriolis(REAL lat){
+   REAL omega, deg2rad, fcor;
+   omega = 2*PI/86400.;
+   deg2rad = PI/180.;
+   
+
+   fcor = 2*omega*sin(lat*deg2rad);
+   return fcor;
+}
 
 
 

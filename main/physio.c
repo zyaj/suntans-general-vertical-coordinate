@@ -220,9 +220,11 @@ void OpenFiles(propT *prop, int myproc)
     // No longer writing to verticalgridfile
     
   }else {
-    MPI_GetFile(filename,DATAFILE,"outputNetcdfFile","OpenFiles",myproc);
-    sprintf(str,"%s.%d",filename,myproc);
-    prop->outputNetcdfFileID = MPI_NCOpen(str,NC_NETCDF4,"OpenFiles",myproc);
+    if(prop->mergeArrays==0){
+	MPI_GetFile(filename,DATAFILE,"outputNetcdfFile","OpenFiles",myproc);
+	sprintf(str,"%s.nc.%d",filename,myproc);
+	prop->outputNetcdfFileID = MPI_NCOpen(str,NC_CLASSIC_MODEL|NC_NETCDF4,"OpenFiles",myproc);
+    }
   }
 
   if(RESTART) {
@@ -345,9 +347,31 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
     // No longer writing to vertical grid file
     if(myproc==0) fclose(prop->ConserveFID);
   }
+  }
 
-  // probably should change to make a distinction between blowup and restarts
-  if(!(prop->n%prop->ntoutStore) || blowup) {
+/*
+ * Function: OutputRestartVariables
+ * Usage: OutputRestartVariables(grid,phys,prop,myproc,numprocs,blowup,comm);
+ * --------------------------------------------------------------------
+ * Output the restart data every ntout steps as specified in suntans.dat
+ * If this is the last time step or if the run is blowing up (blowup==1),
+ * then output the data to the restart file specified by the file pointer
+ * prop->StoreFID.
+ *
+ * Separated from OutputPhysicalVariables so restart can be used with
+ * the NetCDF IO code
+ *
+ */
+void OutputRestartVariables(gridT *grid, physT *phys, propT *prop,int myproc, int numprocs, int blowup, MPI_Comm comm)
+{
+  int i, j, jptr, k, nwritten, arraySize, writeProc, laststep;
+  char str[BUFFERLENGTH], filename[BUFFERLENGTH];
+  REAL *tmp = (REAL *)SunMalloc(grid->Ne*sizeof(REAL),"OutputData");
+
+  // Need this for restart
+  laststep = prop->nsteps+prop->nstart;
+
+  if(!(prop->n%prop->ntoutStore) || blowup || prop->n==laststep) {
     if(VERBOSE>1 && myproc==0) 
       printf("Outputting restart data at step %d\n",prop->n);
 
@@ -357,8 +381,14 @@ void OutputPhysicalVariables(gridT *grid, physT *phys, propT *prop,int myproc, i
 
     nwritten=fwrite(&(prop->n),sizeof(int),1,prop->StoreFID);
 
+
+
+  
     fwrite(phys->h,sizeof(REAL),grid->Nc,prop->StoreFID);
     fwrite(phys->h_old,sizeof(REAL),grid->Nc,prop->StoreFID);
+    fwrite(phys->latv,sizeof(REAL),grid->Nc,prop->StoreFID);
+    fwrite(phys->coriolis_f,sizeof(REAL),grid->Ne,prop->StoreFID); //MR
+
 
     for(j=0;j<grid->Ne;j++) 
       fwrite(phys->Cn_U[j],sizeof(REAL),grid->Nke[j],prop->StoreFID);
@@ -481,6 +511,10 @@ void ReadPhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MP
   if(fread(phys->h_old,sizeof(REAL),grid->Nc,prop->StartFID) != grid->Nc)
     printf("Error reading phys->h\n");
 
+  if(fread(phys->latv,sizeof(REAL),grid->Nc,prop->StartFID) != grid->Nc)
+    printf("Error reading phys->latv\n");
+  if(fread(phys->coriolis_f,sizeof(REAL),grid->Ne,prop->StartFID) != grid->Ne)
+    printf("Error reading phys->coriolis_f\n");
   for(j=0;j<grid->Ne;j++) 
     if(fread(phys->Cn_U[j],sizeof(REAL),grid->Nke[j],prop->StartFID) != grid->Nke[j])
       printf("Error reading phys->Cn_U[j]\n");

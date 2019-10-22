@@ -367,6 +367,15 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
   (*metin)->WRH = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocateMetIn");
   (*metin)->Wcloud = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocateMetIn");
   for(j=0;j<Nc;j++){
+      (*metin)->WUwind[j] = (REAL *)SunMalloc(MAXNEAR*sizeof(REAL),"AllocateMetIn");
+      (*metin)->WVwind[j] = (REAL *)SunMalloc(MAXNEAR*sizeof(REAL),"AllocateMetIn");
+      (*metin)->WTair[j] = (REAL *)SunMalloc(MAXNEAR*sizeof(REAL),"AllocateMetIn");
+      (*metin)->WPair[j] = (REAL *)SunMalloc(MAXNEAR*sizeof(REAL),"AllocateMetIn");
+      (*metin)->Wrain[j] = (REAL *)SunMalloc(MAXNEAR*sizeof(REAL),"AllocateMetIn");
+      (*metin)->WRH[j] = (REAL *)SunMalloc(MAXNEAR*sizeof(REAL),"AllocateMetIn");
+      (*metin)->Wcloud[j] = (REAL *)SunMalloc(MAXNEAR*sizeof(REAL),"AllocateMetIn");
+
+      /* These blowout the memory
       (*metin)->WUwind[j] = (REAL *)SunMalloc(NUwind*sizeof(REAL),"AllocateMetIn");
       (*metin)->WVwind[j] = (REAL *)SunMalloc(NVwind*sizeof(REAL),"AllocateMetIn");
       (*metin)->WTair[j] = (REAL *)SunMalloc(NTair*sizeof(REAL),"AllocateMetIn");
@@ -374,6 +383,7 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
       (*metin)->Wrain[j] = (REAL *)SunMalloc(Nrain*sizeof(REAL),"AllocateMetIn");
       (*metin)->WRH[j] = (REAL *)SunMalloc(NRH*sizeof(REAL),"AllocateMetIn");
       (*metin)->Wcloud[j] = (REAL *)SunMalloc(Ncloud*sizeof(REAL),"AllocateMetIn");
+      */
   }
   
   /* Allocate the 2-D variable data (NTmet time steps)*/
@@ -401,9 +411,9 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
       (*metin)->x_Uwind[j]=0.0;
       (*metin)->y_Uwind[j]=0.0;
       (*metin)->z_Uwind[j]=0.0;
-      for(k=0;k<Nc;k++){
-	 (*metin)->WUwind[k][j]=0.0;
-      }
+      //for(k=0;k<Nc;k++){
+      //   (*metin)->WUwind[k][j]=0.0;
+      //}
        for(n=0;n<NTmet;n++){
 	 (*metin)->Uwind[n][j]=0.0;
       }
@@ -413,9 +423,9 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
       (*metin)->x_Vwind[j]=0.0;
       (*metin)->y_Vwind[j]=0.0;
       (*metin)->z_Vwind[j]=0.0;
-      for(k=0;k<Nc;k++){
-	 (*metin)->WVwind[k][j]=0.0;
-      }
+      //for(k=0;k<Nc;k++){
+      //   (*metin)->WVwind[k][j]=0.0;
+      //}
        for(n=0;n<NTmet;n++){
 	 (*metin)->Vwind[n][j]=0.0;
       }
@@ -425,9 +435,9 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
       (*metin)->x_Tair[j]=0.0;
       (*metin)->y_Tair[j]=0.0;
       (*metin)->z_Tair[j]=0.0;
-      for(k=0;k<Nc;k++){
-	 (*metin)->WTair[k][j]=0.0;
-      }
+      //for(k=0;k<Nc;k++){
+      //   (*metin)->WTair[k][j]=0.0;
+      //}
        for(n=0;n<NTmet;n++){
 	 (*metin)->Tair[n][j]=0.0;
       }
@@ -436,9 +446,9 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
   for(j=0;j<(*metin)->NPair;j++){
       (*metin)->x_Pair[j]=0.0;
       (*metin)->y_Pair[j]=0.0;
-      for(k=0;k<Nc;k++){
-	 (*metin)->WPair[k][j]=0.0;
-      }
+      //for(k=0;k<Nc;k++){
+      //   (*metin)->WPair[k][j]=0.0;
+      //}
        for(n=0;n<NTmet;n++){
 	 (*metin)->Pair[n][j]=0.0;
       }
@@ -447,9 +457,9 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
   for(j=0;j<(*metin)->Nrain;j++){
       (*metin)->x_rain[j]=0.0;
       (*metin)->y_rain[j]=0.0;
-      for(k=0;k<Nc;k++){
-	 (*metin)->Wrain[k][j]=0.0;
-      }
+      //for(k=0;k<Nc;k++){
+      //   (*metin)->Wrain[k][j]=0.0;
+      //}
        for(n=0;n<NTmet;n++){
 	 (*metin)->rain[n][j]=0.0;
       }
@@ -459,9 +469,9 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
       (*metin)->x_RH[j]=0.0;
       (*metin)->y_RH[j]=0.0;
       (*metin)->z_RH[j]=0.0;
-      for(k=0;k<Nc;k++){
-	 (*metin)->WRH[k][j]=0.0;
-      }
+      //for(k=0;k<Nc;k++){
+      //   (*metin)->WRH[k][j]=0.0;
+      //}
        for(n=0;n<NTmet;n++){
 	 (*metin)->RH[n][j]=0.0;
       }
@@ -470,9 +480,9 @@ void AllocateMetIn(propT *prop, gridT *grid, metinT **metin, int myproc){
   for(j=0;j<(*metin)->Ncloud;j++){
       (*metin)->x_cloud[j]=0.0;
       (*metin)->y_cloud[j]=0.0;
-      for(k=0;k<Nc;k++){
-	 (*metin)->Wcloud[k][j]=0.0;
-      }
+      //for(k=0;k<Nc;k++){
+      //   (*metin)->Wcloud[k][j]=0.0;
+      //}
        for(n=0;n<NTmet;n++){
 	 (*metin)->cloud[n][j]=0.0;
       }
@@ -805,7 +815,9 @@ void updateAirSeaFluxes(propT *prop, gridT *grid, physT *phys, metT *met,REAL **
     x[6] = met->Hlw[i];
     
     // Shortwave radiation
-    met->Hsw[i] = shortwave(prop->nctime/86400.0,prop->latitude,met->cloud[i],prop->gmtoffset/24.0);
+    //met->Hsw[i] = shortwave(prop->nctime/86400.0,prop->latitude,met->cloud[i],prop->gmtoffset/24.0);
+    met->Hsw[i] = 
+        shortwave(prop->nctime/86400.0,phys->latv[i],met->cloud[i],prop->gmtoffset/24.0);
     x[7] = met->Hsw[i];
     
     //rain [mm/hr] (rain heat flux is not included at the moment)
@@ -814,7 +826,7 @@ void updateAirSeaFluxes(propT *prop, gridT *grid, physT *phys, metT *met,REAL **
     //Air pressure [mb]
     x[10] = met->Pair[i];
     
-    //wind speed height
+    //wind speed height 
     x[11] = met->z_Uwind[i];
     
     //air temp height

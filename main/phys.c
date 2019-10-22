@@ -575,16 +575,19 @@ void FreePhysicalVariables(gridT *grid, physT *phys, propT *prop)
  */
 void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int myproc, MPI_Comm comm)
 {
-  int i, j, k, ktop, Nc=grid->Nc,nc1,nc2;
+  int i, j, jptr, k, ktop, Nc=grid->Nc;
   REAL z, *stmp;
   REAL *ncscratch;
   int Nci, Nki, T0;
+  int nc1, nc2;
+  REAL dgf, def1, def2, lat_e;
+
 
   prop->nstart=0;
-  prop->n=prop->nstart;
+  
   // Initialise the netcdf time
-  prop->toffSet = getToffSet(prop->basetime,prop->starttime);
-  prop->nctime = prop->toffSet*86400.0 + prop->nstart*prop->dt;
+  //prop->toffSet = getToffSet(prop->basetime,prop->starttime);
+  //prop->nctime = prop->toffSet*86400.0 + prop->nstart*prop->dt;
 
   if (prop->readinitialnc>0){
     ReadInitialNCcoord(prop,grid,&Nci,&Nki,&T0,myproc);
@@ -614,6 +617,45 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       }
     }
   }
+
+
+
+
+  // Initialize the cell-centered latitude from netcdf
+  for(i=0;i<Nc;i++) {
+    phys->latv[i]=prop->latitude;
+  }
+  if (prop->readinitialnc){
+     ReturnLatitudeNC(prop,phys,grid,ncscratch,Nci,myproc);
+  }
+
+   // Compute the coriolis term at the edges
+   for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
+       j = grid->edgep[jptr]; 
+
+       nc1 = grid->grad[2*j];
+       nc2 = grid->grad[2*j+1];
+       if(nc1==-1) nc1=nc2;
+       if(nc2==-1) nc2=nc1;
+
+       // Note that dgf==dg only when the cells are orthogonal!
+       def1 = grid->def[nc1*grid->maxfaces+grid->gradf[2*j]];
+       def2 = grid->def[nc2*grid->maxfaces+grid->gradf[2*j+1]];
+       dgf = def1+def2;
+
+       def1 /= dgf;
+       def2 /= dgf;
+
+       if(prop->betaplane){
+           lat_e = phys->latv[nc2]*def1 + phys->latv[nc1]*def2;
+           phys->coriolis_f[j] = Coriolis(lat_e);
+           //printf("coriolis[%d] = %e\n", j, phys->coriolis_f[j]);
+       }else{
+           phys->coriolis_f[j] = prop->Coriolis_f;
+       }
+   }    
+
+
   // Need to update the vertical grid after updating the free surface.
   // The 1 indicates that this is the first call to UpdateDZ
   if(prop->vertcoord!=1){
@@ -635,6 +677,7 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
       phys->s_old[i][k]=0;
       phys->T_old[i][k]=0;
       phys->s0[i][k]=0;
+      phys->rho[i][k]=0;
     }
   }
 
@@ -657,7 +700,7 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
         phys->s0[i][k]=stmp[k];
       }
     SunFree(stmp,grid->Nkmax*sizeof(REAL),"InitializePhysicalVariables");
-  } else if(prop->readinitialnc){
+  } else if(prop->readinitialnc && prop->beta > 0){
      ReturnSalinityNC(prop,phys,grid,ncscratch,Nci,Nki,T0,myproc);
   } else {
     for(i=0;i<Nc;i++) {
@@ -776,7 +819,10 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
     }
   }
   // Set the density from s and T using the equation of state 
-  SetDensity(grid,phys,prop);
+  // MR - Density cannot be initialized yet as boundary scalars have not yet been set
+  // MR - BoundaryScalars requires boundary data to be allocated first, it is called later.
+  //BoundaryScalars(grid,phys,prop,myproc,comm); // Boundaries should be set first
+  //SetDensity(grid,phys,prop);
 
   // Initialize the eddy-viscosity and scalar diffusivity
   for(i=0;i<grid->Nc;i++) {
@@ -1303,14 +1349,15 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   // Initialise the netcdf time (moved to InitializePhysicalVariables)
   // Get the toffSet property
   //printf("myproc: %d, starttime: %s\n",prop->starttime);
-  //prop->toffSet = getToffSet(prop->basetime,prop->starttime);
-  //prop->nctime = prop->toffSet*86400.0 + prop->nstart*prop->dt;
-  //printf("myproc: %d, toffSet = %f (%s, %s)\n",myproc,prop->toffSet,&prop->basetime,&prop->starttime);
+  prop->toffSet = get_time_offset(prop->basetime,prop->starttime);
+  prop->nctime = prop->toffSet*86400.0 + prop->nstart*prop->dt;
+  printf("myproc: %d, nctime = %f, toffSet = %f (%s, %s)\n",
+        myproc,prop->nctime, prop->toffSet, prop->basetime, prop->starttime);
 
   // Initialise the boundary data from a netcdf file
   if(prop->netcdfBdy==1){
-    AllocateBoundaryData(prop, grid, &bound, myproc,comm);
-    InitBoundaryData(prop, grid, myproc,comm);
+    AllocateBoundaryData(prop, grid, &bound, myproc, comm);
+    InitBoundaryData(prop, grid, myproc, comm);
   }
 
   // get the boundary velocities (boundaries.c)
@@ -1390,8 +1437,7 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   if(prop->laxWendroff && prop->nonlinear==2) LaxWendroff(grid,phys,prop,myproc,comm);
 
   // Initialize the Sponge Layer
-  InitSponge(grid,myproc);
-
+  //InitSponge(grid,myproc);
 
   // Initialise the meteorological forcing input fields
   if(prop->metmodel>0)
@@ -1437,6 +1483,12 @@ void Solve(gridT *grid, physT *phys, propT *prop, int myproc, int numprocs, MPI_
   }
   // get the windstress (boundaries.c) - this needs to go after met data allocation -MR
   WindStress(grid,phys,prop,met,myproc);
+
+  // Set up arrays to merge output
+  if(prop->mergeArrays) {
+    if(VERBOSE>2 && myproc==0) printf("Initializing arrays for merging...\n");
+    InitializeMerging(grid,prop->outputNetcdf,numprocs,myproc,comm);
+  }
 
   // main time loop
   for(n=prop->nstart+1;n<=prop->nsteps+prop->nstart;n++) {
@@ -4543,7 +4595,7 @@ static void UPredictor(gridT *grid, physT *phys,
         sum=0;
         for(k=0;k<grid->Nk[i];k++)
           sum+=grid->dzz[i][k];
-        if(fabs(sum-(phys->h[i]+grid->dv[i]))>1e-6)
+        if(fabs(sum-(phys->h[i]+grid->dv[i]))>1e-5) //1e-6
           printf("n %d something wrong on the cell depth calculation at cell %d error %e sum %e H %e\n",prop->n, i,fabs(sum-(phys->h[i]+grid->dv[i])),sum,phys->h[i]+grid->dv[i]);
     }
 
@@ -5599,6 +5651,10 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
   // allocate memory
   *prop = (propT *)SunMalloc(sizeof(propT),"ReadProperties");
 
+  // allocate string arrays
+  (*prop)->basetime = (char *)SunMalloc(15*sizeof(char *),"ReadProperties");
+  (*prop)->starttime = (char *)SunMalloc(15*sizeof(char *),"ReadProperties");
+
   // set values from suntans.dat file (DATAFILE)
   (*prop)->thetaramptime = MPI_GetValue(DATAFILE,"thetaramptime","ReadProperties",myproc);
   (*prop)->theta = MPI_GetValue(DATAFILE,"theta","ReadProperties",myproc);
@@ -5660,6 +5716,7 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
   (*prop)->nonlinear = MPI_GetValue(DATAFILE,"nonlinear","ReadProperties",myproc);
   (*prop)->wetdry = MPI_GetValue(DATAFILE,"wetdry","ReadProperties",myproc);
   (*prop)->Coriolis_f = MPI_GetValue(DATAFILE,"Coriolis_f","ReadProperties",myproc);
+  (*prop)->betaplane = (int)MPI_GetValue(DATAFILE,"betaplane","ReadProperties",myproc);
   (*prop)->sponge_distance = MPI_GetValue(DATAFILE,"sponge_distance","ReadProperties",myproc);
   (*prop)->sponge_decay = MPI_GetValue(DATAFILE,"sponge_decay","ReadProperties",myproc);
   (*prop)->readSalinity = MPI_GetValue(DATAFILE,"readSalinity","ReadProperties",myproc);
@@ -5750,6 +5807,10 @@ void ReadProperties(propT **prop, gridT *grid, int myproc)
 
       (*prop)->nstepsperncfile=(int)MPI_GetValue(DATAFILE,"nstepsperncfile","ReadProperties",myproc);
       (*prop)->ncfilectr=(int)MPI_GetValue(DATAFILE,"ncfilectr","ReadProperties",myproc);
+      (*prop)->nctimectr = 0;
+  } else{
+        (*prop)->starttime = "20000101.000000";
+        (*prop)->basetime = "19900101.000000";
   }
   
   if((*prop)->nonlinear==2) {
@@ -5939,7 +6000,7 @@ void SetDensity(gridT *grid, physT *phys, propT *prop) {
  */
 void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
   //static void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
-  int i, j, k, nc1, nc2;
+  int i, j, k, jptr, iptr, nc1, nc2;
   REAL dz_bottom, dzsmall=grid->dzsmall,h_uw,utmp;
 
   //  // assuming upwinding
@@ -5977,8 +6038,9 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
   //        grid->dzf[j][k]=0;
   //  }
   // initialize dzf
-  for(j=0;j<grid->Ne;j++) 
-  {
+  for(j=0;j<grid->Ne;j++) {
+  //for(jptr=grid->edgedist[2];jptr<grid->edgedist[3];jptr++) {
+  //  j = grid->edgep[jptr];
     grid->hf[j]=0;
     for(k=0; k<grid->Nkc[j];k++)
       grid->dzf[j][k]=0;
@@ -5990,6 +6052,8 @@ void SetFluxHeight(gridT *grid, physT *phys, propT *prop) {
       grid->dzz[i][grid->Nk[i]-1]=Max(grid->dzbot[i],grid->smoothbot*grid->dz[grid->Nk[i]-1]); 
 
   for(j=0;j<grid->Ne;j++) {
+  //for(jptr=grid->edgedist[2];jptr<grid->edgedist[3];jptr++) {
+  //  j = grid->edgep[jptr];
     nc1 = grid->grad[2*j];
     nc2 = grid->grad[2*j+1];
     if(nc1==-1) nc1=nc2;
