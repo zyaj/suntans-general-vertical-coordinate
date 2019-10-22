@@ -200,6 +200,8 @@ void AllocatePhysicalVariables(gridT *grid, physT **phys, propT *prop)
   (*phys)->hfcoef = (REAL *)SunMalloc(grid->maxfaces*Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->Tsurf = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
   (*phys)->dT = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
+  (*phys)->latv = (REAL *)SunMalloc(Nc*sizeof(REAL),"AllocatePhysicalVariables");
+  (*phys)->coriolis_f = (REAL *)SunMalloc(Ne*sizeof(REAL),"AllocatePhysicalVariables");
 
   // cell-centered values that are also depth-varying
   (*phys)->w = (REAL **)SunMalloc(Nc*sizeof(REAL *),"AllocatePhysicalVariables");
@@ -605,6 +607,9 @@ void InitializePhysicalVariables(gridT *grid, physT *phys, propT *prop, int mypr
    UpdateDZ(grid,phys,prop, -1);
 
   // Initialize the free surface
+  for(i=0;i<Nc;i++) {
+    phys->h[i]=0;
+  }
   if (prop->readinitialnc){
      ReturnFreeSurfaceNC(prop,phys,grid,ncscratch,Nci,T0,myproc);
   }else{
@@ -2051,7 +2056,7 @@ static void HorizontalSource(gridT *grid, physT *phys, propT *prop,
   // Add on a momentum source to momentum equation
   // currently covers the sponge layer and can be used for Coriolis for the 
   // 2D problem
-  MomentumSource(phys->utmp,grid,phys,prop);
+  MomentumSource(phys->utmp,grid,phys,bound,prop);
 
   // 3D Coriolis terms
   // note that this uses linear interpolation to the faces from the cell centers

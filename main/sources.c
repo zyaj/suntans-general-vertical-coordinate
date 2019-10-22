@@ -14,12 +14,11 @@
 #include "memory.h"
 #include "sendrecv.h"
 
-void MomentumSource(REAL **usource, gridT *grid, physT *phys, propT *prop) {
+void MomentumSource(REAL **usource, gridT *grid, physT *phys, boundT *bound, propT *prop){
   int j, jptr, nc1, nc2, k;
   REAL Coriolis_f, ubar, depth_face;
 
   /* This is the sponge layer */
-  /*
   if(prop->sponge_distance) {
     for(jptr=grid->edgedist[0];jptr<grid->edgedist[1];jptr++) {
       j = grid->edgep[jptr]; 
@@ -29,17 +28,27 @@ void MomentumSource(REAL **usource, gridT *grid, physT *phys, propT *prop) {
       
       ubar = 0;
       for(k=grid->etop[j];k<grid->Nke[j];k++) {
-  ubar += grid->dzf[j][k]*phys->u[j][k];
-  depth_face += grid->dzf[j][k];
+	ubar += grid->dzf[j][k]*phys->u[j][k];
+	depth_face += grid->dzf[j][k];
       }
       ubar/=depth_face;
-      
+
       for(k=grid->etop[j];k<grid->Nke[j];k++) 
-  usource[j][k]-=prop->dt*exp(-4.0*rSponge[j]/prop->sponge_distance)/
-    prop->sponge_decay*(phys->u[j][k]-ubar);
+        // Relax back to the boundary velocity
+        // (This doesn't really work like a sponge...)
+        //ubar=bound->boundary_u[k][bound->closest_type2[j]]*grid->n1[j]+
+	//   bound->boundary_v[k][bound->closest_type2[j]]*grid->n2[j];
+
+        // Use the boundary radial dist calculated from the boundary types
+	usource[j][k] -= 
+	    prop->dt*exp(-4.0*bound->rdist_type2[j]/prop->sponge_distance)/
+            prop->sponge_decay*(phys->u[j][k]-ubar);
+	//usource[j][k] -= 
+	//   prop->dt*exp(-4.0*rSponge[j]/prop->sponge_distance)/
+	//   prop->sponge_decay*(phys->u[j][k]-ubar);
+
     }
   }
-  */
 
   /* Coriolis for a 2d problem */
   /*
